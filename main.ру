@@ -1,0 +1,763 @@
+import asyncio
+import logging
+import re
+from datetime import datetime, timedelta
+from typing import Dict, Optional
+from enum import Enum
+
+from aiogram import Bot, Dispatcher, F, types
+from aiogram.filters import Command, CommandStart
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
+from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.types import (
+    InlineKeyboardButton, InlineKeyboardMarkup,
+    ReplyKeyboardMarkup, KeyboardButton,
+    FSInputFile, CallbackQuery
+)
+from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
+from aiogram.types.input_file import BufferedInputFile
+
+# Настройка логирования
+logging.basicConfig(level=logging.INFO)
+
+# Токен бота
+TOKEN = "8714221053:AAFDGwKzPKOTf0ZUnqj9WbaM6Gn-DNXX_ls"
+
+# ID главного администратора (твой ID)
+MAIN_ADMIN_ID = 5596589260
+
+# Инициализация бота и диспетчера
+bot = Bot(token=TOKEN)
+storage = MemoryStorage()
+dp = Dispatcher(storage=storage)
+
+# Классы для должностей
+class Rank(Enum):
+    JUNIOR_MODER = "Младший модератор"
+    MODER = "Модератор"
+    SENIOR_MODER = "Старший модератор"
+    ADMIN = "Администратор"
+    SENIOR_ADMIN = "Старший администратор"
+
+# Нормы для должностей
+RANK_NORMS = {
+    Rank.JUNIOR_MODER: {"online": 150, "answers": 150},
+    Rank.MODER: {"online": 160, "answers": 130},
+    Rank.SENIOR_MODER: {"online": 160, "answers": 130},
+    Rank.ADMIN: {"online": 150, "answers": 120},
+    Rank.SENIOR_ADMIN: {"online": 150, "answers": 120},
+}
+
+# База данных (в памяти, для продакшена лучше использовать SQLite/PostgreSQL)
+users_db: Dict[int, dict] = {}
+applications_db: Dict[int, list] = {}
+pending_applications: Dict[int, dict] = {}
+
+# FSM состояния для регистрации
+class RegistrationStates(StatesGroup):
+    waiting_for_nickname = State()
+    waiting_for_age = State()
+    waiting_for_timezone = State()
+    waiting_for_pc_access = State()
+    waiting_for_vk = State()
+    waiting_for_tg = State()
+    waiting_for_forum = State()
+    waiting_for_discord = State()
+    waiting_for_rank = State()  # Для установки должности администратором
+
+# FSM состояния для заявлений
+class ApplicationStates(StatesGroup):
+    # Доп баллы
+    extra_work_desc = State()
+    extra_work_photo = State()
+    
+    # Неактив
+    inactive_reason = State()
+    inactive_days = State()
+    
+    # Снятие выговора
+    reprisal_work = State()
+    
+    # Повышение
+    promotion_current_rank = State()
+    promotion_target_rank = State()
+    promotion_screenshot = State()
+    
+    # Сдача нормы
+    norm_photo = State()
+
+# FSM для установки должности
+class SetRankStates(StatesGroup):
+    waiting_for_user_id = State()
+    waiting_for_rank = State()
+
+# Клавиатуры
+def get_main_reply_keyboard():
+    """Основная Reply клавиатура"""
+    builder = ReplyKeyboardBuilder()
+    builder.add(KeyboardButton(text="📊 Статистика"))
+    builder.add(KeyboardButton(text="📝 Заявки"))
+    builder.add(KeyboardButton(text="📋 Меню"))
+    builder.adjust(2)
+    return builder.as_markup(resize_keyboard=True)
+
+def get_applications_reply_keyboard():
+    """Клавиатура для заявок"""
+    builder = ReplyKeyboardBuilder()
+    builder.add(KeyboardButton(text="📊 Сдача нормы"))
+    builder.add(KeyboardButton(text="➕ Доп баллы"))
+    builder.add(KeyboardButton(text="💤 Неактив"))
+    builder.add(KeyboardButton(text="⬆️ Повышение"))
+    builder.add(KeyboardButton(text="✅ Снятие выговора"))
+    builder.add(KeyboardButton(text="🔙 Назад"))
+    builder.adjust(2, 2, 2)
+    return builder.as_markup(resize_keyboard=True)
+
+def get_start_inline_keyboard():
+    """Инлайн клавиатура для стартового меню"""
+    builder = InlineKeyboardBuilder()
+    builder.add(InlineKeyboardButton(text="📊 Статистика", callback_data="stats"))
+    builder.add(InlineKeyboardButton(text="📝 Заявки", callback_data="apps"))
+    builder.adjust(1)
+    return builder.as_markup()
+
+def get_admin_keyboard():
+    """Клавиатура для администратора"""
+    builder = InlineKeyboardBuilder()
+    builder.add(InlineKeyboardButton(text="👥 Пользователи", callback_data="admin_users"))
+    builder.add(InlineKeyboardButton(text="📊 Статистика бота", callback_data="admin_stats"))
+    builder.add(InlineKeyboardButton(text="⚙️ Установить должность", callback_data="admin_set_rank"))
+    builder.adjust(1)
+    return builder.as_markup()
+
+# Вспомогательные функции
+def format_user_stats(user_id: int) -> str:
+    """Форматирует статистику пользователя"""
+    user = users_db.get(user_id)
+    if not user:
+        return "Пользователь не найден"
+    
+    # Расчет дней на должности
+    days_on_position = 0
+    if "registration_date" in user:
+        days_on_position = (datetime.now() - user["registration_date"]).days
+    
+    # Получение норматива
+    rank = user.get("rank", Rank.JUNIOR_MODER)
+    norm = RANK_NORMS.get(rank, {"online": 0, "answers": 0})
+    
+    # Формирование статистики
+    stats = f"""
+╔══════════════════════════╗
+║     📊 **ВАША СТАТИСТИКА**     ║
+╚══════════════════════════╝
+
+👤 **Никнейм:** {user.get('nickname', 'Не указан')}
+📋 **Должность:** {rank.value}
+👥 **Добавил:** {user.get('added_by', 'Система')}
+📅 **Дата назначения:** {user.get('registration_date', datetime.now()).strftime('%d.%m.%Y')}
+⏳ **Дней на должности:** {days_on_position}
+📈 **Норматив:** {norm['online']} онлайн / {norm['answers']} ответов
+🎂 **Возраст:** {user.get('age', 'Не указан')}
+🌍 **Часовой пояс:** {user.get('timezone', 'Не указан')}
+💻 **Доступ к ПК:** {user.get('pc_access', 'Не указан')}
+
+🔗 **Ссылки:**
+• ВКонтакте: {user.get('vk', 'Не указано')}
+• Telegram: {user.get('tg', 'Не указано')}
+• Форум: {user.get('forum', 'Не указано')}
+• Discord: {user.get('discord', 'Не указано')}
+
+📊 **Успеваемость:**
+• Онлайн: {user.get('online', 0)}
+• Ответы: {user.get('answers', 0)}
+• Баллы: {user.get('points', 0)}
+
+⚠️ **Наказания:**
+• Выговоры: {user.get('reprisals', 0)}
+"""
+    return stats
+
+def check_norm_compliance(photo_text: str, rank: Rank) -> tuple:
+    """Проверяет соответствие норме по тексту из фото"""
+    try:
+        # Извлекаем числа из текста
+        online_match = re.search(r'Онлайн[:\s]*(\d+)', photo_text, re.IGNORECASE)
+        answers_match = re.search(r'Ответы[:\s]*(\d+)', photo_text, re.IGNORECASE)
+        
+        if not online_match or not answers_match:
+            return False, "Не удалось распознать данные на фото"
+        
+        online = int(online_match.group(1))
+        answers = int(answers_match.group(1))
+        
+        norm = RANK_NORMS.get(rank, {"online": 0, "answers": 0})
+        
+        if online >= norm['online'] and answers >= norm['answers']:
+            return True, f"✅ Норма сдана!\nОнлайн: {online}/{norm['online']}\nОтветы: {answers}/{norm['answers']}"
+        else:
+            return False, f"❌ Норма не сдана\nОнлайн: {online}/{norm['online']}\nОтветы: {answers}/{norm['answers']}"
+    except Exception as e:
+        return False, f"Ошибка при проверке: {str(e)}"
+
+# Обработчики команд
+@dp.message(CommandStart())
+async def cmd_start(message: types.Message, state: FSMContext):
+    """Обработчик команды /start"""
+    user_id = message.from_user.id
+    
+    # Проверяем, зарегистрирован ли пользователь
+    if user_id not in users_db:
+        users_db[user_id] = {
+            "user_id": user_id,
+            "username": message.from_user.username,
+            "first_name": message.from_user.first_name,
+            "last_name": message.from_user.last_name,
+            "registration_date": datetime.now(),
+            "rank": Rank.JUNIOR_MODER,
+            "added_by": "Система",
+            "online": 0,
+            "answers": 0,
+            "points": 0,
+            "reprisals": 0
+        }
+        await message.answer(
+            "👋 **Добро пожаловать!**\n\n"
+            "Для начала работы мне нужно задать вам несколько вопросов.\n"
+            "**Введите ваш никнейм:**",
+            parse_mode="Markdown"
+        )
+        await state.set_state(RegistrationStates.waiting_for_nickname)
+    else:
+        # Если зарегистрирован, показываем главное меню
+        await message.answer(
+            "🌟 **Вы попали в главное меню**\n\n"
+            "Выберите нужный раздел:",
+            parse_mode="Markdown",
+            reply_markup=get_start_inline_keyboard()
+        )
+
+# Регистрация пользователя
+@dp.message(RegistrationStates.waiting_for_nickname)
+async def reg_nickname(message: types.Message, state: FSMContext):
+    user_id = message.from_user.id
+    users_db[user_id]["nickname"] = message.text
+    await message.answer("📅 **Введите ваш возраст:**", parse_mode="Markdown")
+    await state.set_state(RegistrationStates.waiting_for_age)
+
+@dp.message(RegistrationStates.waiting_for_age)
+async def reg_age(message: types.Message, state: FSMContext):
+    user_id = message.from_user.id
+    users_db[user_id]["age"] = message.text
+    await message.answer("🌍 **Введите ваш часовой пояс (например, UTC+3):**", parse_mode="Markdown")
+    await state.set_state(RegistrationStates.waiting_for_timezone)
+
+@dp.message(RegistrationStates.waiting_for_timezone)
+async def reg_timezone(message: types.Message, state: FSMContext):
+    user_id = message.from_user.id
+    users_db[user_id]["timezone"] = message.text
+    await message.answer("💻 **Есть ли у вас доступ к ПК? (Да/Нет):**", parse_mode="Markdown")
+    await state.set_state(RegistrationStates.waiting_for_pc_access)
+
+@dp.message(RegistrationStates.waiting_for_pc_access)
+async def reg_pc_access(message: types.Message, state: FSMContext):
+    user_id = message.from_user.id
+    users_db[user_id]["pc_access"] = message.text
+    await message.answer("🔗 **Введите ссылку на ВКонтакте:**", parse_mode="Markdown")
+    await state.set_state(RegistrationStates.waiting_for_vk)
+
+@dp.message(RegistrationStates.waiting_for_vk)
+async def reg_vk(message: types.Message, state: FSMContext):
+    user_id = message.from_user.id
+    users_db[user_id]["vk"] = message.text
+    await message.answer("🔗 **Введите ссылку на Telegram:**", parse_mode="Markdown")
+    await state.set_state(RegistrationStates.waiting_for_tg)
+
+@dp.message(RegistrationStates.waiting_for_tg)
+async def reg_tg(message: types.Message, state: FSMContext):
+    user_id = message.from_user.id
+    users_db[user_id]["tg"] = message.text
+    await message.answer("🔗 **Введите ссылку на форум:**", parse_mode="Markdown")
+    await state.set_state(RegistrationStates.waiting_for_forum)
+
+@dp.message(RegistrationStates.waiting_for_forum)
+async def reg_forum(message: types.Message, state: FSMContext):
+    user_id = message.from_user.id
+    users_db[user_id]["forum"] = message.text
+    await message.answer("🎮 **Введите ваш ник в Discord:**", parse_mode="Markdown")
+    await state.set_state(RegistrationStates.waiting_for_discord)
+
+@dp.message(RegistrationStates.waiting_for_discord)
+async def reg_discord(message: types.Message, state: FSMContext):
+    user_id = message.from_user.id
+    users_db[user_id]["discord"] = message.text
+    users_db[user_id]["registration_complete"] = True
+    
+    await state.clear()
+    
+    # Отправляем приветственное сообщение
+    await message.answer(
+        "✅ **Регистрация завершена!**\n\n"
+        "🌟 **Вы попали в главное меню**\n\n"
+        "Выберите нужный раздел:",
+        parse_mode="Markdown",
+        reply_markup=get_start_inline_keyboard()
+    )
+    
+    # Уведомляем главного администратора
+    await bot.send_message(
+        MAIN_ADMIN_ID,
+        f"👤 **Новый пользователь зарегистрирован!**\n\n"
+        f"Никнейм: {users_db[user_id]['nickname']}\n"
+        f"ID: {user_id}\n"
+        f"Для установки должности используйте /setrank",
+        parse_mode="Markdown"
+    )
+
+# Обработчики инлайн кнопок
+@dp.callback_query(F.data == "stats")
+async def callback_stats(callback: CallbackQuery):
+    """Показывает статистику пользователя"""
+    user_id = callback.from_user.id
+    
+    if user_id not in users_db:
+        await callback.message.edit_text(
+            "❌ **Вы не зарегистрированы!**\n"
+            "Напишите /start для регистрации.",
+            parse_mode="Markdown"
+        )
+        await callback.answer()
+        return
+    
+    stats_text = format_user_stats(user_id)
+    await callback.message.edit_text(
+        stats_text,
+        parse_mode="Markdown",
+        reply_markup=InlineKeyboardMarkup(
+            inline_keyboard=[[InlineKeyboardButton(text="🔙 Назад", callback_data="back_to_menu")]]
+        )
+    )
+    await callback.answer()
+
+@dp.callback_query(F.data == "apps")
+async def callback_apps(callback: CallbackQuery):
+    """Показывает меню заявок"""
+    await callback.message.edit_text(
+        "📝 **Раздел заявок**\n\n"
+        "Выберите тип заявки:",
+        parse_mode="Markdown",
+        reply_markup=get_applications_reply_keyboard()
+    )
+    await callback.answer()
+
+@dp.callback_query(F.data == "back_to_menu")
+async def callback_back_to_menu(callback: CallbackQuery):
+    """Возвращает в главное меню"""
+    await callback.message.edit_text(
+        "🌟 **Вы попали в главное меню**\n\n"
+        "Выберите нужный раздел:",
+        parse_mode="Markdown",
+        reply_markup=get_start_inline_keyboard()
+    )
+    await callback.answer()
+
+# Обработчики Reply клавиатуры
+@dp.message(F.text == "📊 Статистика")
+async def reply_stats(message: types.Message):
+    """Обработчик кнопки Статистика"""
+    user_id = message.from_user.id
+    
+    if user_id not in users_db:
+        await message.answer("❌ Сначала зарегистрируйтесь через /start")
+        return
+    
+    stats_text = format_user_stats(user_id)
+    await message.answer(stats_text, parse_mode="Markdown")
+
+@dp.message(F.text == "📝 Заявки")
+async def reply_apps(message: types.Message):
+    """Обработчик кнопки Заявки"""
+    await message.answer(
+        "📝 **Выберите тип заявки:**",
+        parse_mode="Markdown",
+        reply_markup=get_applications_reply_keyboard()
+    )
+
+@dp.message(F.text == "📋 Меню")
+async def reply_menu(message: types.Message):
+    """Обработчик кнопки Меню"""
+    await message.answer(
+        "🌟 **Главное меню**",
+        parse_mode="Markdown",
+        reply_markup=get_start_inline_keyboard()
+    )
+
+@dp.message(F.text == "🔙 Назад")
+async def reply_back(message: types.Message):
+    """Обработчик кнопки Назад"""
+    await message.answer(
+        "🌟 **Главное меню**",
+        parse_mode="Markdown",
+        reply_markup=get_start_inline_keyboard()
+    )
+
+# Обработчик для сдачи нормы
+@dp.message(F.text == "📊 Сдача нормы")
+async def norm_start(message: types.Message, state: FSMContext):
+    """Начало процесса сдачи нормы"""
+    user_id = message.from_user.id
+    
+    if user_id not in users_db:
+        await message.answer("❌ Сначала зарегистрируйтесь через /start")
+        return
+    
+    # Отправляем фото примера
+    # Внимание: здесь нужно использовать реальное фото или загрузить его
+    # Пока отправляем текстовое сообщение с описанием
+    await message.answer(
+        "📸 **Сдача норматива**\n\n"
+        "Пришлите фото с показателями Онлайн и Ответы.\n"
+        "Фото должно быть четким и содержать эти данные.\n\n"
+        "Пример фото: [Ссылка на пример]",
+        parse_mode="Markdown"
+    )
+    
+    await state.set_state(ApplicationStates.norm_photo)
+
+@dp.message(ApplicationStates.norm_photo, F.photo)
+async def norm_photo_handler(message: types.Message, state: FSMContext):
+    """Обработка фото для нормы"""
+    user_id = message.from_user.id
+    
+    # Получаем текст с фото (в реальном боте нужно использовать OCR)
+    # Пока просто имитируем проверку
+    await message.answer("🔄 **Обрабатываю фото...**")
+    
+    # Имитация распознавания текста
+    # В реальном проекте нужно подключить OCR (например, Tesseract)
+    photo_text = "Онлайн: 155 Ответы: 160"  # Пример
+    
+    rank = users_db[user_id].get("rank", Rank.JUNIOR_MODER)
+    passed, result_text = check_norm_compliance(photo_text, rank)
+    
+    if passed:
+        # Начисляем баллы за успешную сдачу
+        users_db[user_id]["points"] = users_db[user_id].get("points", 0) + 10
+        users_db[user_id]["online"] = users_db[user_id].get("online", 0) + 50
+        users_db[user_id]["answers"] = users_db[user_id].get("answers", 0) + 50
+    
+    await message.answer(result_text, parse_mode="Markdown")
+    await state.clear()
+
+@dp.message(ApplicationStates.norm_photo)
+async def norm_no_photo(message: types.Message):
+    """Если прислали не фото"""
+    await message.answer("❌ Пожалуйста, отправьте фото!")
+
+# Обработчик для доп баллов
+@dp.message(F.text == "➕ Доп баллы")
+async def extra_work_start(message: types.Message, state: FSMContext):
+    """Начало процесса добавления доп баллов"""
+    await message.answer(
+        "➕ **Дополнительные баллы**\n\n"
+        "1️⃣ Опишите выполненную работу:",
+        parse_mode="Markdown"
+    )
+    await state.set_state(ApplicationStates.extra_work_desc)
+
+@dp.message(ApplicationStates.extra_work_desc)
+async def extra_work_desc_handler(message: types.Message, state: FSMContext):
+    """Получение описания работы"""
+    await state.update_data(work_desc=message.text)
+    await message.answer(
+        "2️⃣ Отправьте фото выполненной работы:",
+        parse_mode="Markdown"
+    )
+    await state.set_state(ApplicationStates.extra_work_photo)
+
+@dp.message(ApplicationStates.extra_work_photo, F.photo)
+async def extra_work_photo_handler(message: types.Message, state: FSMContext):
+    """Получение фото и отправка админам"""
+    user_data = await state.get_data()
+    work_desc = user_data.get("work_desc")
+    
+    user_id = message.from_user.id
+    nickname = users_db[user_id].get("nickname", "Неизвестно")
+    
+    # Отправляем главному администратору
+    await bot.send_message(
+        MAIN_ADMIN_ID,
+        f"📋 **Заявка на доп. баллы**\n\n"
+        f"👤 **Администратор:** {nickname}\n"
+        f"📝 **Описание:** {work_desc}",
+        parse_mode="Markdown"
+    )
+    
+    # Пересылаем фото
+    await bot.send_photo(
+        MAIN_ADMIN_ID,
+        photo=message.photo[-1].file_id,
+        caption=f"Фото от {nickname}"
+    )
+    
+    await message.answer(
+        "✅ **Заявка отправлена администрации!**\n"
+        "Ожидайте рассмотрения.",
+        parse_mode="Markdown"
+    )
+    await state.clear()
+
+# Обработчик для неактива
+@dp.message(F.text == "💤 Неактив")
+async def inactive_start(message: types.Message, state: FSMContext):
+    """Начало процесса неактива"""
+    await message.answer(
+        "💤 **Заявка на неактив**\n\n"
+        "1️⃣ Напишите причину неактива:",
+        parse_mode="Markdown"
+    )
+    await state.set_state(ApplicationStates.inactive_reason)
+
+@dp.message(ApplicationStates.inactive_reason)
+async def inactive_reason_handler(message: types.Message, state: FSMContext):
+    """Получение причины неактива"""
+    await state.update_data(reason=message.text)
+    await message.answer(
+        "2️⃣ На сколько дней вам нужен неактив? (максимум 7):",
+        parse_mode="Markdown"
+    )
+    await state.set_state(ApplicationStates.inactive_days)
+
+@dp.message(ApplicationStates.inactive_days)
+async def inactive_days_handler(message: types.Message, state: FSMContext):
+    """Получение количества дней и отправка админам"""
+    try:
+        days = int(message.text)
+        if days > 7:
+            await message.answer("❌ Максимум 7 дней! Введите число от 1 до 7:")
+            return
+        
+        user_data = await state.get_data()
+        reason = user_data.get("reason")
+        
+        user_id = message.from_user.id
+        nickname = users_db[user_id].get("nickname", "Неизвестно")
+        
+        # Отправляем главному администратору
+        await bot.send_message(
+            MAIN_ADMIN_ID,
+            f"💤 **Заявка на неактив**\n\n"
+            f"👤 **Администратор:** {nickname}\n"
+            f"📝 **Причина:** {reason}\n"
+            f"⏳ **Дней:** {days}",
+            parse_mode="Markdown"
+        )
+        
+        await message.answer(
+            f"✅ **Заявка на неактив отправлена!**\n"
+            f"Причина: {reason}\n"
+            f"Дней: {days}\n\n"
+            f"Ожидайте подтверждения.",
+            parse_mode="Markdown"
+        )
+        await state.clear()
+    except ValueError:
+        await message.answer("❌ Пожалуйста, введите число!")
+
+# Обработчик для снятия выговора
+@dp.message(F.text == "✅ Снятие выговора")
+async def reprisal_start(message: types.Message, state: FSMContext):
+    """Начало процесса снятия выговора"""
+    await message.answer(
+        "✅ **Снятие выговора**\n\n"
+        "Отправьте выполненную работу для снятия выговора:",
+        parse_mode="Markdown"
+    )
+    await state.set_state(ApplicationStates.reprisal_work)
+
+@dp.message(ApplicationStates.reprisal_work)
+async def reprisal_handler(message: types.Message, state: FSMContext):
+    """Получение работы и отправка админам"""
+    work_text = message.text
+    
+    user_id = message.from_user.id
+    nickname = users_db[user_id].get("nickname", "Неизвестно")
+    
+    # Отправляем главному администратору
+    await bot.send_message(
+        MAIN_ADMIN_ID,
+        f"✅ **Заявка на снятие выговора**\n\n"
+        f"👤 **Администратор:** {nickname}\n"
+        f"📝 **Работа:** {work_text}",
+        parse_mode="Markdown"
+    )
+    
+    await message.answer(
+        "✅ **Заявка на снятие выговора отправлена!**\n"
+        "Ожидайте рассмотрения.",
+        parse_mode="Markdown"
+    )
+    await state.clear()
+
+# Обработчик для повышения
+@dp.message(F.text == "⬆️ Повышение")
+async def promotion_start(message: types.Message, state: FSMContext):
+    """Начало процесса повышения"""
+    await message.answer(
+        "⬆️ **Заявка на повышение**\n\n"
+        "1️⃣ Какая у вас сейчас должность?",
+        parse_mode="Markdown"
+    )
+    await state.set_state(ApplicationStates.promotion_current_rank)
+
+@dp.message(ApplicationStates.promotion_current_rank)
+async def promotion_current_rank(message: types.Message, state: FSMContext):
+    """Получение текущей должности"""
+    await state.update_data(current_rank=message.text)
+    await message.answer(
+        "2️⃣ На какую должность вы хотите подать заявление?",
+        parse_mode="Markdown"
+    )
+    await state.set_state(ApplicationStates.promotion_target_rank)
+
+@dp.message(ApplicationStates.promotion_target_rank)
+async def promotion_target_rank(message: types.Message, state: FSMContext):
+    """Получение целевой должности"""
+    await state.update_data(target_rank=message.text)
+    await message.answer(
+        "3️⃣ Отправьте скриншот проделанной работы:",
+        parse_mode="Markdown"
+    )
+    await state.set_state(ApplicationStates.promotion_screenshot)
+
+@dp.message(ApplicationStates.promotion_screenshot, F.photo)
+async def promotion_screenshot(message: types.Message, state: FSMContext):
+    """Получение скриншота и отправка админам"""
+    user_data = await state.get_data()
+    current_rank = user_data.get("current_rank")
+    target_rank = user_data.get("target_rank")
+    
+    user_id = message.from_user.id
+    nickname = users_db[user_id].get("nickname", "Неизвестно")
+    
+    # Отправляем главному администратору
+    await bot.send_message(
+        MAIN_ADMIN_ID,
+        f"⬆️ **Заявка на повышение**\n\n"
+        f"👤 **Администратор:** {nickname}\n"
+        f"📋 **Текущая должность:** {current_rank}\n"
+        f"🎯 **Желаемая должность:** {target_rank}",
+        parse_mode="Markdown"
+    )
+    
+    # Пересылаем скриншот
+    await bot.send_photo(
+        MAIN_ADMIN_ID,
+        photo=message.photo[-1].file_id,
+        caption=f"Скриншот работы от {nickname}"
+    )
+    
+    await message.answer(
+        "✅ **Заявка на повышение отправлена!**\n"
+        "Ожидайте рассмотрения.",
+        parse_mode="Markdown"
+    )
+    await state.clear()
+
+# Команды администратора
+@dp.message(Command("admin"))
+async def cmd_admin(message: types.Message):
+    """Панель администратора"""
+    if message.from_user.id != MAIN_ADMIN_ID:
+        await message.answer("❌ У вас нет прав администратора!")
+        return
+    
+    await message.answer(
+        "⚙️ **Панель администратора**",
+        parse_mode="Markdown",
+        reply_markup=get_admin_keyboard()
+    )
+
+@dp.message(Command("setrank"))
+async def cmd_setrank_start(message: types.Message, state: FSMContext):
+    """Начало установки должности"""
+    if message.from_user.id != MAIN_ADMIN_ID:
+        await message.answer("❌ У вас нет прав администратора!")
+        return
+    
+    await message.answer(
+        "⚙️ **Установка должности**\n\n"
+        "Введите ID пользователя:",
+        parse_mode="Markdown"
+    )
+    await state.set_state(SetRankStates.waiting_for_user_id)
+
+@dp.message(SetRankStates.waiting_for_user_id)
+async def setrank_user_id(message: types.Message, state: FSMContext):
+    """Получение ID пользователя"""
+    try:
+        user_id = int(message.text)
+        if user_id not in users_db:
+            await message.answer("❌ Пользователь не найден!")
+            await state.clear()
+            return
+        
+        await state.update_data(target_user_id=user_id)
+        
+        # Создаем клавиатуру с должностями
+        builder = InlineKeyboardBuilder()
+        for rank in Rank:
+            builder.add(InlineKeyboardButton(
+                text=rank.value,
+                callback_data=f"setrank_{rank.name}"
+            ))
+        builder.adjust(1)
+        
+        await message.answer(
+            "Выберите должность:",
+            reply_markup=builder.as_markup()
+        )
+        await state.set_state(SetRankStates.waiting_for_rank)
+    except ValueError:
+        await message.answer("❌ Введите корректный ID!")
+
+@dp.callback_query(SetRankStates.waiting_for_rank, F.data.startswith("setrank_"))
+async def setrank_choose(callback: CallbackQuery, state: FSMContext):
+    """Выбор должности"""
+    rank_name = callback.data.replace("setrank_", "")
+    rank = Rank[rank_name]
+    
+    user_data = await state.get_data()
+    target_user_id = user_data.get("target_user_id")
+    
+    users_db[target_user_id]["rank"] = rank
+    users_db[target_user_id]["added_by"] = callback.from_user.first_name
+    
+    await callback.message.edit_text(
+        f"✅ Должность установлена!\n"
+        f"Пользователь: {users_db[target_user_id].get('nickname', 'Неизвестно')}\n"
+        f"Должность: {rank.value}"
+    )
+    
+    # Уведомляем пользователя
+    try:
+        await bot.send_message(
+            target_user_id,
+            f"✅ **Вам установлена должность:**\n"
+            f"**{rank.value}**",
+            parse_mode="Markdown"
+        )
+    except:
+        pass
+    
+    await state.clear()
+    await callback.answer()
+
+# Запуск бота
+async def main():
+    print("Бот запущен...")
+    await dp.start_polling(bot)
+
+if __name__ == "__main__":
+    asyncio.run(main())
