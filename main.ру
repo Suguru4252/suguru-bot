@@ -507,6 +507,9 @@ class AdminReviewStates(StatesGroup):
 async def cmd_start(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     
+    # Сбрасываем состояние при старте
+    await state.clear()
+    
     if is_blocked(user_id):
         await message.answer("⛔ Доступ запрещен!")
         return
@@ -715,8 +718,11 @@ async def reg_discord(message: types.Message, state: FSMContext):
 
 # ==================== ОБРАБОТЧИКИ REPLY КНОПОК ====================
 @dp.message(F.text == "📊 Статистика")
-async def reply_stats(message: types.Message):
+async def reply_stats(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
+    
+    # Сбрасываем состояние при входе в статистику
+    await state.clear()
     
     if is_blocked(user_id):
         await message.answer("⛔ Доступ запрещен!")
@@ -731,8 +737,11 @@ async def reply_stats(message: types.Message):
     await message.answer(stats_text)
 
 @dp.message(F.text == "📝 Заявки")
-async def reply_apps(message: types.Message):
+async def reply_apps(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
+    
+    # Сбрасываем состояние при входе в заявки
+    await state.clear()
     
     if is_blocked(user_id):
         return
@@ -743,11 +752,15 @@ async def reply_apps(message: types.Message):
     )
 
 @dp.message(F.text == "📋 Меню")
-async def reply_menu(message: types.Message):
+async def reply_menu(message: types.Message, state: FSMContext):
+    """Обработчик кнопки Меню - сбрасывает все состояния"""
     user_id = message.from_user.id
     
     if is_blocked(user_id):
         return
+    
+    # Сбрасываем все состояния FSM
+    await state.clear()
     
     await message.answer(
         "🌟 Главное меню",
@@ -755,8 +768,11 @@ async def reply_menu(message: types.Message):
     )
 
 @dp.message(F.text == "👑 Админ панель")
-async def reply_admin_panel(message: types.Message):
+async def reply_admin_panel(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
+    
+    # Сбрасываем состояние при входе в админку
+    await state.clear()
     
     if not is_bot_admin(user_id):
         await message.answer("❌ У вас нет доступа к админ-панели!")
@@ -781,12 +797,20 @@ async def reply_admin_panel(message: types.Message):
     await message.answer(text)
 
 @dp.message(F.text == "🔙 Назад")
-async def reply_back(message: types.Message):
+async def reply_back(message: types.Message, state: FSMContext):
+    """Обработчик кнопки Назад - сбрасывает все состояния и возвращает в меню"""
     user_id = message.from_user.id
     
     if is_blocked(user_id):
         return
     
+    # Сбрасываем все состояния FSM - это самое важное!
+    current_state = await state.get_state()
+    if current_state is not None:
+        logger.info(f"Сброс состояния {current_state} для пользователя {user_id}")
+        await state.clear()
+    
+    # Возвращаемся в главное меню с Reply клавиатурой
     await message.answer(
         "🌟 Главное меню",
         reply_markup=get_main_reply_keyboard(user_id)
@@ -1162,8 +1186,11 @@ async def reprisal_handler(message: types.Message, state: FSMContext):
 
 # ==================== ИНЛАЙН КНОПКИ ====================
 @dp.callback_query(F.data == "stats")
-async def callback_stats(callback: CallbackQuery):
+async def callback_stats(callback: CallbackQuery, state: FSMContext):
     user_id = callback.from_user.id
+    
+    # Сбрасываем состояние
+    await state.clear()
     
     if is_blocked(user_id):
         await callback.answer("⛔ Доступ запрещен")
@@ -1190,8 +1217,11 @@ async def callback_stats(callback: CallbackQuery):
     await callback.answer()
 
 @dp.callback_query(F.data == "apps")
-async def callback_apps(callback: CallbackQuery):
+async def callback_apps(callback: CallbackQuery, state: FSMContext):
     user_id = callback.from_user.id
+    
+    # Сбрасываем состояние
+    await state.clear()
     
     if is_blocked(user_id):
         await callback.answer("⛔ Доступ запрещен")
@@ -1205,8 +1235,11 @@ async def callback_apps(callback: CallbackQuery):
     await callback.answer()
 
 @dp.callback_query(F.data == "back_to_menu")
-async def callback_back_to_menu(callback: CallbackQuery):
+async def callback_back_to_menu(callback: CallbackQuery, state: FSMContext):
     user_id = callback.from_user.id
+    
+    # Сбрасываем состояние
+    await state.clear()
     
     builder = InlineKeyboardBuilder()
     builder.add(InlineKeyboardButton(text="📊 Статистика", callback_data="stats"))
@@ -1223,8 +1256,11 @@ async def callback_back_to_menu(callback: CallbackQuery):
     await callback.answer()
 
 @dp.callback_query(F.data == "admin_panel")
-async def callback_admin_panel(callback: CallbackQuery):
+async def callback_admin_panel(callback: CallbackQuery, state: FSMContext):
     user_id = callback.from_user.id
+    
+    # Сбрасываем состояние
+    await state.clear()
     
     if not is_bot_admin(user_id):
         await callback.answer("❌ Нет доступа!")
@@ -1279,10 +1315,13 @@ pending_reprisals: Dict[str, dict] = {}
 
 # ==================== КОМАНДЫ ДЛЯ ПРОВЕРКИ ЗАЯВОК ====================
 @dp.message(Command("norma"))
-async def cmd_check_norma(message: types.Message):
+async def cmd_check_norma(message: types.Message, state: FSMContext):
     if not is_bot_admin(message.from_user.id):
         await message.answer("❌ У вас нет прав для этой команды!")
         return
+    
+    # Сбрасываем состояние
+    await state.clear()
     
     if not pending_norms:
         await message.answer("📭 Нет ожидающих заявок на сдачу нормы")
@@ -1310,10 +1349,13 @@ async def cmd_check_norma(message: types.Message):
     await message.answer(f"✅ Показано заявок: {count}")
 
 @dp.message(Command("povishenie"))
-async def cmd_check_promotion(message: types.Message):
+async def cmd_check_promotion(message: types.Message, state: FSMContext):
     if not is_bot_admin(message.from_user.id):
         await message.answer("❌ У вас нет прав для этой команды!")
         return
+    
+    # Сбрасываем состояние
+    await state.clear()
     
     if not pending_promotions:
         await message.answer("📭 Нет ожидающих заявок на повышение")
@@ -1352,10 +1394,13 @@ async def cmd_check_promotion(message: types.Message):
     await message.answer(f"✅ Показано заявок: {count}")
 
 @dp.message(Command("balli"))
-async def cmd_check_ball(message: types.Message):
+async def cmd_check_ball(message: types.Message, state: FSMContext):
     if not is_bot_admin(message.from_user.id):
         await message.answer("❌ У вас нет прав для этой команды!")
         return
+    
+    # Сбрасываем состояние
+    await state.clear()
     
     if not pending_extra_works:
         await message.answer("📭 Нет ожидающих заявок на доп баллы")
@@ -1393,10 +1438,13 @@ async def cmd_check_ball(message: types.Message):
     await message.answer(f"✅ Показано заявок: {count}")
 
 @dp.message(Command("neaktiv"))
-async def cmd_check_neaktiv(message: types.Message):
+async def cmd_check_neaktiv(message: types.Message, state: FSMContext):
     if not is_bot_admin(message.from_user.id):
         await message.answer("❌ У вас нет прав для этой команды!")
         return
+    
+    # Сбрасываем состояние
+    await state.clear()
     
     if not pending_inactives:
         await message.answer("📭 Нет ожидающих заявок на неактив")
@@ -1427,10 +1475,13 @@ async def cmd_check_neaktiv(message: types.Message):
     await message.answer(f"✅ Показано заявок: {count}")
 
 @dp.message(Command("vigovor"))
-async def cmd_check_reprisal(message: types.Message):
+async def cmd_check_reprisal(message: types.Message, state: FSMContext):
     if not is_bot_admin(message.from_user.id):
         await message.answer("❌ У вас нет прав для этой команды!")
         return
+    
+    # Сбрасываем состояние
+    await state.clear()
     
     if not pending_reprisals:
         await message.answer("📭 Нет ожидающих заявок на снятие выговора")
@@ -1461,10 +1512,13 @@ async def cmd_check_reprisal(message: types.Message):
 
 # ==================== ОБРАБОТЧИКИ ДЛЯ ПРИНЯТИЯ/ОТКАЗА ====================
 @dp.callback_query(F.data.startswith("approve_"))
-async def approve_application(callback: CallbackQuery):
+async def approve_application(callback: CallbackQuery, state: FSMContext):
     if not is_bot_admin(callback.from_user.id):
         await callback.answer("❌ Нет прав!")
         return
+    
+    # Сбрасываем состояние
+    await state.clear()
     
     _, app_type, app_id = callback.data.split("_", 2)
     
@@ -1602,10 +1656,13 @@ async def process_rejection_reason(message: types.Message, state: FSMContext):
 
 # ==================== КОМАНДЫ АДМИНИСТРИРОВАНИЯ ====================
 @dp.message(Command("setadminbot"))
-async def cmd_set_admin_bot(message: types.Message):
+async def cmd_set_admin_bot(message: types.Message, state: FSMContext):
     if not is_super_admin(message.from_user.id):
         await message.answer("❌ У вас нет прав для этой команды!")
         return
+    
+    # Сбрасываем состояние
+    await state.clear()
     
     try:
         args = message.text.split()
@@ -1615,9 +1672,9 @@ async def cmd_set_admin_bot(message: types.Message):
         
         username = args[1].replace('@', '')
         
-        target_id = None
         # Ищем пользователя в базе
         # Здесь нужно добавить поиск по username
+        # Для простоты пока заглушка
         
         await message.answer("⚠️ Функция в разработке")
         
@@ -1625,10 +1682,13 @@ async def cmd_set_admin_bot(message: types.Message):
         await message.answer(f"❌ Ошибка: {e}")
 
 @dp.message(Command("setadmin"))
-async def cmd_set_admin(message: types.Message):
+async def cmd_set_admin(message: types.Message, state: FSMContext):
     if not can_manage_users(message.from_user.id):
         await message.answer("❌ У вас нет прав для этой команды!")
         return
+    
+    # Сбрасываем состояние
+    await state.clear()
     
     try:
         args = message.text.split()
@@ -1651,6 +1711,9 @@ async def cmd_set_admin(message: types.Message):
             5: Rank.SENIOR_ADMIN
         }
         
+        # Ищем пользователя в базе
+        # Для простоты пока заглушка
+        
         await message.answer("⚠️ Функция в разработке")
         
     except ValueError:
@@ -1659,10 +1722,13 @@ async def cmd_set_admin(message: types.Message):
         await message.answer(f"❌ Ошибка: {e}")
 
 @dp.message(Command("givewarn"))
-async def cmd_give_warn(message: types.Message):
+async def cmd_give_warn(message: types.Message, state: FSMContext):
     if not can_manage_users(message.from_user.id):
         await message.answer("❌ У вас нет прав для этой команды!")
         return
+    
+    # Сбрасываем состояние
+    await state.clear()
     
     try:
         parts = message.text.split(maxsplit=3)
@@ -1686,10 +1752,13 @@ async def cmd_give_warn(message: types.Message):
         await message.answer(f"❌ Ошибка: {e}")
 
 @dp.message(Command("giveball"))
-async def cmd_give_ball(message: types.Message):
+async def cmd_give_ball(message: types.Message, state: FSMContext):
     if not can_manage_users(message.from_user.id):
         await message.answer("❌ У вас нет прав для этой команды!")
         return
+    
+    # Сбрасываем состояние
+    await state.clear()
     
     try:
         parts = message.text.split(maxsplit=3)
@@ -1709,10 +1778,13 @@ async def cmd_give_ball(message: types.Message):
         await message.answer(f"❌ Ошибка: {e}")
 
 @dp.message(Command("adminlist"))
-async def cmd_admin_list(message: types.Message):
+async def cmd_admin_list(message: types.Message, state: FSMContext):
     if not is_bot_admin(message.from_user.id):
         await message.answer("❌ У вас нет прав для этой команды!")
         return
+    
+    # Сбрасываем состояние
+    await state.clear()
     
     admins = db.get_all_admins()
     text = "👑 Администраторы бота:\n\n"
@@ -1724,10 +1796,13 @@ async def cmd_admin_list(message: types.Message):
     await message.answer(text)
 
 @dp.message(Command("unadmin"))
-async def cmd_unadmin(message: types.Message):
+async def cmd_unadmin(message: types.Message, state: FSMContext):
     if not is_super_admin(message.from_user.id):
         await message.answer("❌ У вас нет прав для этой команды!")
         return
+    
+    # Сбрасываем состояние
+    await state.clear()
     
     try:
         username = message.text.split()[1].replace('@', '')
@@ -1736,10 +1811,13 @@ async def cmd_unadmin(message: types.Message):
         await message.answer(f"❌ Ошибка: {e}")
 
 @dp.message(Command("unlist"))
-async def cmd_unlist(message: types.Message):
+async def cmd_unlist(message: types.Message, state: FSMContext):
     if not can_manage_users(message.from_user.id):
         await message.answer("❌ У вас нет прав для этой команды!")
         return
+    
+    # Сбрасываем состояние
+    await state.clear()
     
     try:
         username = message.text.split()[1].replace('@', '')
