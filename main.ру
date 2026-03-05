@@ -1,7 +1,9 @@
 import asyncio
 import logging
 import re
-import requests
+import json
+import urllib.request
+import urllib.error
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 from enum import Enum
@@ -18,10 +20,12 @@ from aiogram.types import (
     CallbackQuery, FSInputFile
 )
 from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
-from aiogram.exceptions import TelegramBadRequest
 
 # Настройка логирования
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
 # Токен бота
@@ -30,7 +34,7 @@ TOKEN = "8714221053:AAFDGwKzPKOTf0ZUnqj9WbaM6Gn-DNXX_ls"
 # ID главного администратора
 MAIN_ADMIN_ID = 5596589260
 
-# Инициализация бота
+# Инициализация бота и диспетчера
 bot = Bot(token=TOKEN)
 storage = MemoryStorage()
 dp = Dispatcher(storage=storage)
@@ -54,11 +58,11 @@ RANK_NORMS = {
 
 # База данных
 users_db: Dict[int, dict] = {}
-bot_admins: Dict[int, int] = {MAIN_ADMIN_ID: 999}  # ID: уровень доступа
+bot_admins: Dict[int, int] = {MAIN_ADMIN_ID: 999}
 blocked_users: List[int] = []
 
 # Хранилище заявок
-pending_norms: Dict[str, dict] = {}  # id заявки: данные
+pending_norms: Dict[str, dict] = {}
 pending_promotions: Dict[str, dict] = {}
 pending_extra_works: Dict[str, dict] = {}
 pending_inactives: Dict[str, dict] = {}
@@ -130,6 +134,41 @@ def validate_age(age: str) -> bool:
         return 10 <= age_num <= 100
     except ValueError:
         return False
+
+def validate_pc_access(access: str) -> bool:
+    return access.lower() in ['да', 'нет', 'yes', 'no', 'есть', 'нету']
+
+def check_vk_profile(vk_input: str) -> tuple:
+    """Проверяет существование профиля ВК"""
+    vk_input = vk_input.strip()
+    
+    if 'vk.com/' in vk_input:
+        screen_name = vk_input.split('vk.com/')[-1].split('/')[0].split('?')[0]
+    elif 'vkontakte.ru/' in vk_input:
+        screen_name = vk_input.split('vkontakte.ru/')[-1].split('/')[0].split('?')[0]
+    elif vk_input.isdigit():
+        screen_name = vk_input
+    else:
+        screen_name = vk_input
+    
+    try:
+        url = f"https://api.vk.com/method/users.get?user_ids={screen_name}&v=5.131"
+        
+        with urllib.request.urlopen(url, timeout=5) as response:
+            data = json.loads(response.read().decode())
+            
+            if 'response' in data and len(data['response']) > 0:
+                user = data['response'][0]
+                full_name = f"{user.get('first_name', '')} {user.get('last_name', '')}".strip()
+                return True, f"✅ Профиль найден: {full_name}"
+            else:
+                return False, "❌ Профиль не найден"
+                
+    except Exception:
+        if re.match(r'^[a-zA-Z0-9_.]+$', screen_name) and len(screen_name) > 2:
+            return True, "✅ Формат ссылки корректный"
+        else:
+            return False, "❌ Неверный формат ссылки ВК"
 
 # Функции проверки прав
 def is_bot_admin(user_id: int) -> bool:
@@ -233,7 +272,317 @@ def format_user_stats(user_id: int) -> str:
 """
     return stats
 
-# НОВЫЕ КОМАНДЫ ДЛЯ ПРОВЕРКИ ЗАЯВОК
+# ==================== КОМАНДЫ АДМИНИСТРИРОВАНИЯ ====================
+
+@dp.message(Command("start"))
+async def cmd_start(message: types.Message, state: FSMContext):
+    """Обработчик команды /start"""
+    user_id = message.from_user.id
+    
+    if is_blocked(user_id):
+        await message.answer("⛔ **Доступ запрещен!**", parse_mode="Markdown")
+        return
+    
+    if user_id not in users_db:
+        users_db[user_id] = {
+            "user_id": user_id,
+            "username": message.from_user.username,
+            "first_name": message.from_user.first_name,
+            "last_name": message.from_user.last_name,
+            "registration_date": datetime.now(),
+            "rank": Rank.JUNIOR_MODER,
+            "added_by": "Система",
+            "online": 0,
+            "answers": 0,
+            "points": 0,
+            "reprisals": 0
+        }
+        await message.answer(
+            "👋 **Добро пожаловать в бот Black Russia!**\n\n"
+            "Для начала работы нужно заполнить анкету.\n"
+            "**Введите ваш никнейм:**",
+            parse_mode="Markdown"
+        )
+        await state.set_state(RegistrationStates.waiting_for_nickname)
+    else:
+        await message.answer(
+            "🌟 **Главное меню**",
+            parse_mode="Markdown",
+            reply_markup=get_main_reply_keyboard(user_id)
+        )
+        await message.answer(
+            "Выберите действие:",
+            reply_markup=get_start_inline_keyboard(user_id)
+        )
+
+@dp.message(Command("setadminbot"))
+async def cmd_set_admin_bot(message: types.Message):
+    """Добавляет администратора бота"""
+    if not is_super_admin(message.from_user.id):
+        await message.answer("❌ У вас нет прав для этой команды!")
+        return
+    
+    try:
+        args = message.text.split()
+        if len(args) < 2:
+            await message.answer("❌ Использование: /setadminbot @username")
+            return
+        
+        username = args[1].replace('@', '')
+        
+        target_id = None
+        for uid, data in users_db.items():
+            if data.get('tg_username', '').lower() == username.lower():
+                target_id = uid
+                break
+        
+        if not target_id:
+            await message.answer("❌ Пользователь не найден в базе!")
+            return
+        
+        bot_admins[target_id] = 50
+        await message.answer(f"✅ Пользователь @{username} добавлен как администратор бота!")
+        await bot.send_message(target_id, "✅ Вам выданы права администратора бота!")
+        
+    except Exception as e:
+        await message.answer(f"❌ Ошибка: {e}")
+
+@dp.message(Command("setadmin"))
+async def cmd_set_admin(message: types.Message):
+    """Выдает игроку доступ к боту и устанавливает должность"""
+    if not can_manage_users(message.from_user.id):
+        await message.answer("❌ У вас нет прав для этой команды!")
+        return
+    
+    try:
+        args = message.text.split()
+        if len(args) < 3:
+            await message.answer("❌ Использование: /setadmin [уровень] @username")
+            return
+        
+        level = int(args[1])
+        username = args[2].replace('@', '')
+        
+        if level < 1 or level > 5:
+            await message.answer("❌ Уровень должен быть от 1 до 5!")
+            return
+        
+        rank_map = {
+            1: Rank.JUNIOR_MODER,
+            2: Rank.MODER,
+            3: Rank.SENIOR_MODER,
+            4: Rank.ADMIN,
+            5: Rank.SENIOR_ADMIN
+        }
+        
+        target_id = None
+        for uid, data in users_db.items():
+            if data.get('tg_username', '').lower() == username.lower():
+                target_id = uid
+                break
+        
+        if not target_id:
+            await message.answer("❌ Пользователь не найден в базе!")
+            return
+        
+        users_db[target_id]["rank"] = rank_map[level]
+        users_db[target_id]["added_by"] = message.from_user.first_name
+        
+        await message.answer(f"✅ Пользователю @{username} выдана должность: {rank_map[level].value}")
+        await bot.send_message(
+            target_id,
+            f"✅ Вам выдана должность: **{rank_map[level].value}**",
+            parse_mode="Markdown"
+        )
+        
+    except ValueError:
+        await message.answer("❌ Уровень должен быть числом!")
+    except Exception as e:
+        await message.answer(f"❌ Ошибка: {e}")
+
+@dp.message(Command("givewarn"))
+async def cmd_give_warn(message: types.Message):
+    """Выдает выговор игроку"""
+    if not can_manage_users(message.from_user.id):
+        await message.answer("❌ У вас нет прав для этой команды!")
+        return
+    
+    try:
+        parts = message.text.split(maxsplit=3)
+        if len(parts) < 4:
+            await message.answer("❌ Использование: /givewarn [1-3] @username [причина]")
+            return
+        
+        count = int(parts[1])
+        username = parts[2].replace('@', '')
+        reason = parts[3]
+        
+        if count < 1 or count > 3:
+            await message.answer("❌ Количество выговоров должно быть от 1 до 3!")
+            return
+        
+        target_id = None
+        for uid, data in users_db.items():
+            if data.get('tg_username', '').lower() == username.lower():
+                target_id = uid
+                break
+        
+        if not target_id:
+            await message.answer("❌ Пользователь не найден!")
+            return
+        
+        current_warns = users_db[target_id].get('reprisals', 0)
+        users_db[target_id]['reprisals'] = current_warns + count
+        
+        await message.answer(f"✅ Пользователю @{username} выдано {count} выговор(ов)\nПричина: {reason}")
+        await bot.send_message(
+            target_id,
+            f"⚠️ **Вам выдан выговор!**\n"
+            f"Количество: {count}\n"
+            f"Причина: {reason}\n"
+            f"Всего выговоров: {users_db[target_id]['reprisals']}",
+            parse_mode="Markdown"
+        )
+        
+    except ValueError:
+        await message.answer("❌ Количество должно быть числом!")
+    except Exception as e:
+        await message.answer(f"❌ Ошибка: {e}")
+
+@dp.message(Command("giveball"))
+async def cmd_give_ball(message: types.Message):
+    """Выдает баллы игроку"""
+    if not can_manage_users(message.from_user.id):
+        await message.answer("❌ У вас нет прав для этой команды!")
+        return
+    
+    try:
+        parts = message.text.split(maxsplit=3)
+        if len(parts) < 4:
+            await message.answer("❌ Использование: /giveball @username [количество] [причина]")
+            return
+        
+        username = parts[1].replace('@', '')
+        count = int(parts[2])
+        reason = parts[3]
+        
+        target_id = None
+        for uid, data in users_db.items():
+            if data.get('tg_username', '').lower() == username.lower():
+                target_id = uid
+                break
+        
+        if not target_id:
+            await message.answer("❌ Пользователь не найден!")
+            return
+        
+        current_points = users_db[target_id].get('points', 0)
+        users_db[target_id]['points'] = current_points + count
+        
+        await message.answer(f"✅ Пользователю @{username} начислено {count} баллов\nПричина: {reason}")
+        await bot.send_message(
+            target_id,
+            f"➕ **Вам начислены баллы!**\n"
+            f"Количество: {count}\n"
+            f"Причина: {reason}\n"
+            f"Всего баллов: {users_db[target_id]['points']}",
+            parse_mode="Markdown"
+        )
+        
+    except ValueError:
+        await message.answer("❌ Количество должно быть числом!")
+    except Exception as e:
+        await message.answer(f"❌ Ошибка: {e}")
+
+@dp.message(Command("adminlist"))
+async def cmd_admin_list(message: types.Message):
+    """Список администраторов бота"""
+    if not is_bot_admin(message.from_user.id):
+        await message.answer("❌ У вас нет прав для этой команды!")
+        return
+    
+    text = "👑 **Администраторы бота:**\n\n"
+    
+    for admin_id, level in bot_admins.items():
+        user_data = users_db.get(admin_id, {})
+        nickname = user_data.get('nickname', 'Неизвестно')
+        tg_username = user_data.get('tg_username', 'Не указан')
+        
+        level_text = "⭐ ГЛАВНЫЙ" if admin_id == MAIN_ADMIN_ID else "👨‍💼 Админ"
+        
+        text += f"• {nickname} (@{tg_username}) - {level_text}\n"
+    
+    await message.answer(text, parse_mode="Markdown")
+
+@dp.message(Command("unadmin"))
+async def cmd_unadmin(message: types.Message):
+    """Снять админа бота с должности"""
+    if not is_super_admin(message.from_user.id):
+        await message.answer("❌ У вас нет прав для этой команды!")
+        return
+    
+    try:
+        username = message.text.split()[1].replace('@', '')
+        
+        target_id = None
+        for uid, data in users_db.items():
+            if data.get('tg_username', '').lower() == username.lower():
+                target_id = uid
+                break
+        
+        if not target_id:
+            await message.answer("❌ Пользователь не найден!")
+            return
+        
+        if target_id == MAIN_ADMIN_ID:
+            await message.answer("❌ Нельзя снять права главного администратора!")
+            return
+        
+        if target_id in bot_admins:
+            del bot_admins[target_id]
+            await message.answer(f"✅ У @{username} отозваны права администратора бота")
+            await bot.send_message(target_id, "⚠️ У вас отозваны права администратора бота")
+        else:
+            await message.answer("❌ Пользователь не является администратором бота")
+            
+    except Exception as e:
+        await message.answer(f"❌ Ошибка: {e}")
+
+@dp.message(Command("unlist"))
+async def cmd_unlist(message: types.Message):
+    """Заблокировать игрока"""
+    if not can_manage_users(message.from_user.id):
+        await message.answer("❌ У вас нет прав для этой команды!")
+        return
+    
+    try:
+        username = message.text.split()[1].replace('@', '')
+        
+        target_id = None
+        for uid, data in users_db.items():
+            if data.get('tg_username', '').lower() == username.lower():
+                target_id = uid
+                break
+        
+        if not target_id:
+            await message.answer("❌ Пользователь не найден!")
+            return
+        
+        if target_id == MAIN_ADMIN_ID:
+            await message.answer("❌ Нельзя заблокировать главного администратора!")
+            return
+        
+        if target_id not in blocked_users:
+            blocked_users.append(target_id)
+            await message.answer(f"✅ Пользователь @{username} заблокирован")
+            await bot.send_message(target_id, "⛔ Вы заблокированы в боте администрацией")
+        else:
+            await message.answer("❌ Пользователь уже заблокирован")
+            
+    except Exception as e:
+        await message.answer(f"❌ Ошибка: {e}")
+
+# ==================== НОВЫЕ КОМАНДЫ ДЛЯ ПРОВЕРКИ ЗАЯВОК ====================
 
 @dp.message(Command("shecknorma"))
 async def cmd_check_norma(message: types.Message):
@@ -254,7 +603,6 @@ async def cmd_check_norma(message: types.Message):
             user_data = users_db.get(user_id, {})
             nickname = user_data.get('nickname', 'Неизвестно')
             
-            # Отправляем фото
             await bot.send_photo(
                 message.from_user.id,
                 photo=app_data['file_id'],
@@ -390,7 +738,8 @@ async def cmd_check_neaktiv(message: types.Message):
             logger.error(f"Ошибка при отправке заявки на неактив: {e}")
             continue
 
-# Обработчики для одобрения/отклонения заявок
+# ==================== ОБРАБОТЧИКИ ДЛЯ ОДОБРЕНИЯ/ОТКЛОНЕНИЯ ====================
+
 @dp.callback_query(F.data.startswith("approve_"))
 async def approve_application(callback: CallbackQuery):
     """Одобрение заявки"""
@@ -400,7 +749,6 @@ async def approve_application(callback: CallbackQuery):
     
     _, app_type, app_id = callback.data.split("_", 2)
     
-    # Определяем словарь с заявками
     pending_dict = {
         "norm": pending_norms,
         "promotion": pending_promotions,
@@ -416,7 +764,6 @@ async def approve_application(callback: CallbackQuery):
     app_data = pending_dict[app_id]
     user_id = app_data['user_id']
     
-    # Начисляем баллы в зависимости от типа заявки
     if app_type == "norm":
         users_db[user_id]['points'] = users_db[user_id].get('points', 0) + 20
         users_db[user_id]['online'] = users_db[user_id].get('online', 0) + 50
@@ -438,7 +785,6 @@ async def approve_application(callback: CallbackQuery):
             parse_mode="Markdown"
         )
     
-    # Удаляем заявку
     del pending_dict[app_id]
     
     await callback.message.edit_text(f"✅ Заявка одобрена!\n\n{callback.message.caption if callback.message.caption else ''}")
@@ -446,14 +792,13 @@ async def approve_application(callback: CallbackQuery):
 
 @dp.callback_query(F.data.startswith("reject_"))
 async def reject_application_start(callback: CallbackQuery, state: FSMContext):
-    """Начало отклонения заявки (запрос причины)"""
+    """Начало отклонения заявки"""
     if not is_bot_admin(callback.from_user.id):
         await callback.answer("❌ Нет прав!")
         return
     
     _, app_type, app_id = callback.data.split("_", 2)
     
-    # Сохраняем данные в состояние
     await state.update_data(
         app_type=app_type,
         app_id=app_id,
@@ -473,7 +818,6 @@ async def process_rejection_reason(message: types.Message, state: FSMContext):
     original_message = data.get('original_message')
     reason = message.text
     
-    # Определяем словарь с заявками
     pending_dict = {
         "norm": pending_norms,
         "promotion": pending_promotions,
@@ -489,17 +833,14 @@ async def process_rejection_reason(message: types.Message, state: FSMContext):
     app_data = pending_dict[app_id]
     user_id = app_data['user_id']
     
-    # Отправляем уведомление пользователю
     await bot.send_message(
         user_id,
         f"❌ **Ваша заявка отклонена**\n📝 Причина: {reason}",
         parse_mode="Markdown"
     )
     
-    # Удаляем заявку
     del pending_dict[app_id]
     
-    # Обновляем сообщение админа
     try:
         await original_message.edit_text(
             f"❌ Заявка отклонена!\nПричина: {reason}\n\n{original_message.caption if original_message.caption else ''}"
@@ -510,7 +851,157 @@ async def process_rejection_reason(message: types.Message, state: FSMContext):
     await message.answer("✅ Заявка отклонена, уведомление отправлено пользователю")
     await state.clear()
 
-# ОБРАБОТЧИКИ ЗАЯВОК (ОБНОВЛЕННЫЕ)
+# ==================== РЕГИСТРАЦИЯ ПОЛЬЗОВАТЕЛЯ ====================
+
+@dp.message(RegistrationStates.waiting_for_nickname)
+async def reg_nickname(message: types.Message, state: FSMContext):
+    user_id = message.from_user.id
+    if len(message.text) < 3 or len(message.text) > 30:
+        await message.answer("❌ Никнейм должен быть от 3 до 30 символов. Попробуйте еще раз:")
+        return
+    users_db[user_id]["nickname"] = message.text
+    await message.answer("📅 **Введите ваш возраст (от 10 до 100):**", parse_mode="Markdown")
+    await state.set_state(RegistrationStates.waiting_for_age)
+
+@dp.message(RegistrationStates.waiting_for_age)
+async def reg_age(message: types.Message, state: FSMContext):
+    if not validate_age(message.text):
+        await message.answer("❌ Неверный формат возраста. Введите число от 10 до 100:")
+        return
+    user_id = message.from_user.id
+    users_db[user_id]["age"] = message.text
+    await message.answer(
+        "🌍 **Введите ваш часовой пояс**\n\n"
+        "Формат: МСК, МСК+1, МСК-4 и т.д.\n"
+        "Пример: МСК, МСК+3, МСК-2",
+        parse_mode="Markdown"
+    )
+    await state.set_state(RegistrationStates.waiting_for_timezone)
+
+@dp.message(RegistrationStates.waiting_for_timezone)
+async def reg_timezone(message: types.Message, state: FSMContext):
+    if not validate_timezone_msk(message.text):
+        await message.answer(
+            "❌ Неверный формат!\n"
+            "Используйте: МСК, МСК+1, МСК-4 и т.д.\n"
+            "Пример: МСК, МСК+3, МСК-2"
+        )
+        return
+    user_id = message.from_user.id
+    users_db[user_id]["timezone"] = message.text.upper()
+    await message.answer("💻 **Есть ли у вас доступ к ПК? (Да/Нет):**", parse_mode="Markdown")
+    await state.set_state(RegistrationStates.waiting_for_pc_access)
+
+@dp.message(RegistrationStates.waiting_for_pc_access)
+async def reg_pc_access(message: types.Message, state: FSMContext):
+    if not validate_pc_access(message.text):
+        await message.answer("❌ Ответьте Да или Нет:")
+        return
+    user_id = message.from_user.id
+    users_db[user_id]["pc_access"] = "Да" if message.text.lower() in ['да', 'yes', 'есть'] else "Нет"
+    await message.answer(
+        "🔗 **Введите ссылку на ВКонтакте**\n\n"
+        "Примеры:\n"
+        "• vk.com/durov\n"
+        "• https://vk.com/durov\n"
+        "• durov\n"
+        "• id123456789",
+        parse_mode="Markdown"
+    )
+    await state.set_state(RegistrationStates.waiting_for_vk)
+
+@dp.message(RegistrationStates.waiting_for_vk)
+async def reg_vk(message: types.Message, state: FSMContext):
+    if not validate_vk_link(message.text):
+        await message.answer(
+            "❌ Неверная ссылка ВК!\n\n"
+            "Примеры правильных ссылок:\n"
+            "• vk.com/durov\n"
+            "• https://vk.com/durov\n"
+            "• durov\n"
+            "• id123456789"
+        )
+        return
+    
+    user_id = message.from_user.id
+    users_db[user_id]["vk"] = message.text
+    await message.answer(
+        "🔗 **Введите ваш Telegram username**\n\n"
+        "Пример: durov (без @)",
+        parse_mode="Markdown"
+    )
+    await state.set_state(RegistrationStates.waiting_for_tg_username)
+
+@dp.message(RegistrationStates.waiting_for_tg_username)
+async def reg_tg_username(message: types.Message, state: FSMContext):
+    if not validate_telegram_username(message.text):
+        await message.answer(
+            "❌ Неверный username!\n\n"
+            "Требования:\n"
+            "• Только латиница\n"
+            "• Можно использовать цифры и _\n"
+            "• Минимум 5 символов\n"
+            "• Пример: durov"
+        )
+        return
+    user_id = message.from_user.id
+    users_db[user_id]["tg_username"] = message.text.replace('@', '')
+    await message.answer(
+        "🔗 **Введите ссылку на форум**\n\n"
+        "Пример: forum.blackrussia.ru/username",
+        parse_mode="Markdown"
+    )
+    await state.set_state(RegistrationStates.waiting_for_forum)
+
+@dp.message(RegistrationStates.waiting_for_forum)
+async def reg_forum(message: types.Message, state: FSMContext):
+    if not validate_forum_link(message.text):
+        await message.answer("❌ Неверная ссылка на форум. Попробуйте снова:")
+        return
+    user_id = message.from_user.id
+    users_db[user_id]["forum"] = message.text
+    await message.answer(
+        "🎮 **Введите ваш ник в Discord**\n\n"
+        "Пример: username или username#1234",
+        parse_mode="Markdown"
+    )
+    await state.set_state(RegistrationStates.waiting_for_discord)
+
+@dp.message(RegistrationStates.waiting_for_discord)
+async def reg_discord(message: types.Message, state: FSMContext):
+    if not validate_discord_username(message.text):
+        await message.answer(
+            "❌ Неверный Discord ник!\n\n"
+            "Примеры:\n"
+            "• username\n"
+            "• username#1234"
+        )
+        return
+    user_id = message.from_user.id
+    users_db[user_id]["discord"] = message.text
+    users_db[user_id]["registration_complete"] = True
+    
+    await state.clear()
+    
+    await message.answer(
+        "✅ **Регистрация завершена!**",
+        parse_mode="Markdown",
+        reply_markup=get_main_reply_keyboard(user_id)
+    )
+    await message.answer(
+        "🌟 **Главное меню**",
+        reply_markup=get_start_inline_keyboard(user_id)
+    )
+    
+    await bot.send_message(
+        MAIN_ADMIN_ID,
+        f"👤 **Новый пользователь!**\n"
+        f"Ник: {users_db[user_id]['nickname']}\n"
+        f"Username: @{users_db[user_id]['tg_username']}",
+        parse_mode="Markdown"
+    )
+
+# ==================== ОБРАБОТЧИКИ ЗАЯВОК ====================
 
 @dp.message(F.text == "📊 Сдача нормы")
 async def norm_start(message: types.Message, state: FSMContext):
@@ -534,10 +1025,8 @@ async def norm_start(message: types.Message, state: FSMContext):
 async def norm_photo_handler(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     
-    # Генерируем уникальный ID заявки
     app_id = str(uuid4())[:8]
     
-    # Сохраняем заявку
     pending_norms[app_id] = {
         'user_id': user_id,
         'file_id': message.photo[-1].file_id,
@@ -551,7 +1040,6 @@ async def norm_photo_handler(message: types.Message, state: FSMContext):
         parse_mode="Markdown"
     )
     
-    # Уведомление админам
     for admin_id in bot_admins:
         if admin_id != user_id:
             try:
@@ -604,7 +1092,6 @@ async def extra_work_photo_handler(message: types.Message, state: FSMContext):
     
     app_id = str(uuid4())[:8]
     
-    # Сохраняем заявку
     pending_extra_works[app_id] = {
         'user_id': user_id,
         'description': work_desc,
@@ -619,7 +1106,6 @@ async def extra_work_photo_handler(message: types.Message, state: FSMContext):
         parse_mode="Markdown"
     )
     
-    # Уведомление админам
     for admin_id in bot_admins:
         if admin_id != user_id:
             try:
@@ -674,7 +1160,6 @@ async def inactive_days_handler(message: types.Message, state: FSMContext):
         
         app_id = str(uuid4())[:8]
         
-        # Сохраняем заявку
         pending_inactives[app_id] = {
             'user_id': user_id,
             'reason': reason,
@@ -689,7 +1174,6 @@ async def inactive_days_handler(message: types.Message, state: FSMContext):
             parse_mode="Markdown"
         )
         
-        # Уведомление админам
         for admin_id in bot_admins:
             if admin_id != user_id:
                 try:
@@ -751,7 +1235,6 @@ async def promotion_screenshot(message: types.Message, state: FSMContext):
     
     app_id = str(uuid4())[:8]
     
-    # Сохраняем заявку
     pending_promotions[app_id] = {
         'user_id': user_id,
         'current_rank': current_rank,
@@ -767,7 +1250,6 @@ async def promotion_screenshot(message: types.Message, state: FSMContext):
         parse_mode="Markdown"
     )
     
-    # Уведомление админам
     for admin_id in bot_admins:
         if admin_id != user_id:
             try:
@@ -804,7 +1286,6 @@ async def reprisal_handler(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     work_text = message.text
     
-    # Отправляем главному администратору
     await bot.send_message(
         MAIN_ADMIN_ID,
         f"✅ **Заявка на снятие выговора**\n"
@@ -820,18 +1301,221 @@ async def reprisal_handler(message: types.Message, state: FSMContext):
     )
     await state.clear()
 
-# ОСТАЛЬНЫЕ ОБРАБОТЧИКИ (КОМАНДЫ АДМИНИСТРИРОВАНИЯ, РЕГИСТРАЦИЯ И Т.Д.)
-# (весь остальной код из предыдущей версии остается без изменений)
+# ==================== ОБРАБОТЧИКИ КНОПОК ====================
 
-# Запуск бота
+@dp.message(F.text == "📊 Статистика")
+async def reply_stats(message: types.Message):
+    user_id = message.from_user.id
+    if is_blocked(user_id):
+        return
+    
+    if user_id not in users_db:
+        await message.answer("❌ Сначала зарегистрируйтесь через /start")
+        return
+    
+    stats_text = format_user_stats(user_id)
+    await message.answer(stats_text, parse_mode="Markdown")
+
+@dp.message(F.text == "📝 Заявки")
+async def reply_apps(message: types.Message):
+    user_id = message.from_user.id
+    if is_blocked(user_id):
+        return
+    
+    await message.answer(
+        "📝 **Выберите тип заявки:**",
+        parse_mode="Markdown",
+        reply_markup=get_applications_reply_keyboard()
+    )
+
+@dp.message(F.text == "📋 Меню")
+async def reply_menu(message: types.Message):
+    user_id = message.from_user.id
+    if is_blocked(user_id):
+        return
+    
+    await message.answer(
+        "🌟 **Главное меню**",
+        parse_mode="Markdown",
+        reply_markup=get_start_inline_keyboard(user_id)
+    )
+
+@dp.message(F.text == "👑 Админ панель")
+async def reply_admin_panel(message: types.Message):
+    user_id = message.from_user.id
+    if not is_bot_admin(user_id):
+        await message.answer("❌ У вас нет доступа к админ-панели!")
+        return
+    
+    text = "👑 **Панель администратора бота**\n\n"
+    text += "**Команды:**\n"
+    text += "• /adminlist - список админов\n"
+    text += "• /setadminbot - добавить админа бота\n"
+    text += "• /setadmin [1-5] - выдать должность\n"
+    text += "• /givewarn - выдать выговор\n"
+    text += "• /giveball - начислить баллы\n"
+    text += "• /unadmin - снять админа\n"
+    text += "• /unlist - заблокировать игрока\n"
+    text += "• /shecknorma - проверить нормы\n"
+    text += "• /checkapp - проверить повышения\n"
+    text += "• /checkball - проверить доп баллы\n"
+    text += "• /checkneaktiv - проверить неактивы"
+    
+    await message.answer(text, parse_mode="Markdown")
+
+@dp.message(F.text == "🔙 Назад")
+async def reply_back(message: types.Message):
+    user_id = message.from_user.id
+    if is_blocked(user_id):
+        return
+    
+    await message.answer(
+        "🌟 **Главное меню**",
+        parse_mode="Markdown",
+        reply_markup=get_start_inline_keyboard(user_id)
+    )
+
+# ==================== ИНЛАЙН КНОПКИ ====================
+
+@dp.callback_query(F.data == "stats")
+async def callback_stats(callback: CallbackQuery):
+    user_id = callback.from_user.id
+    
+    if is_blocked(user_id):
+        await callback.answer("⛔ Доступ запрещен")
+        return
+    
+    if user_id not in users_db:
+        await callback.message.edit_text(
+            "❌ **Вы не зарегистрированы!**\n"
+            "Напишите /start для регистрации.",
+            parse_mode="Markdown"
+        )
+        await callback.answer()
+        return
+    
+    stats_text = format_user_stats(user_id)
+    
+    builder = InlineKeyboardBuilder()
+    builder.add(InlineKeyboardButton(text="🔙 Назад", callback_data="back_to_menu"))
+    
+    await callback.message.edit_text(
+        stats_text,
+        parse_mode="Markdown",
+        reply_markup=builder.as_markup()
+    )
+    await callback.answer()
+
+@dp.callback_query(F.data == "apps")
+async def callback_apps(callback: CallbackQuery):
+    user_id = callback.from_user.id
+    
+    if is_blocked(user_id):
+        await callback.answer("⛔ Доступ запрещен")
+        return
+    
+    builder = InlineKeyboardBuilder()
+    builder.add(InlineKeyboardButton(text="📊 Сдача нормы", callback_data="app_norm"))
+    builder.add(InlineKeyboardButton(text="➕ Доп баллы", callback_data="app_extra"))
+    builder.add(InlineKeyboardButton(text="💤 Неактив", callback_data="app_inactive"))
+    builder.add(InlineKeyboardButton(text="⬆️ Повышение", callback_data="app_promotion"))
+    builder.add(InlineKeyboardButton(text="✅ Снятие выговора", callback_data="app_reprisal"))
+    builder.add(InlineKeyboardButton(text="🔙 Назад", callback_data="back_to_menu"))
+    builder.adjust(1)
+    
+    await callback.message.edit_text(
+        "📝 **Раздел заявок**\n\n"
+        "Выберите тип заявки:",
+        parse_mode="Markdown",
+        reply_markup=builder.as_markup()
+    )
+    await callback.answer()
+
+@dp.callback_query(F.data == "back_to_menu")
+async def callback_back_to_menu(callback: CallbackQuery):
+    user_id = callback.from_user.id
+    
+    builder = InlineKeyboardBuilder()
+    builder.add(InlineKeyboardButton(text="📊 Статистика", callback_data="stats"))
+    builder.add(InlineKeyboardButton(text="📝 Заявки", callback_data="apps"))
+    if is_bot_admin(user_id):
+        builder.add(InlineKeyboardButton(text="👑 Админка", callback_data="admin_panel"))
+    builder.adjust(1)
+    
+    await callback.message.edit_text(
+        "🌟 **Главное меню**\n\n"
+        "Выберите нужный раздел:",
+        parse_mode="Markdown",
+        reply_markup=builder.as_markup()
+    )
+    await callback.answer()
+
+@dp.callback_query(F.data == "admin_panel")
+async def callback_admin_panel(callback: CallbackQuery):
+    user_id = callback.from_user.id
+    
+    if not is_bot_admin(user_id):
+        await callback.answer("❌ Нет доступа!")
+        return
+    
+    text = "👑 **Панель администратора**\n\n"
+    text += "Используйте команды:\n"
+    text += "/adminlist\n/setadminbot\n/setadmin\n/givewarn\n/giveball\n/unadmin\n/unlist\n"
+    text += "/shecknorma\n/checkapp\n/checkball\n/checkneaktiv"
+    
+    await callback.message.edit_text(text, parse_mode="Markdown")
+    await callback.answer()
+
+@dp.callback_query(F.data.startswith("app_"))
+async def callback_app_handler(callback: CallbackQuery, state: FSMContext):
+    user_id = callback.from_user.id
+    app_type = callback.data.replace("app_", "")
+    
+    if is_blocked(user_id):
+        await callback.answer("⛔ Доступ запрещен")
+        return
+    
+    messages = {
+        "norm": "📸 **Сдача норматива**\n\nПришлите фото с показателями Онлайн и Ответы.",
+        "extra": "➕ **Дополнительные баллы**\n\nОпишите выполненную работу:",
+        "inactive": "💤 **Заявка на неактив**\n\nНапишите причину неактива:",
+        "promotion": "⬆️ **Заявка на повышение**\n\nКакая у вас сейчас должность?",
+        "reprisal": "✅ **Снятие выговора**\n\nОтправьте выполненную работу:"
+    }
+    
+    states = {
+        "norm": ApplicationStates.norm_photo,
+        "extra": ApplicationStates.extra_work_desc,
+        "inactive": ApplicationStates.inactive_reason,
+        "promotion": ApplicationStates.promotion_current_rank,
+        "reprisal": ApplicationStates.reprisal_work
+    }
+    
+    if app_type in messages:
+        await callback.message.edit_text(messages[app_type], parse_mode="Markdown")
+        await state.set_state(states[app_type])
+    
+    await callback.answer()
+
+# ==================== ЗАПУСК БОТА ====================
+
 async def main():
     print("🚀 Бот Black Russia запущен!")
     print(f"👑 Главный администратор ID: {MAIN_ADMIN_ID}")
-    print("📋 Новые команды для проверки заявок:")
-    print("  • /shecknorma - проверка норм")
-    print("  • /checkapp - проверка повышений")
-    print("  • /checkball - проверка доп баллов")
-    print("  • /checkneaktiv - проверка неактивов")
+    print("📋 Доступные команды:")
+    print("  • /start - начать работу")
+    print("  • /adminlist - список админов")
+    print("  • /setadminbot - добавить админа бота")
+    print("  • /setadmin [1-5] - выдать должность")
+    print("  • /givewarn - выдать выговор")
+    print("  • /giveball - начислить баллы")
+    print("  • /unadmin - снять админа")
+    print("  • /unlist - заблокировать игрока")
+    print("  • /shecknorma - проверить нормы")
+    print("  • /checkapp - проверить повышения")
+    print("  • /checkball - проверить доп баллы")
+    print("  • /checkneaktiv - проверить неактивы")
+    
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
