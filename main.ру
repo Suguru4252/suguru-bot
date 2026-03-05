@@ -66,6 +66,7 @@ pending_norms: Dict[str, dict] = {}
 pending_promotions: Dict[str, dict] = {}
 pending_extra_works: Dict[str, dict] = {}
 pending_inactives: Dict[str, dict] = {}
+pending_reprisals: Dict[str, dict] = {}  # Заявки на снятие выговора
 
 # FSM состояния
 class RegistrationStates(StatesGroup):
@@ -138,38 +139,6 @@ def validate_age(age: str) -> bool:
 def validate_pc_access(access: str) -> bool:
     return access.lower() in ['да', 'нет', 'yes', 'no', 'есть', 'нету']
 
-def check_vk_profile(vk_input: str) -> tuple:
-    """Проверяет существование профиля ВК"""
-    vk_input = vk_input.strip()
-    
-    if 'vk.com/' in vk_input:
-        screen_name = vk_input.split('vk.com/')[-1].split('/')[0].split('?')[0]
-    elif 'vkontakte.ru/' in vk_input:
-        screen_name = vk_input.split('vkontakte.ru/')[-1].split('/')[0].split('?')[0]
-    elif vk_input.isdigit():
-        screen_name = vk_input
-    else:
-        screen_name = vk_input
-    
-    try:
-        url = f"https://api.vk.com/method/users.get?user_ids={screen_name}&v=5.131"
-        
-        with urllib.request.urlopen(url, timeout=5) as response:
-            data = json.loads(response.read().decode())
-            
-            if 'response' in data and len(data['response']) > 0:
-                user = data['response'][0]
-                full_name = f"{user.get('first_name', '')} {user.get('last_name', '')}".strip()
-                return True, f"✅ Профиль найден: {full_name}"
-            else:
-                return False, "❌ Профиль не найден"
-                
-    except Exception:
-        if re.match(r'^[a-zA-Z0-9_.]+$', screen_name) and len(screen_name) > 2:
-            return True, "✅ Формат ссылки корректный"
-        else:
-            return False, "❌ Неверный формат ссылки ВК"
-
 # Функции проверки прав
 def is_bot_admin(user_id: int) -> bool:
     return user_id in bot_admins
@@ -218,11 +187,11 @@ def get_admin_review_keyboard(app_id: str, app_type: str):
     """Клавиатура для проверки заявок"""
     builder = InlineKeyboardBuilder()
     builder.add(InlineKeyboardButton(
-        text="✅ Одобрить", 
+        text="✅ Принять", 
         callback_data=f"approve_{app_type}_{app_id}"
     ))
     builder.add(InlineKeyboardButton(
-        text="❌ Отклонить", 
+        text="❌ Отказать", 
         callback_data=f"reject_{app_type}_{app_id}"
     ))
     builder.adjust(2)
@@ -243,31 +212,31 @@ def format_user_stats(user_id: int) -> str:
     
     stats = f"""
 ╔══════════════════════════╗
-║     📊 **ВАША СТАТИСТИКА**     ║
+║     📊 *ВАША СТАТИСТИКА*     ║
 ╚══════════════════════════╝
 
-👤 **Никнейм:** {user.get('nickname', 'Не указан')}
-📋 **Должность:** {rank.value}
-👥 **Добавил:** {user.get('added_by', 'Система')}
-📅 **Дата регистрации:** {user.get('registration_date', datetime.now()).strftime('%d.%m.%Y')}
-⏳ **Дней на проекте:** {days_on_position}
-📈 **Норматив:** {norm['online']} онлайн / {norm['answers']} ответов
-🎂 **Возраст:** {user.get('age', 'Не указан')}
-🌍 **Часовой пояс:** {user.get('timezone', 'Не указан')}
-💻 **Доступ к ПК:** {user.get('pc_access', 'Не указан')}
+👤 *Никнейм:* {user.get('nickname', 'Не указан')}
+📋 *Должность:* {rank.value}
+👥 *Добавил:* {user.get('added_by', 'Система')}
+📅 *Дата регистрации:* {user.get('registration_date', datetime.now()).strftime('%d.%m.%Y')}
+⏳ *Дней на проекте:* {days_on_position}
+📈 *Норматив:* {norm['online']} онлайн / {norm['answers']} ответов
+🎂 *Возраст:* {user.get('age', 'Не указан')}
+🌍 *Часовой пояс:* {user.get('timezone', 'Не указан')}
+💻 *Доступ к ПК:* {user.get('pc_access', 'Не указан')}
 
-🔗 **Ссылки:**
+🔗 *Ссылки:*
 • ВКонтакте: {user.get('vk', 'Не указано')}
 • Telegram: @{user.get('tg_username', 'Не указано')}
 • Форум: {user.get('forum', 'Не указано')}
 • Discord: {user.get('discord', 'Не указано')}
 
-📊 **Успеваемость:**
+📊 *Успеваемость:*
 • Онлайн: {user.get('online', 0)}
 • Ответы: {user.get('answers', 0)}
 • Баллы: {user.get('points', 0)}
 
-⚠️ **Наказания:**
+⚠️ *Наказания:*
 • Выговоры: {user.get('reprisals', 0)}
 """
     return stats
@@ -280,7 +249,7 @@ async def cmd_start(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     
     if is_blocked(user_id):
-        await message.answer("⛔ **Доступ запрещен!**", parse_mode="Markdown")
+        await message.answer("⛔ *Доступ запрещен!*", parse_mode="Markdown")
         return
     
     if user_id not in users_db:
@@ -298,15 +267,15 @@ async def cmd_start(message: types.Message, state: FSMContext):
             "reprisals": 0
         }
         await message.answer(
-            "👋 **Добро пожаловать в бот Black Russia!**\n\n"
+            "👋 *Добро пожаловать в бот Black Russia!*\n\n"
             "Для начала работы нужно заполнить анкету.\n"
-            "**Введите ваш никнейм:**",
+            "*Введите ваш никнейм:*",
             parse_mode="Markdown"
         )
         await state.set_state(RegistrationStates.waiting_for_nickname)
     else:
         await message.answer(
-            "🌟 **Главное меню**",
+            "🌟 *Главное меню*",
             parse_mode="Markdown",
             reply_markup=get_main_reply_keyboard(user_id)
         )
@@ -391,7 +360,7 @@ async def cmd_set_admin(message: types.Message):
         await message.answer(f"✅ Пользователю @{username} выдана должность: {rank_map[level].value}")
         await bot.send_message(
             target_id,
-            f"✅ Вам выдана должность: **{rank_map[level].value}**",
+            f"✅ Вам выдана должность: *{rank_map[level].value}*",
             parse_mode="Markdown"
         )
         
@@ -437,7 +406,7 @@ async def cmd_give_warn(message: types.Message):
         await message.answer(f"✅ Пользователю @{username} выдано {count} выговор(ов)\nПричина: {reason}")
         await bot.send_message(
             target_id,
-            f"⚠️ **Вам выдан выговор!**\n"
+            f"⚠️ *Вам выдан выговор!*\n"
             f"Количество: {count}\n"
             f"Причина: {reason}\n"
             f"Всего выговоров: {users_db[target_id]['reprisals']}",
@@ -482,7 +451,7 @@ async def cmd_give_ball(message: types.Message):
         await message.answer(f"✅ Пользователю @{username} начислено {count} баллов\nПричина: {reason}")
         await bot.send_message(
             target_id,
-            f"➕ **Вам начислены баллы!**\n"
+            f"➕ *Вам начислены баллы!*\n"
             f"Количество: {count}\n"
             f"Причина: {reason}\n"
             f"Всего баллов: {users_db[target_id]['points']}",
@@ -501,7 +470,7 @@ async def cmd_admin_list(message: types.Message):
         await message.answer("❌ У вас нет прав для этой команды!")
         return
     
-    text = "👑 **Администраторы бота:**\n\n"
+    text = "👑 *Администраторы бота:*\n\n"
     
     for admin_id, level in bot_admins.items():
         user_data = users_db.get(admin_id, {})
@@ -582,11 +551,11 @@ async def cmd_unlist(message: types.Message):
     except Exception as e:
         await message.answer(f"❌ Ошибка: {e}")
 
-# ==================== НОВЫЕ КОМАНДЫ ДЛЯ ПРОВЕРКИ ЗАЯВОК ====================
+# ==================== КОМАНДЫ ДЛЯ ПРОВЕРКИ ЗАЯВОК ====================
 
-@dp.message(Command("shecknorma"))
+@dp.message(Command("norma"))
 async def cmd_check_norma(message: types.Message):
-    """Просмотр всех заявок на норму"""
+    """Просмотр заявок на норму"""
     if not is_bot_admin(message.from_user.id):
         await message.answer("❌ У вас нет прав для этой команды!")
         return
@@ -595,9 +564,7 @@ async def cmd_check_norma(message: types.Message):
         await message.answer("📭 Нет ожидающих заявок на сдачу нормы")
         return
     
-    await message.answer(f"📊 **Найдено заявок на норму: {len(pending_norms)}**", parse_mode="Markdown")
-    
-    for app_id, app_data in pending_norms.items():
+    for app_id, app_data in list(pending_norms.items()):
         try:
             user_id = app_data['user_id']
             user_data = users_db.get(user_id, {})
@@ -606,19 +573,18 @@ async def cmd_check_norma(message: types.Message):
             await bot.send_photo(
                 message.from_user.id,
                 photo=app_data['file_id'],
-                caption=f"📸 **Заявка на норму**\n"
-                       f"👤 От: {nickname}\n"
-                       f"🆔 ID: {app_id}",
+                caption=f"📸 *Заявка на норму*\n👤 Игрок: {nickname}\n🆔 ID: {app_id}",
                 parse_mode="Markdown",
                 reply_markup=get_admin_review_keyboard(app_id, "norm")
             )
+            await asyncio.sleep(0.5)  # Небольшая задержка между сообщениями
         except Exception as e:
             logger.error(f"Ошибка при отправке заявки на норму: {e}")
             continue
 
-@dp.message(Command("checkapp"))
-async def cmd_check_app(message: types.Message):
-    """Просмотр всех заявок на повышение"""
+@dp.message(Command("povishenie"))
+async def cmd_check_promotion(message: types.Message):
+    """Просмотр заявок на повышение"""
     if not is_bot_admin(message.from_user.id):
         await message.answer("❌ У вас нет прав для этой команды!")
         return
@@ -627,16 +593,14 @@ async def cmd_check_app(message: types.Message):
         await message.answer("📭 Нет ожидающих заявок на повышение")
         return
     
-    await message.answer(f"⬆️ **Найдено заявок на повышение: {len(pending_promotions)}**", parse_mode="Markdown")
-    
-    for app_id, app_data in pending_promotions.items():
+    for app_id, app_data in list(pending_promotions.items()):
         try:
             user_id = app_data['user_id']
             user_data = users_db.get(user_id, {})
             nickname = user_data.get('nickname', 'Неизвестно')
             
-            text = (f"⬆️ **Заявка на повышение**\n"
-                   f"👤 От: {nickname}\n"
+            text = (f"⬆️ *Заявка на повышение*\n"
+                   f"👤 Игрок: {nickname}\n"
                    f"📋 Текущая: {app_data['current_rank']}\n"
                    f"🎯 Желаемая: {app_data['target_rank']}\n"
                    f"🆔 ID: {app_id}")
@@ -656,13 +620,14 @@ async def cmd_check_app(message: types.Message):
                     parse_mode="Markdown",
                     reply_markup=get_admin_review_keyboard(app_id, "promotion")
                 )
+            await asyncio.sleep(0.5)
         except Exception as e:
             logger.error(f"Ошибка при отправке заявки на повышение: {e}")
             continue
 
-@dp.message(Command("checkball"))
+@dp.message(Command("balli"))
 async def cmd_check_ball(message: types.Message):
-    """Просмотр всех заявок на доп баллы"""
+    """Просмотр заявок на доп баллы"""
     if not is_bot_admin(message.from_user.id):
         await message.answer("❌ У вас нет прав для этой команды!")
         return
@@ -671,16 +636,14 @@ async def cmd_check_ball(message: types.Message):
         await message.answer("📭 Нет ожидающих заявок на доп баллы")
         return
     
-    await message.answer(f"➕ **Найдено заявок на доп баллы: {len(pending_extra_works)}**", parse_mode="Markdown")
-    
-    for app_id, app_data in pending_extra_works.items():
+    for app_id, app_data in list(pending_extra_works.items()):
         try:
             user_id = app_data['user_id']
             user_data = users_db.get(user_id, {})
             nickname = user_data.get('nickname', 'Неизвестно')
             
-            text = (f"➕ **Заявка на доп баллы**\n"
-                   f"👤 От: {nickname}\n"
+            text = (f"➕ *Заявка на доп баллы*\n"
+                   f"👤 Игрок: {nickname}\n"
                    f"📝 Описание: {app_data['description']}\n"
                    f"🆔 ID: {app_id}")
             
@@ -699,13 +662,14 @@ async def cmd_check_ball(message: types.Message):
                     parse_mode="Markdown",
                     reply_markup=get_admin_review_keyboard(app_id, "extra")
                 )
+            await asyncio.sleep(0.5)
         except Exception as e:
             logger.error(f"Ошибка при отправке заявки на доп баллы: {e}")
             continue
 
-@dp.message(Command("checkneaktiv"))
+@dp.message(Command("neaktiv"))
 async def cmd_check_neaktiv(message: types.Message):
-    """Просмотр всех заявок на неактив"""
+    """Просмотр заявок на неактив"""
     if not is_bot_admin(message.from_user.id):
         await message.answer("❌ У вас нет прав для этой команды!")
         return
@@ -714,16 +678,14 @@ async def cmd_check_neaktiv(message: types.Message):
         await message.answer("📭 Нет ожидающих заявок на неактив")
         return
     
-    await message.answer(f"💤 **Найдено заявок на неактив: {len(pending_inactives)}**", parse_mode="Markdown")
-    
-    for app_id, app_data in pending_inactives.items():
+    for app_id, app_data in list(pending_inactives.items()):
         try:
             user_id = app_data['user_id']
             user_data = users_db.get(user_id, {})
             nickname = user_data.get('nickname', 'Неизвестно')
             
-            text = (f"💤 **Заявка на неактив**\n"
-                   f"👤 От: {nickname}\n"
+            text = (f"💤 *Заявка на неактив*\n"
+                   f"👤 Игрок: {nickname}\n"
                    f"📝 Причина: {app_data['reason']}\n"
                    f"⏳ Дней: {app_data['days']}\n"
                    f"🆔 ID: {app_id}")
@@ -734,8 +696,42 @@ async def cmd_check_neaktiv(message: types.Message):
                 parse_mode="Markdown",
                 reply_markup=get_admin_review_keyboard(app_id, "inactive")
             )
+            await asyncio.sleep(0.5)
         except Exception as e:
             logger.error(f"Ошибка при отправке заявки на неактив: {e}")
+            continue
+
+@dp.message(Command("vigovor"))
+async def cmd_check_reprisal(message: types.Message):
+    """Просмотр заявок на снятие выговора"""
+    if not is_bot_admin(message.from_user.id):
+        await message.answer("❌ У вас нет прав для этой команды!")
+        return
+    
+    if not pending_reprisals:
+        await message.answer("📭 Нет ожидающих заявок на снятие выговора")
+        return
+    
+    for app_id, app_data in list(pending_reprisals.items()):
+        try:
+            user_id = app_data['user_id']
+            user_data = users_db.get(user_id, {})
+            nickname = user_data.get('nickname', 'Неизвестно')
+            
+            text = (f"✅ *Заявка на снятие выговора*\n"
+                   f"👤 Игрок: {nickname}\n"
+                   f"📝 Работа: {app_data['work']}\n"
+                   f"🆔 ID: {app_id}")
+            
+            await bot.send_message(
+                message.from_user.id,
+                text,
+                parse_mode="Markdown",
+                reply_markup=get_admin_review_keyboard(app_id, "reprisal")
+            )
+            await asyncio.sleep(0.5)
+        except Exception as e:
+            logger.error(f"Ошибка при отправке заявки на снятие выговора: {e}")
             continue
 
 # ==================== ОБРАБОТЧИКИ ДЛЯ ОДОБРЕНИЯ/ОТКЛОНЕНИЯ ====================
@@ -753,7 +749,8 @@ async def approve_application(callback: CallbackQuery):
         "norm": pending_norms,
         "promotion": pending_promotions,
         "extra": pending_extra_works,
-        "inactive": pending_inactives
+        "inactive": pending_inactives,
+        "reprisal": pending_reprisals
     }.get(app_type)
     
     if not pending_dict or app_id not in pending_dict:
@@ -768,27 +765,44 @@ async def approve_application(callback: CallbackQuery):
         users_db[user_id]['points'] = users_db[user_id].get('points', 0) + 20
         users_db[user_id]['online'] = users_db[user_id].get('online', 0) + 50
         users_db[user_id]['answers'] = users_db[user_id].get('answers', 0) + 50
-        await bot.send_message(user_id, "✅ **Ваша норма одобрена!**\n➕ Начислено 20 баллов", parse_mode="Markdown")
+        await bot.send_message(user_id, "✅ *Ваша норма одобрена!*\n➕ Начислено 20 баллов", parse_mode="Markdown")
     
     elif app_type == "promotion":
         users_db[user_id]['points'] = users_db[user_id].get('points', 0) + 30
-        await bot.send_message(user_id, "✅ **Ваше повышение одобрено!**\n➕ Начислено 30 баллов", parse_mode="Markdown")
+        await bot.send_message(user_id, "✅ *Ваше повышение одобрено!*\n➕ Начислено 30 баллов", parse_mode="Markdown")
     
     elif app_type == "extra":
         users_db[user_id]['points'] = users_db[user_id].get('points', 0) + 15
-        await bot.send_message(user_id, "✅ **Ваши доп баллы одобрены!**\n➕ Начислено 15 баллов", parse_mode="Markdown")
+        await bot.send_message(user_id, "✅ *Ваши доп баллы одобрены!*\n➕ Начислено 15 баллов", parse_mode="Markdown")
     
     elif app_type == "inactive":
         await bot.send_message(
             user_id, 
-            f"✅ **Ваш неактив одобрен!**\n⏳ Дней: {app_data['days']}\n📅 До: {(datetime.now() + timedelta(days=app_data['days'])).strftime('%d.%m.%Y')}",
+            f"✅ *Ваш неактив одобрен!*\n⏳ Дней: {app_data['days']}\n📅 До: {(datetime.now() + timedelta(days=app_data['days'])).strftime('%d.%m.%Y')}",
+            parse_mode="Markdown"
+        )
+    
+    elif app_type == "reprisal":
+        current_warns = users_db[user_id].get('reprisals', 0)
+        if current_warns > 0:
+            users_db[user_id]['reprisals'] = current_warns - 1
+        users_db[user_id]['points'] = users_db[user_id].get('points', 0) + 10
+        await bot.send_message(
+            user_id,
+            f"✅ *Ваш выговор снят!*\n➕ Начислено 10 баллов\n📊 Осталось выговоров: {users_db[user_id]['reprisals']}",
             parse_mode="Markdown"
         )
     
     del pending_dict[app_id]
     
-    await callback.message.edit_text(f"✅ Заявка одобрена!\n\n{callback.message.caption if callback.message.caption else ''}")
-    await callback.answer("✅ Одобрено!")
+    # Получаем текст исходного сообщения
+    original_text = callback.message.caption if callback.message.caption else callback.message.text
+    
+    await callback.message.edit_text(
+        f"✅ Заявка принята!\n\n{original_text}",
+        parse_mode="Markdown"
+    )
+    await callback.answer("✅ Принято!")
 
 @dp.callback_query(F.data.startswith("reject_"))
 async def reject_application_start(callback: CallbackQuery, state: FSMContext):
@@ -805,13 +819,13 @@ async def reject_application_start(callback: CallbackQuery, state: FSMContext):
         original_message=callback.message
     )
     
-    await callback.message.answer("📝 **Напишите причину отклонения:**", parse_mode="Markdown")
+    await callback.message.answer("📝 *Напишите причину отказа:*", parse_mode="Markdown")
     await state.set_state(AdminReviewStates.waiting_for_rejection_reason)
     await callback.answer()
 
 @dp.message(AdminReviewStates.waiting_for_rejection_reason)
 async def process_rejection_reason(message: types.Message, state: FSMContext):
-    """Обработка причины отклонения"""
+    """Обработка причины отказа"""
     data = await state.get_data()
     app_type = data.get('app_type')
     app_id = data.get('app_id')
@@ -822,7 +836,8 @@ async def process_rejection_reason(message: types.Message, state: FSMContext):
         "norm": pending_norms,
         "promotion": pending_promotions,
         "extra": pending_extra_works,
-        "inactive": pending_inactives
+        "inactive": pending_inactives,
+        "reprisal": pending_reprisals
     }.get(app_type)
     
     if not pending_dict or app_id not in pending_dict:
@@ -835,20 +850,24 @@ async def process_rejection_reason(message: types.Message, state: FSMContext):
     
     await bot.send_message(
         user_id,
-        f"❌ **Ваша заявка отклонена**\n📝 Причина: {reason}",
+        f"❌ *Ваша заявка отклонена*\n📝 Причина: {reason}",
         parse_mode="Markdown"
     )
     
     del pending_dict[app_id]
     
+    # Получаем текст исходного сообщения
+    original_text = original_message.caption if original_message.caption else original_message.text
+    
     try:
         await original_message.edit_text(
-            f"❌ Заявка отклонена!\nПричина: {reason}\n\n{original_message.caption if original_message.caption else ''}"
+            f"❌ Заявка отклонена!\nПричина: {reason}\n\n{original_text}",
+            parse_mode="Markdown"
         )
     except:
         pass
     
-    await message.answer("✅ Заявка отклонена, уведомление отправлено пользователю")
+    await message.answer("✅ Заявка отклонена, уведомление отправлено игроку")
     await state.clear()
 
 # ==================== РЕГИСТРАЦИЯ ПОЛЬЗОВАТЕЛЯ ====================
@@ -860,7 +879,7 @@ async def reg_nickname(message: types.Message, state: FSMContext):
         await message.answer("❌ Никнейм должен быть от 3 до 30 символов. Попробуйте еще раз:")
         return
     users_db[user_id]["nickname"] = message.text
-    await message.answer("📅 **Введите ваш возраст (от 10 до 100):**", parse_mode="Markdown")
+    await message.answer("📅 *Введите ваш возраст (от 10 до 100):*", parse_mode="Markdown")
     await state.set_state(RegistrationStates.waiting_for_age)
 
 @dp.message(RegistrationStates.waiting_for_age)
@@ -871,7 +890,7 @@ async def reg_age(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     users_db[user_id]["age"] = message.text
     await message.answer(
-        "🌍 **Введите ваш часовой пояс**\n\n"
+        "🌍 *Введите ваш часовой пояс*\n\n"
         "Формат: МСК, МСК+1, МСК-4 и т.д.\n"
         "Пример: МСК, МСК+3, МСК-2",
         parse_mode="Markdown"
@@ -889,7 +908,7 @@ async def reg_timezone(message: types.Message, state: FSMContext):
         return
     user_id = message.from_user.id
     users_db[user_id]["timezone"] = message.text.upper()
-    await message.answer("💻 **Есть ли у вас доступ к ПК? (Да/Нет):**", parse_mode="Markdown")
+    await message.answer("💻 *Есть ли у вас доступ к ПК? (Да/Нет):*", parse_mode="Markdown")
     await state.set_state(RegistrationStates.waiting_for_pc_access)
 
 @dp.message(RegistrationStates.waiting_for_pc_access)
@@ -900,7 +919,7 @@ async def reg_pc_access(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     users_db[user_id]["pc_access"] = "Да" if message.text.lower() in ['да', 'yes', 'есть'] else "Нет"
     await message.answer(
-        "🔗 **Введите ссылку на ВКонтакте**\n\n"
+        "🔗 *Введите ссылку на ВКонтакте*\n\n"
         "Примеры:\n"
         "• vk.com/durov\n"
         "• https://vk.com/durov\n"
@@ -926,7 +945,7 @@ async def reg_vk(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     users_db[user_id]["vk"] = message.text
     await message.answer(
-        "🔗 **Введите ваш Telegram username**\n\n"
+        "🔗 *Введите ваш Telegram username*\n\n"
         "Пример: durov (без @)",
         parse_mode="Markdown"
     )
@@ -947,7 +966,7 @@ async def reg_tg_username(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     users_db[user_id]["tg_username"] = message.text.replace('@', '')
     await message.answer(
-        "🔗 **Введите ссылку на форум**\n\n"
+        "🔗 *Введите ссылку на форум*\n\n"
         "Пример: forum.blackrussia.ru/username",
         parse_mode="Markdown"
     )
@@ -961,7 +980,7 @@ async def reg_forum(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     users_db[user_id]["forum"] = message.text
     await message.answer(
-        "🎮 **Введите ваш ник в Discord**\n\n"
+        "🎮 *Введите ваш ник в Discord*\n\n"
         "Пример: username или username#1234",
         parse_mode="Markdown"
     )
@@ -984,18 +1003,18 @@ async def reg_discord(message: types.Message, state: FSMContext):
     await state.clear()
     
     await message.answer(
-        "✅ **Регистрация завершена!**",
+        "✅ *Регистрация завершена!*",
         parse_mode="Markdown",
         reply_markup=get_main_reply_keyboard(user_id)
     )
     await message.answer(
-        "🌟 **Главное меню**",
+        "🌟 *Главное меню*",
         reply_markup=get_start_inline_keyboard(user_id)
     )
     
     await bot.send_message(
         MAIN_ADMIN_ID,
-        f"👤 **Новый пользователь!**\n"
+        f"👤 *Новый пользователь!*\n"
         f"Ник: {users_db[user_id]['nickname']}\n"
         f"Username: @{users_db[user_id]['tg_username']}",
         parse_mode="Markdown"
@@ -1015,7 +1034,7 @@ async def norm_start(message: types.Message, state: FSMContext):
         return
     
     await message.answer(
-        "📸 **Сдача норматива**\n\n"
+        "📸 *Сдача норматива*\n\n"
         "Пришлите фото с показателями Онлайн и Ответы.",
         parse_mode="Markdown"
     )
@@ -1034,7 +1053,7 @@ async def norm_photo_handler(message: types.Message, state: FSMContext):
     }
     
     await message.answer(
-        "✅ **Фото получено!**\n"
+        "✅ *Фото получено!*\n"
         f"🆔 ID заявки: {app_id}\n\n"
         "Ваша заявка отправлена на проверку администрации.",
         parse_mode="Markdown"
@@ -1046,10 +1065,10 @@ async def norm_photo_handler(message: types.Message, state: FSMContext):
                 user_data = users_db.get(user_id, {})
                 await bot.send_message(
                     admin_id,
-                    f"📸 **Новая заявка на норму**\n"
+                    f"📸 *Новая заявка на норму*\n"
                     f"👤 От: {user_data.get('nickname', 'Неизвестно')}\n"
                     f"🆔 ID: {app_id}\n\n"
-                    f"Используйте /shecknorma для просмотра",
+                    f"Используйте /norma для просмотра",
                     parse_mode="Markdown"
                 )
             except:
@@ -1069,7 +1088,7 @@ async def extra_work_start(message: types.Message, state: FSMContext):
         return
     
     await message.answer(
-        "➕ **Дополнительные баллы**\n\n"
+        "➕ *Дополнительные баллы*\n\n"
         "1️⃣ Опишите выполненную работу:",
         parse_mode="Markdown"
     )
@@ -1100,7 +1119,7 @@ async def extra_work_photo_handler(message: types.Message, state: FSMContext):
     }
     
     await message.answer(
-        "✅ **Заявка отправлена!**\n"
+        "✅ *Заявка отправлена!*\n"
         f"🆔 ID заявки: {app_id}\n\n"
         "Ожидайте проверки администрации.",
         parse_mode="Markdown"
@@ -1112,10 +1131,10 @@ async def extra_work_photo_handler(message: types.Message, state: FSMContext):
                 user_data = users_db.get(user_id, {})
                 await bot.send_message(
                     admin_id,
-                    f"➕ **Новая заявка на доп баллы**\n"
+                    f"➕ *Новая заявка на доп баллы*\n"
                     f"👤 От: {user_data.get('nickname', 'Неизвестно')}\n"
                     f"🆔 ID: {app_id}\n\n"
-                    f"Используйте /checkball для просмотра",
+                    f"Используйте /balli для просмотра",
                     parse_mode="Markdown"
                 )
             except:
@@ -1131,7 +1150,7 @@ async def inactive_start(message: types.Message, state: FSMContext):
         return
     
     await message.answer(
-        "💤 **Заявка на неактив**\n\n"
+        "💤 *Заявка на неактив*\n\n"
         "1️⃣ Напишите причину неактива:",
         parse_mode="Markdown"
     )
@@ -1168,7 +1187,7 @@ async def inactive_days_handler(message: types.Message, state: FSMContext):
         }
         
         await message.answer(
-            "✅ **Заявка на неактив отправлена!**\n"
+            "✅ *Заявка на неактив отправлена!*\n"
             f"🆔 ID заявки: {app_id}\n\n"
             "Ожидайте проверки администрации.",
             parse_mode="Markdown"
@@ -1180,10 +1199,10 @@ async def inactive_days_handler(message: types.Message, state: FSMContext):
                     user_data = users_db.get(user_id, {})
                     await bot.send_message(
                         admin_id,
-                        f"💤 **Новая заявка на неактив**\n"
+                        f"💤 *Новая заявка на неактив*\n"
                         f"👤 От: {user_data.get('nickname', 'Неизвестно')}\n"
                         f"🆔 ID: {app_id}\n\n"
-                        f"Используйте /checkneaktiv для просмотра",
+                        f"Используйте /neaktiv для просмотра",
                         parse_mode="Markdown"
                     )
                 except:
@@ -1202,7 +1221,7 @@ async def promotion_start(message: types.Message, state: FSMContext):
         return
     
     await message.answer(
-        "⬆️ **Заявка на повышение**\n\n"
+        "⬆️ *Заявка на повышение*\n\n"
         "1️⃣ Какая у вас сейчас должность?",
         parse_mode="Markdown"
     )
@@ -1244,7 +1263,7 @@ async def promotion_screenshot(message: types.Message, state: FSMContext):
     }
     
     await message.answer(
-        "✅ **Заявка на повышение отправлена!**\n"
+        "✅ *Заявка на повышение отправлена!*\n"
         f"🆔 ID заявки: {app_id}\n\n"
         "Ожидайте проверки администрации.",
         parse_mode="Markdown"
@@ -1256,10 +1275,10 @@ async def promotion_screenshot(message: types.Message, state: FSMContext):
                 user_data = users_db.get(user_id, {})
                 await bot.send_message(
                     admin_id,
-                    f"⬆️ **Новая заявка на повышение**\n"
+                    f"⬆️ *Новая заявка на повышение*\n"
                     f"👤 От: {user_data.get('nickname', 'Неизвестно')}\n"
                     f"🆔 ID: {app_id}\n\n"
-                    f"Используйте /checkapp для просмотра",
+                    f"Используйте /povishenie для просмотра",
                     parse_mode="Markdown"
                 )
             except:
@@ -1275,7 +1294,7 @@ async def reprisal_start(message: types.Message, state: FSMContext):
         return
     
     await message.answer(
-        "✅ **Снятие выговора**\n\n"
+        "✅ *Снятие выговора*\n\n"
         "Отправьте выполненную работу для снятия выговора:",
         parse_mode="Markdown"
     )
@@ -1286,19 +1305,36 @@ async def reprisal_handler(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     work_text = message.text
     
-    await bot.send_message(
-        MAIN_ADMIN_ID,
-        f"✅ **Заявка на снятие выговора**\n"
-        f"👤 От: @{users_db[user_id].get('tg_username', 'Unknown')}\n"
-        f"📝 Работа: {work_text}",
+    app_id = str(uuid4())[:8]
+    
+    pending_reprisals[app_id] = {
+        'user_id': user_id,
+        'work': work_text,
+        'timestamp': datetime.now()
+    }
+    
+    await message.answer(
+        "✅ *Заявка на снятие выговора отправлена!*\n"
+        f"🆔 ID заявки: {app_id}\n\n"
+        "Ожидайте проверки администрации.",
         parse_mode="Markdown"
     )
     
-    await message.answer(
-        "✅ **Заявка на снятие выговора отправлена!**\n"
-        "Ожидайте рассмотрения.",
-        parse_mode="Markdown"
-    )
+    for admin_id in bot_admins:
+        if admin_id != user_id:
+            try:
+                user_data = users_db.get(user_id, {})
+                await bot.send_message(
+                    admin_id,
+                    f"✅ *Новая заявка на снятие выговора*\n"
+                    f"👤 От: {user_data.get('nickname', 'Неизвестно')}\n"
+                    f"🆔 ID: {app_id}\n\n"
+                    f"Используйте /vigovor для просмотра",
+                    parse_mode="Markdown"
+                )
+            except:
+                continue
+    
     await state.clear()
 
 # ==================== ОБРАБОТЧИКИ КНОПОК ====================
@@ -1323,7 +1359,7 @@ async def reply_apps(message: types.Message):
         return
     
     await message.answer(
-        "📝 **Выберите тип заявки:**",
+        "📝 *Выберите тип заявки:*",
         parse_mode="Markdown",
         reply_markup=get_applications_reply_keyboard()
     )
@@ -1335,7 +1371,7 @@ async def reply_menu(message: types.Message):
         return
     
     await message.answer(
-        "🌟 **Главное меню**",
+        "🌟 *Главное меню*",
         parse_mode="Markdown",
         reply_markup=get_start_inline_keyboard(user_id)
     )
@@ -1347,19 +1383,21 @@ async def reply_admin_panel(message: types.Message):
         await message.answer("❌ У вас нет доступа к админ-панели!")
         return
     
-    text = "👑 **Панель администратора бота**\n\n"
-    text += "**Команды:**\n"
+    text = "👑 *Панель администратора бота*\n\n"
+    text += "*Команды для управления:*\n"
     text += "• /adminlist - список админов\n"
     text += "• /setadminbot - добавить админа бота\n"
     text += "• /setadmin [1-5] - выдать должность\n"
     text += "• /givewarn - выдать выговор\n"
     text += "• /giveball - начислить баллы\n"
     text += "• /unadmin - снять админа\n"
-    text += "• /unlist - заблокировать игрока\n"
-    text += "• /shecknorma - проверить нормы\n"
-    text += "• /checkapp - проверить повышения\n"
-    text += "• /checkball - проверить доп баллы\n"
-    text += "• /checkneaktiv - проверить неактивы"
+    text += "• /unlist - заблокировать игрока\n\n"
+    text += "*Команды для проверки заявок:*\n"
+    text += "• /norma - проверить нормы\n"
+    text += "• /povishenie - проверить повышения\n"
+    text += "• /balli - проверить доп баллы\n"
+    text += "• /neaktiv - проверить неактивы\n"
+    text += "• /vigovor - проверить снятие выговоров"
     
     await message.answer(text, parse_mode="Markdown")
 
@@ -1370,7 +1408,7 @@ async def reply_back(message: types.Message):
         return
     
     await message.answer(
-        "🌟 **Главное меню**",
+        "🌟 *Главное меню*",
         parse_mode="Markdown",
         reply_markup=get_start_inline_keyboard(user_id)
     )
@@ -1387,7 +1425,7 @@ async def callback_stats(callback: CallbackQuery):
     
     if user_id not in users_db:
         await callback.message.edit_text(
-            "❌ **Вы не зарегистрированы!**\n"
+            "❌ *Вы не зарегистрированы!*\n"
             "Напишите /start для регистрации.",
             parse_mode="Markdown"
         )
@@ -1424,7 +1462,7 @@ async def callback_apps(callback: CallbackQuery):
     builder.adjust(1)
     
     await callback.message.edit_text(
-        "📝 **Раздел заявок**\n\n"
+        "📝 *Раздел заявок*\n\n"
         "Выберите тип заявки:",
         parse_mode="Markdown",
         reply_markup=builder.as_markup()
@@ -1443,7 +1481,7 @@ async def callback_back_to_menu(callback: CallbackQuery):
     builder.adjust(1)
     
     await callback.message.edit_text(
-        "🌟 **Главное меню**\n\n"
+        "🌟 *Главное меню*\n\n"
         "Выберите нужный раздел:",
         parse_mode="Markdown",
         reply_markup=builder.as_markup()
@@ -1458,10 +1496,10 @@ async def callback_admin_panel(callback: CallbackQuery):
         await callback.answer("❌ Нет доступа!")
         return
     
-    text = "👑 **Панель администратора**\n\n"
+    text = "👑 *Панель администратора*\n\n"
     text += "Используйте команды:\n"
-    text += "/adminlist\n/setadminbot\n/setadmin\n/givewarn\n/giveball\n/unadmin\n/unlist\n"
-    text += "/shecknorma\n/checkapp\n/checkball\n/checkneaktiv"
+    text += "• /adminlist\n• /setadminbot\n• /setadmin\n• /givewarn\n• /giveball\n"
+    text += "• /unadmin\n• /unlist\n• /norma\n• /povishenie\n• /balli\n• /neaktiv\n• /vigovor"
     
     await callback.message.edit_text(text, parse_mode="Markdown")
     await callback.answer()
@@ -1475,12 +1513,13 @@ async def callback_app_handler(callback: CallbackQuery, state: FSMContext):
         await callback.answer("⛔ Доступ запрещен")
         return
     
+    # Просто отвечаем, но не удаляем Reply Keyboard
     messages = {
-        "norm": "📸 **Сдача норматива**\n\nПришлите фото с показателями Онлайн и Ответы.",
-        "extra": "➕ **Дополнительные баллы**\n\nОпишите выполненную работу:",
-        "inactive": "💤 **Заявка на неактив**\n\nНапишите причину неактива:",
-        "promotion": "⬆️ **Заявка на повышение**\n\nКакая у вас сейчас должность?",
-        "reprisal": "✅ **Снятие выговора**\n\nОтправьте выполненную работу:"
+        "norm": "📸 *Сдача норматива*\n\nПришлите фото с показателями Онлайн и Ответы.",
+        "extra": "➕ *Дополнительные баллы*\n\nОпишите выполненную работу:",
+        "inactive": "💤 *Заявка на неактив*\n\nНапишите причину неактива:",
+        "promotion": "⬆️ *Заявка на повышение*\n\nКакая у вас сейчас должность?",
+        "reprisal": "✅ *Снятие выговора*\n\nОтправьте выполненную работу:"
     }
     
     states = {
@@ -1492,7 +1531,8 @@ async def callback_app_handler(callback: CallbackQuery, state: FSMContext):
     }
     
     if app_type in messages:
-        await callback.message.edit_text(messages[app_type], parse_mode="Markdown")
+        # Отправляем новое сообщение, не редактируем старое
+        await callback.message.answer(messages[app_type], parse_mode="Markdown")
         await state.set_state(states[app_type])
     
     await callback.answer()
@@ -1511,10 +1551,11 @@ async def main():
     print("  • /giveball - начислить баллы")
     print("  • /unadmin - снять админа")
     print("  • /unlist - заблокировать игрока")
-    print("  • /shecknorma - проверить нормы")
-    print("  • /checkapp - проверить повышения")
-    print("  • /checkball - проверить доп баллы")
-    print("  • /checkneaktiv - проверить неактивы")
+    print("  • /norma - проверить нормы")
+    print("  • /povishenie - проверить повышения")
+    print("  • /balli - проверить доп баллы")
+    print("  • /neaktiv - проверить неактивы")
+    print("  • /vigovor - проверить снятие выговоров")
     
     await dp.start_polling(bot)
 
