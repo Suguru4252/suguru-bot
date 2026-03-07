@@ -635,7 +635,7 @@
             tg.expand();
         }
         
-        // ========== СИСТЕМА АККАУНТОВ ==========
+        // ========== СИСТЕМА АККАУНТОВ В TELEGRAM CLOUD ==========
         
         let users = {};
         let currentUser = null;
@@ -659,18 +659,23 @@
                     const saved = await tg.CloudStorage.getItem('imperiaUsers');
                     if (saved) {
                         users = JSON.parse(saved);
+                        console.log('✅ Загружено пользователей:', Object.keys(users).length);
                     } else {
                         users = {};
+                        console.log('📭 База данных пуста');
                     }
                 } catch(e) {
-                    console.log('Ошибка загрузки из облака', e);
+                    console.log('❌ Ошибка загрузки из облака:', e);
                     users = {};
                 }
             } else {
                 const saved = localStorage.getItem('imperiaUsers');
-                if (saved) users = JSON.parse(saved);
+                if (saved) {
+                    users = JSON.parse(saved);
+                } else {
+                    users = {};
+                }
             }
-            
             updateTopPlayers();
         }
         
@@ -679,13 +684,13 @@
             if (tg) {
                 try {
                     await tg.CloudStorage.setItem('imperiaUsers', JSON.stringify(users));
+                    console.log('✅ Пользователи сохранены в облако');
                 } catch(e) {
-                    console.log('Ошибка сохранения в облако', e);
+                    console.log('❌ Ошибка сохранения в облако:', e);
                 }
             } else {
                 localStorage.setItem('imperiaUsers', JSON.stringify(users));
             }
-            
             updateTopPlayers();
         }
         
@@ -700,7 +705,6 @@
                     });
                 }
             }
-            
             players.sort((a, b) => b.totalEarned - a.totalEarned);
             topPlayers = players.slice(0, 100);
         }
@@ -715,7 +719,7 @@
             return null;
         }
         
-        // Регистрация
+        // Регистрация нового пользователя
         async function registerUser(nickname, password) {
             await loadUsers();
             
@@ -725,8 +729,10 @@
             
             const hashedPassword = hashPassword(password);
             
+            // Создаём нового пользователя с начальными данными
             users[nickname] = {
                 password: hashedPassword,
+                createdAt: Date.now(),
                 gameState: {
                     balance: 0,
                     diamonds: 10,
@@ -772,7 +778,7 @@
             return { success: true, message: "✅ Регистрация успешна!" };
         }
         
-        // Вход
+        // Вход пользователя
         async function loginUser(nickname, password) {
             await loadUsers();
             
@@ -791,15 +797,19 @@
             return { success: true, message: "✅ Вход выполнен!" };
         }
         
-        // Выход
+        // Выход из аккаунта
         async function logoutUser() {
-            await saveGame();
-            currentUser = null;
-            localStorage.removeItem('currentUser');
+            if (currentUser) {
+                // Сохраняем состояние перед выходом
+                users[currentUser].gameState = { ...gameState };
+                await saveUsers();
+                currentUser = null;
+                localStorage.removeItem('currentUser');
+            }
             showAuthScreen();
         }
         
-        // Сохранение игры
+        // Сохранение игры текущего пользователя
         async function saveGame() {
             if (currentUser && users[currentUser]) {
                 gameState.lastOnlineTime = Date.now();
@@ -808,7 +818,7 @@
             }
         }
         
-        // Загрузка игры
+        // Загрузка игры пользователя
         function loadUserGameState() {
             if (currentUser && users[currentUser]) {
                 const userState = users[currentUser].gameState;
@@ -832,11 +842,16 @@
                 if (userState.planes) gameState.planes = userState.planes;
                 if (userState.ships) gameState.ships = userState.ships;
                 
+                // Показываем интерфейс
                 document.getElementById('header').style.display = 'block';
                 document.getElementById('bottomNav').style.display = 'flex';
                 document.getElementById('username').textContent = `👑 ${currentUser}`;
                 
+                // Обновляем UI
                 updateUI();
+                
+                // Переходим на главную
+                renderTab('home');
             }
         }
         
@@ -886,7 +901,7 @@
             `;
         }
         
-        // ========== ИСПРАВЛЕННАЯ РЕГИСТРАЦИЯ ==========
+        // Обработка регистрации
         async function handleRegister() {
             const nickname = document.getElementById('regNickname')?.value;
             const password = document.getElementById('regPassword')?.value;
@@ -916,25 +931,16 @@
             
             if (result.success) {
                 alert(result.message);
-                // АВТОМАТИЧЕСКИ ВХОДИМ ПОСЛЕ РЕГИСТРАЦИИ
+                // Автоматически входим после регистрации
                 await loginUser(nickname, password);
-                
-                // ПОКАЗЫВАЕМ ИНТЕРФЕЙС ИГРЫ
-                document.getElementById('header').style.display = 'block';
-                document.getElementById('bottomNav').style.display = 'flex';
-                document.getElementById('username').textContent = `👑 ${nickname}`;
-                
-                // ЗАГРУЖАЕМ СОСТОЯНИЕ ИГРОКА
+                // Загружаем игру
                 loadUserGameState();
-                
-                // ПЕРЕХОДИМ НА ГЛАВНУЮ
-                renderTab('home');
             } else {
                 alert(result.message);
             }
         }
         
-        // ========== ИСПРАВЛЕННЫЙ ВХОД ==========
+        // Обработка входа
         async function handleLogin() {
             const nickname = document.getElementById('loginNickname')?.value;
             const password = document.getElementById('loginPassword')?.value;
@@ -947,12 +953,8 @@
             const result = await loginUser(nickname, password);
             
             if (result.success) {
-                document.getElementById('header').style.display = 'block';
-                document.getElementById('bottomNav').style.display = 'flex';
-                document.getElementById('username').textContent = `👑 ${nickname}`;
-                
+                // Загружаем игру
                 loadUserGameState();
-                renderTab('home');
             } else {
                 alert(result.message);
             }
@@ -1038,12 +1040,11 @@
             const expNeeded = gameState.level * 1000;
             const expPercent = (gameState.exp / expNeeded) * 100;
             document.getElementById('levelProgress').style.width = Math.min(expPercent, 100) + '%';
-            
-            const activeTab = document.querySelector('.nav-item.active')?.dataset.tab || 'home';
-            renderTab(activeTab);
         }
         
         function handleClick() {
+            if (!currentUser) return;
+            
             let power = gameState.clickPower * (1 + gameState.clickPowerLevel * 0.5);
             
             if (Math.random() * 100 < gameState.critLevel * 10) {
@@ -1067,6 +1068,8 @@
         }
         
         function renderTab(tab) {
+            if (!currentUser) return;
+            
             const content = document.getElementById('content');
             
             if (tab === 'home') {
@@ -1824,7 +1827,6 @@
             if (savedUser && users[savedUser]) {
                 currentUser = savedUser;
                 loadUserGameState();
-                renderTab('home');
             } else {
                 showAuthScreen();
             }
