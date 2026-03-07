@@ -266,15 +266,17 @@
             margin-bottom: 30px;
         }
         
-        .auth-switch {
-            text-align: center;
-            margin-top: 20px;
-            color: rgba(255, 255, 255, 0.7);
+        .remember-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 15px 0;
+            color: white;
         }
         
-        .auth-switch span {
-            color: #ffd700;
-            text-decoration: underline;
+        .remember-checkbox input {
+            width: 20px;
+            height: 20px;
             cursor: pointer;
         }
         
@@ -635,227 +637,105 @@
             tg.expand();
         }
         
-        // ========== СИСТЕМА АККАУНТОВ В TELEGRAM CLOUD ==========
+        // ========== ПРОСТАЯ СИСТЕМА ЗАПОМИНАНИЯ ==========
         
-        let users = {};
         let currentUser = null;
+        let gameState = null;
         let topPlayers = [];
         
-        // Простое хеширование пароля
-        function hashPassword(password) {
-            let hash = 0;
-            for (let i = 0; i < password.length; i++) {
-                const char = password.charCodeAt(i);
-                hash = ((hash << 5) - hash) + char;
-                hash = hash & hash;
-            }
-            return hash.toString(16);
-        }
-        
-        // Загрузка пользователей из Telegram Cloud
-        async function loadUsers() {
-            if (tg) {
+        // Загрузка сохраненной игры
+        function loadSavedGame() {
+            const saved = localStorage.getItem('imperiaClickerSave');
+            if (saved) {
                 try {
-                    const saved = await tg.CloudStorage.getItem('imperiaUsers');
-                    if (saved) {
-                        users = JSON.parse(saved);
-                        console.log('✅ Загружено пользователей:', Object.keys(users).length);
-                    } else {
-                        users = {};
-                        console.log('📭 База данных пуста');
-                    }
+                    gameState = JSON.parse(saved);
+                    currentUser = "Игрок";
+                    console.log('✅ Загружена сохраненная игра');
+                    return true;
                 } catch(e) {
-                    console.log('❌ Ошибка загрузки из облака:', e);
-                    users = {};
-                }
-            } else {
-                const saved = localStorage.getItem('imperiaUsers');
-                if (saved) {
-                    users = JSON.parse(saved);
-                } else {
-                    users = {};
+                    console.log('❌ Ошибка загрузки');
+                    return false;
                 }
             }
-            updateTopPlayers();
+            return false;
         }
         
-        // Сохранение пользователей в Telegram Cloud
-        async function saveUsers() {
-            if (tg) {
-                try {
-                    await tg.CloudStorage.setItem('imperiaUsers', JSON.stringify(users));
-                    console.log('✅ Пользователи сохранены в облако');
-                } catch(e) {
-                    console.log('❌ Ошибка сохранения в облако:', e);
-                }
-            } else {
-                localStorage.setItem('imperiaUsers', JSON.stringify(users));
+        // Сохранение игры
+        function saveGame() {
+            if (gameState) {
+                gameState.lastOnlineTime = Date.now();
+                localStorage.setItem('imperiaClickerSave', JSON.stringify(gameState));
+                console.log('✅ Игра сохранена');
             }
-            updateTopPlayers();
         }
         
-        // Обновление топа богатейших игроков
-        function updateTopPlayers() {
-            const players = [];
-            for (const [nickname, data] of Object.entries(users)) {
-                if (data.gameState && data.gameState.totalEarned > 0) {
-                    players.push({
-                        nickname: nickname,
-                        totalEarned: data.gameState.totalEarned || 0
-                    });
-                }
-            }
-            players.sort((a, b) => b.totalEarned - a.totalEarned);
-            topPlayers = players.slice(0, 100);
-        }
-        
-        // Получить место игрока в топе
-        function getPlayerRank(nickname) {
-            for (let i = 0; i < topPlayers.length; i++) {
-                if (topPlayers[i].nickname === nickname) {
-                    return i + 1;
-                }
-            }
-            return null;
-        }
-        
-        // Регистрация нового пользователя
-        async function registerUser(nickname, password) {
-            await loadUsers();
-            
-            if (users[nickname]) {
-                return { success: false, message: "❌ Такой никнейм уже существует!" };
-            }
-            
-            const hashedPassword = hashPassword(password);
-            
-            // Создаём нового пользователя с начальными данными
-            users[nickname] = {
-                password: hashedPassword,
-                createdAt: Date.now(),
-                gameState: {
-                    balance: 0,
-                    diamonds: 10,
-                    exp: 0,
-                    level: 1,
-                    clickPower: 1,
-                    clickPowerLevel: 0,
-                    autoClickerLevel: 0,
-                    critLevel: 0,
-                    totalClicks: 0,
-                    totalEarned: 0,
-                    playTime: 0,
-                    lastOnlineTime: Date.now(),
-                    myBusinesses: [],
-                    houses: [
-                        { id: 0, name: "КВАРТИРА", emoji: "🏢", price: 50000, income: 5, owned: false },
-                        { id: 1, name: "ДОМ", emoji: "🏠", price: 500000, income: 50, owned: false },
-                        { id: 2, name: "ОСОБНЯК", emoji: "🏰", price: 5000000, income: 500, owned: false },
-                        { id: 3, name: "ВИЛЛА", emoji: "🏛️", price: 50000000, income: 5000, owned: false }
-                    ],
-                    cars: [
-                        { id: 0, name: "ЛАДА", emoji: "🚗", price: 20000, income: 2, owned: false },
-                        { id: 1, name: "МЕРСЕДЕС", emoji: "🚘", price: 200000, income: 20, owned: false },
-                        { id: 2, name: "ФЕРРАРИ", emoji: "🏎️", price: 2000000, income: 200, owned: false },
-                        { id: 3, name: "БУГАТТИ", emoji: "🚀", price: 20000000, income: 2000, owned: false }
-                    ],
-                    planes: [
-                        { id: 0, name: "КУКУРУЗНИК", emoji: "✈️", price: 100000, income: 10, owned: false },
-                        { id: 1, name: "БОИНГ", emoji: "🛩️", price: 1000000, income: 100, owned: false },
-                        { id: 2, name: "ЧАСТНЫЙ", emoji: "🛫", price: 10000000, income: 1000, owned: false },
-                        { id: 3, name: "РЕАКТИВНЫЙ", emoji: "🛬", price: 100000000, income: 10000, owned: false }
-                    ],
-                    ships: [
-                        { id: 0, name: "ЛОДКА", emoji: "🛶", price: 30000, income: 3, owned: false },
-                        { id: 1, name: "КАРТЕР", emoji: "⛵", price: 300000, income: 30, owned: false },
-                        { id: 2, name: "ЯХТА", emoji: "🛥️", price: 3000000, income: 300, owned: false },
-                        { id: 3, name: "ЛАЙНЕР", emoji: "🚢", price: 30000000, income: 3000, owned: false }
-                    ]
-                }
+        // Создание новой игры
+        function newGame() {
+            gameState = {
+                balance: 0,
+                diamonds: 10,
+                exp: 0,
+                level: 1,
+                clickPower: 1,
+                clickPowerLevel: 0,
+                autoClickerLevel: 0,
+                critLevel: 0,
+                totalClicks: 0,
+                totalEarned: 0,
+                playTime: 0,
+                lastOnlineTime: Date.now(),
+                myBusinesses: [],
+                houses: [
+                    { id: 0, name: "КВАРТИРА", emoji: "🏢", price: 50000, income: 5, owned: false },
+                    { id: 1, name: "ДОМ", emoji: "🏠", price: 500000, income: 50, owned: false },
+                    { id: 2, name: "ОСОБНЯК", emoji: "🏰", price: 5000000, income: 500, owned: false },
+                    { id: 3, name: "ВИЛЛА", emoji: "🏛️", price: 50000000, income: 5000, owned: false }
+                ],
+                cars: [
+                    { id: 0, name: "ЛАДА", emoji: "🚗", price: 20000, income: 2, owned: false },
+                    { id: 1, name: "МЕРСЕДЕС", emoji: "🚘", price: 200000, income: 20, owned: false },
+                    { id: 2, name: "ФЕРРАРИ", emoji: "🏎️", price: 2000000, income: 200, owned: false },
+                    { id: 3, name: "БУГАТТИ", emoji: "🚀", price: 20000000, income: 2000, owned: false }
+                ],
+                planes: [
+                    { id: 0, name: "КУКУРУЗНИК", emoji: "✈️", price: 100000, income: 10, owned: false },
+                    { id: 1, name: "БОИНГ", emoji: "🛩️", price: 1000000, income: 100, owned: false },
+                    { id: 2, name: "ЧАСТНЫЙ", emoji: "🛫", price: 10000000, income: 1000, owned: false },
+                    { id: 3, name: "РЕАКТИВНЫЙ", emoji: "🛬", price: 100000000, income: 10000, owned: false }
+                ],
+                ships: [
+                    { id: 0, name: "ЛОДКА", emoji: "🛶", price: 30000, income: 3, owned: false },
+                    { id: 1, name: "КАРТЕР", emoji: "⛵", price: 300000, income: 30, owned: false },
+                    { id: 2, name: "ЯХТА", emoji: "🛥️", price: 3000000, income: 300, owned: false },
+                    { id: 3, name: "ЛАЙНЕР", emoji: "🚢", price: 30000000, income: 3000, owned: false }
+                ]
             };
             
-            await saveUsers();
-            return { success: true, message: "✅ Регистрация успешна!" };
-        }
-        
-        // Вход пользователя
-        async function loginUser(nickname, password) {
-            await loadUsers();
+            // Оффлайн доход
+            const now = Date.now();
+            const secondsPassed = Math.floor((now - gameState.lastOnlineTime) / 1000);
             
-            if (!users[nickname]) {
-                return { success: false, message: "❌ Пользователь не найден!" };
+            if (secondsPassed > 30) {
+                let offlineIncome = gameState.autoClickerLevel * secondsPassed;
+                
+                gameState.myBusinesses.forEach(business => {
+                    if (business.level > 0) {
+                        const template = businessTemplates[business.templateId];
+                        offlineIncome += template.baseIncome * business.level * secondsPassed;
+                        business.totalEarned += template.baseIncome * business.level * secondsPassed;
+                    }
+                });
+                
+                if (offlineIncome > 0) {
+                    gameState.balance += Math.floor(offlineIncome);
+                    gameState.totalEarned += Math.floor(offlineIncome);
+                }
             }
             
-            const hashedPassword = hashPassword(password);
-            if (users[nickname].password !== hashedPassword) {
-                return { success: false, message: "❌ Неверный пароль!" };
-            }
-            
-            currentUser = nickname;
-            localStorage.setItem('currentUser', nickname);
-            
-            return { success: true, message: "✅ Вход выполнен!" };
+            gameState.lastOnlineTime = now;
         }
         
-        // Выход из аккаунта
-        async function logoutUser() {
-            if (currentUser) {
-                // Сохраняем состояние перед выходом
-                users[currentUser].gameState = { ...gameState };
-                await saveUsers();
-                currentUser = null;
-                localStorage.removeItem('currentUser');
-            }
-            showAuthScreen();
-        }
-        
-        // Сохранение игры текущего пользователя
-        async function saveGame() {
-            if (currentUser && users[currentUser]) {
-                gameState.lastOnlineTime = Date.now();
-                users[currentUser].gameState = { ...gameState };
-                await saveUsers();
-            }
-        }
-        
-        // Загрузка игры пользователя
-        function loadUserGameState() {
-            if (currentUser && users[currentUser]) {
-                const userState = users[currentUser].gameState;
-                
-                gameState.balance = userState.balance || 0;
-                gameState.diamonds = userState.diamonds || 10;
-                gameState.exp = userState.exp || 0;
-                gameState.level = userState.level || 1;
-                gameState.clickPower = userState.clickPower || 1;
-                gameState.clickPowerLevel = userState.clickPowerLevel || 0;
-                gameState.autoClickerLevel = userState.autoClickerLevel || 0;
-                gameState.critLevel = userState.critLevel || 0;
-                gameState.totalClicks = userState.totalClicks || 0;
-                gameState.totalEarned = userState.totalEarned || 0;
-                gameState.playTime = userState.playTime || 0;
-                gameState.lastOnlineTime = Date.now();
-                gameState.myBusinesses = userState.myBusinesses || [];
-                
-                if (userState.houses) gameState.houses = userState.houses;
-                if (userState.cars) gameState.cars = userState.cars;
-                if (userState.planes) gameState.planes = userState.planes;
-                if (userState.ships) gameState.ships = userState.ships;
-                
-                // Показываем интерфейс
-                document.getElementById('header').style.display = 'block';
-                document.getElementById('bottomNav').style.display = 'flex';
-                document.getElementById('username').textContent = `👑 ${currentUser}`;
-                
-                // Обновляем UI
-                updateUI();
-                
-                // Переходим на главную
-                renderTab('home');
-            }
-        }
-        
-        // Показать экран авторизации
+        // Показать экран входа
         function showAuthScreen() {
             document.getElementById('header').style.display = 'none';
             document.getElementById('bottomNav').style.display = 'none';
@@ -865,144 +745,60 @@
                 <div class="auth-screen">
                     <div class="auth-title">IMPERIA CLICKER</div>
                     
-                    <div id="authForm">
-                        <input type="text" id="loginNickname" class="input-field" placeholder="Никнейм">
-                        <input type="password" id="loginPassword" class="input-field" placeholder="Пароль">
-                        
-                        <button class="btn btn-gold" onclick="handleLogin()">🔓 ВОЙТИ</button>
-                        
-                        <div class="auth-switch">
-                            Нет аккаунта? <span onclick="showRegisterForm()">Зарегистрироваться</span>
-                        </div>
+                    <div class="btn btn-gold" onclick="startNewGame()">
+                        🎮 НАЧАТЬ НОВУЮ ИГРУ
                     </div>
-                </div>
-            `;
-        }
-        
-        // Показать форму регистрации
-        function showRegisterForm() {
-            const content = document.getElementById('content');
-            content.innerHTML = `
-                <div class="auth-screen">
-                    <div class="auth-title">РЕГИСТРАЦИЯ</div>
                     
-                    <div id="authForm">
-                        <input type="text" id="regNickname" class="input-field" placeholder="Придумайте никнейм">
-                        <input type="password" id="regPassword" class="input-field" placeholder="Придумайте пароль">
-                        <input type="password" id="regPasswordConfirm" class="input-field" placeholder="Повторите пароль">
-                        
-                        <button class="btn btn-gold" onclick="handleRegister()">📝 ЗАРЕГИСТРИРОВАТЬСЯ</button>
-                        
-                        <div class="auth-switch">
-                            Уже есть аккаунт? <span onclick="showAuthScreen()">Войти</span>
-                        </div>
+                    <div class="remember-checkbox">
+                        <input type="checkbox" id="rememberMe" checked>
+                        <label for="rememberMe">🔒 Запомнить меня в этой игре</label>
+                    </div>
+                    
+                    <div style="margin-top: 30px; text-align: center; color: rgba(255,255,255,0.5); font-size: 12px;">
+                        Если включено "Запомнить меня",<br>при следующем входе игра продолжится
                     </div>
                 </div>
             `;
         }
         
-        // Обработка регистрации
-        async function handleRegister() {
-            const nickname = document.getElementById('regNickname')?.value;
-            const password = document.getElementById('regPassword')?.value;
-            const passwordConfirm = document.getElementById('regPasswordConfirm')?.value;
+        // Начать новую игру
+        function startNewGame() {
+            const remember = document.getElementById('rememberMe')?.checked || false;
             
-            if (!nickname || !password || !passwordConfirm) {
-                alert('❌ Заполните все поля!');
-                return;
+            newGame();
+            currentUser = "Игрок";
+            
+            if (remember) {
+                saveGame();
             }
             
-            if (password !== passwordConfirm) {
-                alert('❌ Пароли не совпадают!');
-                return;
-            }
+            document.getElementById('header').style.display = 'block';
+            document.getElementById('bottomNav').style.display = 'flex';
+            document.getElementById('username').textContent = `👑 ИГРОК`;
             
-            if (nickname.length < 3) {
-                alert('❌ Никнейм должен быть минимум 3 символа!');
-                return;
-            }
-            
-            if (password.length < 4) {
-                alert('❌ Пароль должен быть минимум 4 символа!');
-                return;
-            }
-            
-            const result = await registerUser(nickname, password);
-            
-            if (result.success) {
-                alert(result.message);
-                // Автоматически входим после регистрации
-                await loginUser(nickname, password);
-                // Загружаем игру
-                loadUserGameState();
+            updateUI();
+            renderTab('home');
+        }
+        
+        // Обновление топа
+        function updateTopPlayers() {
+            // В этой версии топ работает только с сохраненной игрой
+            if (gameState) {
+                topPlayers = [{
+                    nickname: "Игрок",
+                    totalEarned: gameState.totalEarned || 0
+                }];
             } else {
-                alert(result.message);
+                topPlayers = [];
             }
         }
         
-        // Обработка входа
-        async function handleLogin() {
-            const nickname = document.getElementById('loginNickname')?.value;
-            const password = document.getElementById('loginPassword')?.value;
-            
-            if (!nickname || !password) {
-                alert('❌ Заполните все поля!');
-                return;
-            }
-            
-            const result = await loginUser(nickname, password);
-            
-            if (result.success) {
-                // Загружаем игру
-                loadUserGameState();
-            } else {
-                alert(result.message);
-            }
+        function getPlayerRank() {
+            return 1; // Всегда первый, потому что игрок один
         }
         
-        // ========== СОСТОЯНИЕ ИГРЫ ==========
+        // ========== БИЗНЕСЫ ==========
         
-        let gameState = {
-            balance: 0,
-            diamonds: 10,
-            exp: 0,
-            level: 1,
-            clickPower: 1,
-            clickPowerLevel: 0,
-            autoClickerLevel: 0,
-            critLevel: 0,
-            totalClicks: 0,
-            totalEarned: 0,
-            playTime: 0,
-            lastOnlineTime: Date.now(),
-            myBusinesses: [],
-            houses: [
-                { id: 0, name: "КВАРТИРА", emoji: "🏢", price: 50000, income: 5, owned: false },
-                { id: 1, name: "ДОМ", emoji: "🏠", price: 500000, income: 50, owned: false },
-                { id: 2, name: "ОСОБНЯК", emoji: "🏰", price: 5000000, income: 500, owned: false },
-                { id: 3, name: "ВИЛЛА", emoji: "🏛️", price: 50000000, income: 5000, owned: false }
-            ],
-            cars: [
-                { id: 0, name: "ЛАДА", emoji: "🚗", price: 20000, income: 2, owned: false },
-                { id: 1, name: "МЕРСЕДЕС", emoji: "🚘", price: 200000, income: 20, owned: false },
-                { id: 2, name: "ФЕРРАРИ", emoji: "🏎️", price: 2000000, income: 200, owned: false },
-                { id: 3, name: "БУГАТТИ", emoji: "🚀", price: 20000000, income: 2000, owned: false }
-            ],
-            planes: [
-                { id: 0, name: "КУКУРУЗНИК", emoji: "✈️", price: 100000, income: 10, owned: false },
-                { id: 1, name: "БОИНГ", emoji: "🛩️", price: 1000000, income: 100, owned: false },
-                { id: 2, name: "ЧАСТНЫЙ", emoji: "🛫", price: 10000000, income: 1000, owned: false },
-                { id: 3, name: "РЕАКТИВНЫЙ", emoji: "🛬", price: 100000000, income: 10000, owned: false }
-            ],
-            ships: [
-                { id: 0, name: "ЛОДКА", emoji: "🛶", price: 30000, income: 3, owned: false },
-                { id: 1, name: "КАРТЕР", emoji: "⛵", price: 300000, income: 30, owned: false },
-                { id: 2, name: "ЯХТА", emoji: "🛥️", price: 3000000, income: 300, owned: false },
-                { id: 3, name: "ЛАЙНЕР", emoji: "🚢", price: 30000000, income: 3000, owned: false }
-            ]
-        };
-        
-        // Шаблоны бизнесов
         const businessTemplates = [
             { id: 0, name: "🚕 ТАКСОПАРК", baseIncome: 1, baseUpgradeCost: 1000, upgradeTime: 30, maxLevel: 20 },
             { id: 1, name: "🍔 РЕСТОРАН", baseIncome: 2, baseUpgradeCost: 5000, upgradeTime: 60, maxLevel: 20 },
@@ -1016,22 +812,18 @@
             { id: 9, name: "🏛️ ИМПЕРИЯ", baseIncome: 1000, baseUpgradeCost: 1000000000, upgradeTime: 9600, maxLevel: 20 }
         ];
         
-        // Цены улучшений
         const upgradePrices = {
             clickPower: [1000, 5000, 25000, 125000, 625000],
             autoClicker: [2000, 10000, 50000, 250000, 1250000],
             crit: [5000, 25000, 125000, 625000, 3125000]
         };
         
-        // Функция форматирования чисел
         function formatNumber(num) {
             return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
         }
         
-        // ========== ОСНОВНЫЕ ФУНКЦИИ ==========
-        
         function updateUI() {
-            if (!currentUser) return;
+            if (!currentUser || !gameState) return;
             
             document.getElementById('balance').textContent = formatNumber(Math.floor(gameState.balance));
             document.getElementById('diamonds').textContent = gameState.diamonds;
@@ -1043,7 +835,7 @@
         }
         
         function handleClick() {
-            if (!currentUser) return;
+            if (!currentUser || !gameState) return;
             
             let power = gameState.clickPower * (1 + gameState.clickPowerLevel * 0.5);
             
@@ -1068,7 +860,7 @@
         }
         
         function renderTab(tab) {
-            if (!currentUser) return;
+            if (!currentUser || !gameState) return;
             
             const content = document.getElementById('content');
             
@@ -1115,43 +907,18 @@
         function renderTop(content) {
             let html = '<div class="card"><div class="card-title">🏆 ТОП-100 БОГАЧЕЙ</div>';
             
-            if (topPlayers.length === 0) {
+            if (!gameState || gameState.totalEarned === 0) {
                 html += '<div style="text-align:center; padding:30px;">ПОКА НИКОГО НЕТ</div>';
             } else {
                 html += '<div style="margin-bottom:10px; text-align:center; color:#ffd700;">По общему заработку</div>';
                 
-                topPlayers.forEach((player, index) => {
-                    let rankClass = '';
-                    if (index === 0) rankClass = 'top-rank-1';
-                    else if (index === 1) rankClass = 'top-rank-2';
-                    else if (index === 2) rankClass = 'top-rank-3';
-                    
-                    const isCurrentUser = player.nickname === currentUser;
-                    
-                    html += `
-                        <div class="top-item" style="${isCurrentUser ? 'background: rgba(255, 215, 0, 0.15); border: 2px solid #ffd700;' : ''}">
-                            <div class="top-rank ${rankClass}">${index + 1}</div>
-                            <div class="top-name">${player.nickname}${isCurrentUser ? ' 👑' : ''}</div>
-                            <div class="top-money">${formatNumber(Math.floor(player.totalEarned))}💰</div>
-                        </div>
-                    `;
-                });
-            }
-            
-            if (currentUser) {
-                const userRank = getPlayerRank(currentUser);
-                if (!userRank) {
-                    const userData = users[currentUser];
-                    if (userData && userData.gameState) {
-                        html += `
-                            <div style="margin-top:20px; padding:15px; background: rgba(255, 255, 255, 0.05); border-radius:15px; text-align:center;">
-                                <div style="color:#ffd700; margin-bottom:5px;">ВАШЕ МЕСТО:</div>
-                                <div style="font-size:20px;">ЗА ПРЕДЕЛАМИ ТОП-100</div>
-                                <div style="margin-top:5px;">💰 ${formatNumber(Math.floor(userData.gameState.totalEarned))}</div>
-                            </div>
-                        `;
-                    }
-                }
+                html += `
+                    <div class="top-item" style="background: rgba(255, 215, 0, 0.15); border: 2px solid #ffd700;">
+                        <div class="top-rank top-rank-1">1</div>
+                        <div class="top-name">ИГРОК 👑</div>
+                        <div class="top-money">${formatNumber(Math.floor(gameState.totalEarned))}💰</div>
+                    </div>
+                `;
             }
             
             html += '</div>';
@@ -1428,6 +1195,8 @@
                 }
             });
         }
+        
+        // ========== НЕДВИЖИМОСТЬ ==========
         
         function renderProperty(content) {
             const housesOwned = gameState.houses.filter(h => h.owned).length;
@@ -1738,8 +1507,6 @@
                 ...gameState.ships.filter(s => s.owned)
             ].length;
             
-            const userRank = getPlayerRank(currentUser);
-            
             content.innerHTML = `
                 <div class="card">
                     <div class="card-title">📊 СТАТИСТИКА</div>
@@ -1772,21 +1539,25 @@
                         <span>💎 АЛМАЗЫ</span>
                         <span style="color:#ffd700;">${gameState.diamonds}</span>
                     </div>
-                    <div class="property-item" style="justify-content:space-between;">
-                        <span>🏆 МЕСТО В ТОПЕ</span>
-                        <span style="color:#ffd700;">${userRank ? userRank : 'ЗА ПРЕДЕЛАМИ 100'}</span>
-                    </div>
                     
                     <div style="margin-top:20px;">
-                        <button class="btn btn-danger" onclick="logoutUser()">🚪 ВЫЙТИ ИЗ АККАУНТА</button>
+                        <button class="btn btn-danger" onclick="resetGame()">🔄 СБРОСИТЬ ПРОГРЕСС</button>
                     </div>
                 </div>
             `;
         }
         
-        // Автоматический доход
+        function resetGame() {
+            if (confirm('Точно сбросить весь прогресс?')) {
+                localStorage.removeItem('imperiaClickerSave');
+                location.reload();
+            }
+        }
+        
+        // ========== АВТОМАТИЧЕСКИЙ ДОХОД ==========
+        
         setInterval(() => {
-            if (!currentUser) return;
+            if (!currentUser || !gameState) return;
             
             if (gameState.autoClickerLevel > 0) {
                 gameState.balance += gameState.autoClickerLevel;
@@ -1808,10 +1579,11 @@
             saveGame();
         }, 1000);
         
-        // Навигация
+        // ========== НАВИГАЦИЯ ==========
+        
         document.querySelectorAll('.nav-item').forEach(item => {
             item.addEventListener('click', function() {
-                if (!currentUser) return;
+                if (!currentUser || !gameState) return;
                 
                 document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
                 this.classList.add('active');
@@ -1819,14 +1591,17 @@
             });
         });
         
-        // Запуск
-        window.onload = async function() {
-            await loadUsers();
-            
-            const savedUser = localStorage.getItem('currentUser');
-            if (savedUser && users[savedUser]) {
-                currentUser = savedUser;
-                loadUserGameState();
+        // ========== ЗАПУСК ==========
+        
+        window.onload = function() {
+            // Пробуем загрузить сохраненную игру
+            if (loadSavedGame()) {
+                currentUser = "Игрок";
+                document.getElementById('header').style.display = 'block';
+                document.getElementById('bottomNav').style.display = 'flex';
+                document.getElementById('username').textContent = `👑 ИГРОК`;
+                updateUI();
+                renderTab('home');
             } else {
                 showAuthScreen();
             }
@@ -1848,17 +1623,10 @@
             window.showMyShips = showMyShips;
             window.buyUpgrade = buyUpgrade;
             window.exchangeDiamonds = exchangeDiamonds;
-            window.handleLogin = handleLogin;
-            window.handleRegister = handleRegister;
-            window.showRegisterForm = showRegisterForm;
-            window.showAuthScreen = showAuthScreen;
-            window.logoutUser = logoutUser;
+            window.startNewGame = startNewGame;
+            window.resetGame = resetGame;
             
             setInterval(checkBusinessUpgrades, 1000);
-            setInterval(async () => {
-                await loadUsers();
-                updateUI();
-            }, 30000);
         };
     </script>
 </body>
