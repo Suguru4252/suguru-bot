@@ -635,7 +635,7 @@
             tg.expand();
         }
         
-        // ========== СИСТЕМА АККАУНТОВ С TELEGRAM CLOUD ==========
+        // ========== СИСТЕМА АККАУНТОВ ==========
         
         let users = {};
         let currentUser = null;
@@ -886,7 +886,7 @@
             `;
         }
         
-        // ИСПРАВЛЕННАЯ ОБРАБОТКА РЕГИСТРАЦИИ
+        // ========== ИСПРАВЛЕННАЯ РЕГИСТРАЦИЯ ==========
         async function handleRegister() {
             const nickname = document.getElementById('regNickname')?.value;
             const password = document.getElementById('regPassword')?.value;
@@ -917,27 +917,24 @@
             if (result.success) {
                 alert(result.message);
                 // АВТОМАТИЧЕСКИ ВХОДИМ ПОСЛЕ РЕГИСТРАЦИИ
-                await handleLoginAfterRegister(nickname, password);
+                await loginUser(nickname, password);
+                
+                // ПОКАЗЫВАЕМ ИНТЕРФЕЙС ИГРЫ
+                document.getElementById('header').style.display = 'block';
+                document.getElementById('bottomNav').style.display = 'flex';
+                document.getElementById('username').textContent = `👑 ${nickname}`;
+                
+                // ЗАГРУЖАЕМ СОСТОЯНИЕ ИГРОКА
+                loadUserGameState();
+                
+                // ПЕРЕХОДИМ НА ГЛАВНУЮ
+                renderTab('home');
             } else {
                 alert(result.message);
             }
         }
         
-        // Вход после регистрации
-        async function handleLoginAfterRegister(nickname, password) {
-            const result = await loginUser(nickname, password);
-            
-            if (result.success) {
-                document.getElementById('header').style.display = 'block';
-                document.getElementById('bottomNav').style.display = 'flex';
-                document.getElementById('username').textContent = `👑 ${nickname}`;
-                
-                loadUserGameState();
-                renderTab('home');
-            }
-        }
-        
-        // ИСПРАВЛЕННАЯ ОБРАБОТКА ВХОДА
+        // ========== ИСПРАВЛЕННЫЙ ВХОД ==========
         async function handleLogin() {
             const nickname = document.getElementById('loginNickname')?.value;
             const password = document.getElementById('loginPassword')?.value;
@@ -1112,7 +1109,6 @@
             document.getElementById('home-content').addEventListener('click', handleClick);
         }
         
-        // ТОП-100
         function renderTop(content) {
             let html = '<div class="card"><div class="card-title">🏆 ТОП-100 БОГАЧЕЙ</div>';
             
@@ -1158,8 +1154,6 @@
             html += '</div>';
             content.innerHTML = html;
         }
-        
-        // ========== БИЗНЕСЫ ==========
         
         function renderMyBusiness(content) {
             let html = '<div class="card"><div class="card-title">💼 МОИ БИЗНЕСЫ</div>';
@@ -1432,8 +1426,6 @@
             });
         }
         
-        // ========== НЕДВИЖИМОСТЬ (сокращено для экономии места) ==========
-        
         function renderProperty(content) {
             const housesOwned = gameState.houses.filter(h => h.owned).length;
             const carsOwned = gameState.cars.filter(c => c.owned).length;
@@ -1648,8 +1640,6 @@
             document.getElementById('propertyModal').classList.remove('active');
         }
         
-        // ========== МАГАЗИН ==========
-        
         function renderShop(content) {
             let html = '<div class="card"><div class="card-title">🏪 МАГАЗИН УЛУЧШЕНИЙ</div>';
             
@@ -1730,8 +1720,6 @@
             }
         }
         
-        // ========== СТАТИСТИКА ==========
-        
         function renderStats(content) {
             const totalIncome = gameState.autoClickerLevel + 
                 gameState.myBusinesses.reduce((sum, b) => {
@@ -1793,8 +1781,7 @@
             `;
         }
         
-        // ========== АВТОМАТИЧЕСКИЙ ДОХОД ==========
-        
+        // Автоматический доход
         setInterval(() => {
             if (!currentUser) return;
             
@@ -1818,8 +1805,7 @@
             saveGame();
         }, 1000);
         
-        // ========== НАВИГАЦИЯ ==========
-        
+        // Навигация
         document.querySelectorAll('.nav-item').forEach(item => {
             item.addEventListener('click', function() {
                 if (!currentUser) return;
@@ -1830,8 +1816,7 @@
             });
         });
         
-        // ========== ЗАПУСК ==========
-        
+        // Запуск
         window.onload = async function() {
             await loadUsers();
             
