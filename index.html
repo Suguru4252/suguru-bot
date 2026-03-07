@@ -670,39 +670,6 @@
             cursor: pointer;
         }
         
-        /* Update banner */
-        .update-banner {
-            background: rgba(255, 215, 0, 0.2);
-            border: 2px solid #ffd700;
-            border-radius: 15px;
-            padding: 15px;
-            margin: 15px 0;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-        }
-        .update-text {
-            font-size: 14px;
-            color: #ffd700;
-        }
-        .update-btn {
-            background: #ffd700;
-            color: black;
-            padding: 8px 15px;
-            border-radius: 30px;
-            font-weight: bold;
-            cursor: pointer;
-            border: none;
-            font-size: 14px;
-        }
-        .version-text {
-            font-size: 12px;
-            color: rgba(255,255,255,0.5);
-            text-align: center;
-            margin-top: 5px;
-        }
-        
         /* Cloud storage */
         .cloud-badge {
             background: rgba(0, 150, 255, 0.2);
@@ -775,30 +742,21 @@
         </div>
     </div>
     
-    <div class="modal" id="updateModal">
-        <div class="modal-content">
-            <div class="modal-title">🔄 ОБНОВЛЕНИЕ</div>
-            <div style="text-align:center; margin:20px 0;">
-                <div style="font-size:48px;">📦</div>
-                <div id="updateInfo" style="margin:15px 0;">Загрузка информации...</div>
-            </div>
-            <div class="btn btn-gold" onclick="downloadUpdate()">📥 СКАЧАТЬ ОБНОВЛЕНИЕ</div>
-            <div class="close-btn" onclick="closeUpdateModal()">ЗАКРЫТЬ</div>
-        </div>
-    </div>
-    
     <div class="modal" id="authModal">
         <div class="modal-content">
             <div class="modal-title">🔐 РЕГИСТРАЦИЯ</div>
             <div style="text-align:center; margin:20px 0;">
                 <div style="font-size:48px;">👤</div>
-                <div style="margin:15px 0;">Введите ваш Telegram ID для сохранения прогресса в облаке</div>
             </div>
-            <input type="text" class="input-field" id="telegramIdInput" placeholder="Ваш Telegram ID" value="">
-            <div class="btn btn-gold" onclick="registerWithTelegramId()">🔑 ВОЙТИ / ЗАРЕГИСТРИРОВАТЬСЯ</div>
-            <div class="btn" onclick="playAsGuest()">👤 ИГРАТЬ ГОСТЕМ (без сохранения)</div>
+            <input type="text" class="input-field" id="regLogin" placeholder="Придумайте логин" maxlength="20">
+            <input type="password" class="input-field" id="regPassword" placeholder="Придумайте пароль" maxlength="30">
+            <div class="btn btn-gold" onclick="register()">🔐 ЗАРЕГИСТРИРОВАТЬСЯ</div>
+            <div style="margin:15px 0; text-align:center; color:#ffd700;">или</div>
+            <input type="text" class="input-field" id="loginLogin" placeholder="Ваш логин">
+            <input type="password" class="input-field" id="loginPassword" placeholder="Ваш пароль">
+            <div class="btn" onclick="login()">🔑 ВОЙТИ</div>
             <div style="margin-top:15px; font-size:12px; color:rgba(255,255,255,0.5); text-align:center;">
-                Ваш ID можно узнать у бота @userinfobot
+                Ваши данные сохранятся в облаке и не пропадут после переустановки
             </div>
         </div>
     </div>
@@ -811,10 +769,10 @@
             tg.expand();
         }
         
-        // ========== СИСТЕМА РЕГИСТРАЦИИ (ОБЛАЧНОЕ СОХРАНЕНИЕ) ==========
-        const APP_VERSION = '1.0.2'; // Текущая версия приложения
+        // ========== СИСТЕМА РЕГИСТРАЦИИ ==========
+        const APP_VERSION = '1.0.3';
         
-        // База данных пользователей (в реальном приложении это был бы сервер)
+        // База данных пользователей
         let usersDatabase = {};
         
         // Загружаем базу пользователей из localStorage
@@ -838,34 +796,33 @@
         
         // Текущий пользователь
         let currentUser = null;
-        let currentUserId = null;
+        let currentUserLogin = null;
         let gameState = null;
         let topPlayers = [];
         
         // Настройки
         let settings = {
             soundEnabled: true,
-            effectsEnabled: true,
-            nickname: "ИГРОК"
+            effectsEnabled: true
         };
         
-        // Загрузка игры пользователя
-        function loadUserGame(userId) {
-            if (usersDatabase[userId]) {
-                gameState = usersDatabase[userId].gameState;
-                settings = usersDatabase[userId].settings || { soundEnabled: true, effectsEnabled: true, nickname: "ИГРОК" };
-                currentUser = settings.nickname || "ИГРОК";
-                currentUserId = userId;
+        // Загрузка игры пользователя по логину
+        function loadUserGame(login) {
+            if (usersDatabase[login]) {
+                gameState = usersDatabase[login].gameState;
+                settings = usersDatabase[login].settings || { soundEnabled: true, effectsEnabled: true };
+                currentUser = login;
+                currentUserLogin = login;
                 
                 document.getElementById('cloudBadge').style.display = 'inline-block';
-                console.log(`✅ Загружена игра пользователя ${userId}`);
+                document.getElementById('username').innerHTML = `👑 ${login} <span class="cloud-badge">☁️ ОБЛАКО</span>`;
                 return true;
             }
             return false;
         }
         
         // Создание нового пользователя
-        function createNewUser(userId, nickname) {
+        function createNewUser(login, password) {
             const newGame = {
                 balance: 0,
                 diamonds: 10,
@@ -909,11 +866,11 @@
             
             const newSettings = {
                 soundEnabled: true,
-                effectsEnabled: true,
-                nickname: nickname || "ИГРОК"
+                effectsEnabled: true
             };
             
-            usersDatabase[userId] = {
+            usersDatabase[login] = {
+                password: password,
                 gameState: newGame,
                 settings: newSettings,
                 registeredAt: Date.now()
@@ -923,25 +880,23 @@
             
             gameState = newGame;
             settings = newSettings;
-            currentUser = newSettings.nickname;
-            currentUserId = userId;
+            currentUser = login;
+            currentUserLogin = login;
             
             document.getElementById('cloudBadge').style.display = 'inline-block';
-            console.log(`✅ Создан новый пользователь ${userId}`);
         }
         
         // Сохранение игры в облако
         function saveGameToCloud() {
-            if (currentUserId && usersDatabase[currentUserId]) {
-                usersDatabase[currentUserId].gameState = gameState;
-                usersDatabase[currentUserId].settings = settings;
-                usersDatabase[currentUserId].lastOnline = Date.now();
+            if (currentUserLogin && usersDatabase[currentUserLogin]) {
+                usersDatabase[currentUserLogin].gameState = gameState;
+                usersDatabase[currentUserLogin].settings = settings;
+                usersDatabase[currentUserLogin].lastOnline = Date.now();
                 saveUsersDatabase();
-                console.log('✅ Игра сохранена в облако');
             }
         }
         
-        // Сохранение игры (локальное + облачное)
+        // Сохранение игры
         function saveGame() {
             if (gameState) {
                 gameState.lastOnlineTime = Date.now();
@@ -950,7 +905,7 @@
                 const localSave = {
                     gameState: gameState,
                     settings: settings,
-                    userId: currentUserId
+                    login: currentUserLogin
                 };
                 localStorage.setItem('imperiaClickerLocal', JSON.stringify(localSave));
                 
@@ -965,9 +920,14 @@
             if (local) {
                 try {
                     const data = JSON.parse(local);
-                    if (data.userId && usersDatabase[data.userId]) {
-                        // Если есть облачное сохранение, загружаем его
-                        return loadUserGame(data.userId);
+                    if (data.login && usersDatabase[data.login]) {
+                        gameState = data.gameState;
+                        settings = data.settings;
+                        currentUser = data.login;
+                        currentUserLogin = data.login;
+                        document.getElementById('cloudBadge').style.display = 'inline-block';
+                        document.getElementById('username').innerHTML = `👑 ${data.login} <span class="cloud-badge">☁️ ОБЛАКО</span>`;
+                        return true;
                     }
                 } catch(e) {}
             }
@@ -979,12 +939,6 @@
             document.getElementById('header').style.display = 'none';
             document.getElementById('bottomNav').style.display = 'none';
             
-            // Пытаемся получить Telegram ID
-            let telegramId = '';
-            if (tg && tg.initDataUnsafe?.user?.id) {
-                telegramId = tg.initDataUnsafe.user.id;
-            }
-            
             const content = document.getElementById('content');
             content.innerHTML = `
                 <div class="auth-screen">
@@ -994,21 +948,26 @@
                         <div style="text-align:center; margin-bottom:20px;">
                             <span style="font-size:48px;">👑</span>
                         </div>
-                        <input type="text" class="input-field" id="regTelegramId" placeholder="Ваш Telegram ID" value="${telegramId}">
-                        <input type="text" class="input-field" id="regNickname" placeholder="Ваш никнейм" value="ИГРОК">
-                        <div class="btn btn-gold" onclick="register()">
-                            🔐 ЗАРЕГИСТРИРОВАТЬСЯ
+                        
+                        <div style="margin-bottom:20px;">
+                            <div style="color:#ffd700; margin-bottom:10px;">🔐 РЕГИСТРАЦИЯ</div>
+                            <input type="text" class="input-field" id="regLogin" placeholder="Придумайте логин" maxlength="20">
+                            <input type="password" class="input-field" id="regPassword" placeholder="Придумайте пароль" maxlength="30">
+                            <div class="btn btn-gold" onclick="register()">ЗАРЕГИСТРИРОВАТЬСЯ</div>
                         </div>
-                        <div class="btn" onclick="login()">
-                            🔑 ВОЙТИ
-                        </div>
-                        <div class="btn" onclick="playAsGuest()">
-                            👤 ГОСТЬ (прогресс локально)
+                        
+                        <div style="margin:20px 0; text-align:center; color:#ffd700;">────────── или ──────────</div>
+                        
+                        <div>
+                            <div style="color:#ffd700; margin-bottom:10px;">🔑 ВХОД</div>
+                            <input type="text" class="input-field" id="loginLogin" placeholder="Ваш логин">
+                            <input type="password" class="input-field" id="loginPassword" placeholder="Ваш пароль">
+                            <div class="btn" onclick="login()">ВОЙТИ</div>
                         </div>
                     </div>
                     
                     <div style="text-align:center; color:rgba(255,255,255,0.5); font-size:12px;">
-                        Регистрация сохранит ваш прогресс в облаке<br>и позволит восстановить его после переустановки
+                        Ваш прогресс сохранится в облаке<br>и не пропадет после переустановки
                     </div>
                     
                     <div class="version-text" style="margin-top:20px;">
@@ -1019,77 +978,82 @@
         }
         
         function register() {
-            const userId = document.getElementById('regTelegramId').value.trim();
-            const nickname = document.getElementById('regNickname').value.trim() || "ИГРОК";
+            const login = document.getElementById('regLogin')?.value.trim();
+            const password = document.getElementById('regPassword')?.value.trim();
             
-            if (!userId) {
-                alert('❌ Введите Telegram ID!');
+            if (!login || !password) {
+                alert('❌ Введите логин и пароль!');
                 return;
             }
             
-            if (usersDatabase[userId]) {
-                alert('❌ Пользователь с таким ID уже существует! Войдите.');
+            if (login.length < 3) {
+                alert('❌ Логин должен быть не меньше 3 символов!');
                 return;
             }
             
-            createNewUser(userId, nickname);
+            if (password.length < 4) {
+                alert('❌ Пароль должен быть не меньше 4 символов!');
+                return;
+            }
+            
+            if (usersDatabase[login]) {
+                alert('❌ Пользователь с таким логином уже существует!');
+                return;
+            }
+            
+            createNewUser(login, password);
             startGame();
         }
         
         function login() {
-            const userId = document.getElementById('regTelegramId').value.trim();
+            const login = document.getElementById('loginLogin')?.value.trim();
+            const password = document.getElementById('loginPassword')?.value.trim();
             
-            if (!userId) {
-                alert('❌ Введите Telegram ID!');
+            if (!login || !password) {
+                alert('❌ Введите логин и пароль!');
                 return;
             }
             
-            if (!usersDatabase[userId]) {
-                alert('❌ Пользователь не найден! Зарегистрируйтесь.');
+            const user = usersDatabase[login];
+            if (!user) {
+                alert('❌ Пользователь не найден!');
                 return;
             }
             
-            loadUserGame(userId);
-            startGame();
-        }
-        
-        function playAsGuest() {
-            // Создаем временного гостя
-            const guestId = 'guest_' + Date.now();
-            createNewUser(guestId, 'ГОСТЬ');
-            document.getElementById('cloudBadge').style.display = 'none';
+            if (user.password !== password) {
+                alert('❌ Неверный пароль!');
+                return;
+            }
+            
+            loadUserGame(login);
             startGame();
         }
         
         function startGame() {
             document.getElementById('header').style.display = 'block';
             document.getElementById('bottomNav').style.display = 'flex';
-            document.getElementById('username').innerHTML = `👑 ${currentUser} ${currentUserId && !currentUserId.startsWith('guest') ? '<span class="cloud-badge">☁️ ОБЛАКО</span>' : ''}`;
             
             updateUI();
             renderTab('home');
         }
         
-        // Обновление топа
+        // Обновление топа (теперь общий для всех)
         function updateTopPlayers() {
+            topPlayers = [];
+            
+            // Собираем всех игроков из базы
+            for (let login in usersDatabase) {
+                topPlayers.push({
+                    nickname: login,
+                    totalEarned: usersDatabase[login].gameState.totalEarned || 0
+                });
+            }
+            
+            // Сортируем по заработку
+            topPlayers.sort((a, b) => b.totalEarned - a.totalEarned);
+            
+            // Проверка недельной награды для текущего игрока
             if (gameState) {
-                topPlayers = [{
-                    nickname: currentUser || "ИГРОК",
-                    totalEarned: gameState.totalEarned || 0,
-                    lastWeekly: gameState.lastWeeklyReward || 0
-                }];
-                
-                // Добавляем других пользователей из базы для топа
-                for (let id in usersDatabase) {
-                    if (id !== currentUserId) {
-                        topPlayers.push({
-                            nickname: usersDatabase[id].settings.nickname || id,
-                            totalEarned: usersDatabase[id].gameState.totalEarned || 0
-                        });
-                    }
-                }
-                
-                // Проверка недельной награды
                 const now = Date.now();
                 if (now - (gameState.lastWeeklyReward || 0) > 7 * 24 * 60 * 60 * 1000) {
                     giveWeeklyReward();
@@ -1100,8 +1064,7 @@
         function giveWeeklyReward() {
             if (!gameState || topPlayers.length === 0) return;
             
-            const sorted = [...topPlayers].sort((a,b) => b.totalEarned - a.totalEarned);
-            const myIndex = sorted.findIndex(p => p.nickname === currentUser);
+            const myIndex = topPlayers.findIndex(p => p.nickname === currentUser);
             
             let reward = 0;
             if (myIndex === 0) reward = 1000;
@@ -1119,8 +1082,7 @@
         
         function getPlayerRank() {
             if (!gameState) return 100;
-            const sorted = [...topPlayers].sort((a,b) => b.totalEarned - a.totalEarned);
-            const myIndex = sorted.findIndex(p => p.nickname === currentUser);
+            const myIndex = topPlayers.findIndex(p => p.nickname === currentUser);
             return myIndex + 1;
         }
         
@@ -1209,7 +1171,6 @@
                 gameState.diamonds += gameState.level * 5;
             }
             
-            // Звук и эффект
             playClickSound();
             if (event) {
                 createFloatingEffect(event.clientX, event.clientY, `+${earned}💰`);
@@ -1217,6 +1178,7 @@
             
             updateUI();
             saveGame();
+            updateTopPlayers(); // Обновляем топ после заработка
             renderCurrentTab();
         }
         
@@ -1274,19 +1236,18 @@
         function renderTop(content) {
             let html = '<div class="card"><div class="card-title">🏆 ТОП-100 БОГАЧЕЙ</div>';
             
-            if (!gameState || gameState.totalEarned === 0) {
+            if (topPlayers.length === 0) {
                 html += '<div style="text-align:center; padding:30px;">ПОКА НИКОГО НЕТ</div>';
             } else {
                 html += '<div style="margin-bottom:10px; text-align:center; color:#ffd700;">По общему заработку</div>';
                 
-                const sorted = [...topPlayers].sort((a,b) => b.totalEarned - a.totalEarned);
                 const myRank = getPlayerRank();
                 
                 html += `
                     <div style="text-align:center; margin:10px; color:#ffd700;">🏅 ВАШЕ МЕСТО: ${myRank}</div>
                 `;
                 
-                sorted.slice(0, 10).forEach((player, index) => {
+                topPlayers.slice(0, 10).forEach((player, index) => {
                     const rank = index + 1;
                     html += `
                         <div class="top-item" style="${player.nickname === currentUser ? 'background: rgba(255,215,0,0.2); border:2px solid gold;' : ''}">
@@ -1959,11 +1920,7 @@
                     
                     <div class="settings-group">
                         <div class="btn btn-gold" onclick="showNicknameModal()">✏️ ИЗМЕНИТЬ НИК</div>
-                        <div class="btn btn-gold" onclick="showUpdateModal()">🔄 ПРОВЕРИТЬ ОБНОВЛЕНИЯ</div>
-                        ${currentUserId && !currentUserId.startsWith('guest') ? 
-                            '<div class="btn btn-success" onclick="alert(\'✅ Аккаунт сохранен в облаке\')">☁️ АККАУНТ: ' + currentUserId + '</div>' : 
-                            '<div class="btn" onclick="showAuthScreen()">🔐 ВОЙТИ В АККАУНТ</div>'
-                        }
+                        <div class="btn btn-success" onclick="alert('✅ Аккаунт: ' + currentUser)">☁️ МОЙ АККАУНТ</div>
                     </div>
                     
                     <div style="margin-top:30px; text-align:center;">
@@ -1993,7 +1950,7 @@
         }
         
         function showNicknameModal() {
-            document.getElementById('nicknameInput').value = settings.nickname || '';
+            document.getElementById('nicknameInput').value = currentUser || '';
             document.getElementById('nicknameModal').classList.add('active');
         }
         
@@ -2004,71 +1961,40 @@
         function saveNickname() {
             const newNick = document.getElementById('nicknameInput').value.trim();
             if (newNick) {
-                settings.nickname = newNick;
-                currentUser = newNick;
-                document.getElementById('username').innerHTML = `👑 ${newNick} ${currentUserId && !currentUserId.startsWith('guest') ? '<span class="cloud-badge">☁️ ОБЛАКО</span>' : ''}`;
+                if (usersDatabase[newNick] && newNick !== currentUser) {
+                    alert('❌ Такой логин уже занят!');
+                    return;
+                }
+                
+                // Меняем логин в базе
+                if (currentUserLogin) {
+                    const userData = usersDatabase[currentUserLogin];
+                    delete usersDatabase[currentUserLogin];
+                    usersDatabase[newNick] = userData;
+                    currentUserLogin = newNick;
+                    currentUser = newNick;
+                    saveUsersDatabase();
+                }
+                
+                document.getElementById('username').innerHTML = `👑 ${newNick} <span class="cloud-badge">☁️ ОБЛАКО</span>`;
                 saveGame();
                 closeNicknameModal();
                 renderCurrentTab();
+                updateTopPlayers();
             }
         }
         
         function resetGame() {
             if (confirm('Точно сбросить весь прогресс?')) {
-                if (currentUserId && !currentUserId.startsWith('guest')) {
-                    // Для зарегистрированных пользователей просто обнуляем прогресс
-                    createNewUser(currentUserId, settings.nickname);
+                localStorage.removeItem('imperiaClickerLocal');
+                if (currentUserLogin) {
+                    // Обнуляем прогресс, но сохраняем аккаунт
+                    createNewUser(currentUserLogin, usersDatabase[currentUserLogin].password);
                     startGame();
                 } else {
-                    localStorage.removeItem('imperiaClickerLocal');
                     location.reload();
                 }
             }
-        }
-        
-        // ========== СИСТЕМА ОБНОВЛЕНИЙ ==========
-        
-        function showUpdateModal() {
-            const modal = document.getElementById('updateModal');
-            const updateInfo = document.getElementById('updateInfo');
-            
-            updateInfo.innerHTML = `
-                <div style="margin-bottom:15px;">Текущая версия: ${APP_VERSION}</div>
-                <div style="margin-bottom:15px;">Новая версия: 1.1.0</div>
-                <div style="text-align:left; padding:10px; background:rgba(0,0,0,0.3); border-radius:10px;">
-                    <div>✨ Что нового:</div>
-                    <div>• Улучшена производительность</div>
-                    <div>• Добавлены новые бизнесы</div>
-                    <div>• Исправлены баги</div>
-                </div>
-            `;
-            
-            modal.classList.add('active');
-        }
-        
-        function closeUpdateModal() {
-            document.getElementById('updateModal').classList.remove('active');
-        }
-        
-        function downloadUpdate() {
-            const currentCode = document.documentElement.outerHTML;
-            const blob = new Blob([currentCode], { type: 'text/html' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'imperia-clicker-2026.html';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
-            
-            closeUpdateModal();
-            alert('✅ Обновление скачано!\n\nЧтобы применить обновление:\n1. Закройте игру\n2. Откройте скачанный файл\n3. Ваш прогресс сохранится автоматически');
-        }
-        
-        function checkForUpdates() {
-            // Заглушка для проверки обновлений
-            showUpdateModal();
         }
         
         // ========== АВТОМАТИЧЕСКИЙ ДОХОД ==========
@@ -2094,6 +2020,7 @@
             gameState.playTime++;
             updateUI();
             saveGame();
+            updateTopPlayers(); // Обновляем топ
         }, 1000);
         
         // ========== НАВИГАЦИЯ ==========
@@ -2145,18 +2072,12 @@
             window.toggleSound = toggleSound;
             window.toggleEffects = toggleEffects;
             window.handleClick = handleClick;
-            window.showUpdateModal = showUpdateModal;
-            window.closeUpdateModal = closeUpdateModal;
-            window.downloadUpdate = downloadUpdate;
-            window.checkForUpdates = checkForUpdates;
             window.showPrivacyPolicy = showPrivacyPolicy;
             window.register = register;
             window.login = login;
-            window.playAsGuest = playAsGuest;
             window.showAuthScreen = showAuthScreen;
             
             setInterval(checkBusinessUpgrades, 1000);
-            setInterval(updateTopPlayers, 60000);
         };
     </script>
 </body>
