@@ -770,7 +770,7 @@
         }
         
         // ========== СИСТЕМА РЕГИСТРАЦИИ ==========
-        const APP_VERSION = '1.0.3';
+        const APP_VERSION = '1.0.4';
         
         // База данных пользователей
         let usersDatabase = {};
@@ -806,13 +806,117 @@
             effectsEnabled: true
         };
         
+        // ========== БИЗНЕСЫ ==========
+        
+        const businessTemplates = [
+            { id: 0, name: "🚕 ТАКСОПАРК", baseIncome: 1, baseUpgradeCost: 1000, upgradeTime: 30, maxLevel: 20 },
+            { id: 1, name: "🍔 РЕСТОРАН", baseIncome: 2, baseUpgradeCost: 5000, upgradeTime: 60, maxLevel: 20 },
+            { id: 2, name: "⛽ ЗАПРАВКА", baseIncome: 5, baseUpgradeCost: 25000, upgradeTime: 120, maxLevel: 20 },
+            { id: 3, name: "🏭 ЗАВОД", baseIncome: 10, baseUpgradeCost: 100000, upgradeTime: 180, maxLevel: 20 },
+            { id: 4, name: "🏨 ОТЕЛЬ", baseIncome: 20, baseUpgradeCost: 500000, upgradeTime: 300, maxLevel: 20 },
+            { id: 5, name: "🎰 КАЗИНО", baseIncome: 50, baseUpgradeCost: 2500000, upgradeTime: 600, maxLevel: 20 },
+            { id: 6, name: "🏦 БАНК", baseIncome: 100, baseUpgradeCost: 10000000, upgradeTime: 1200, maxLevel: 20 },
+            { id: 7, name: "🛳️ ПОРТ", baseIncome: 200, baseUpgradeCost: 50000000, upgradeTime: 2400, maxLevel: 20 },
+            { id: 8, name: "✈️ АЭРОПОРТ", baseIncome: 500, baseUpgradeCost: 250000000, upgradeTime: 4800, maxLevel: 20 },
+            { id: 9, name: "🏛️ ИМПЕРИЯ", baseIncome: 1000, baseUpgradeCost: 1000000000, upgradeTime: 9600, maxLevel: 20 }
+        ];
+        
+        const upgradePrices = {
+            clickPower: [1000, 5000, 25000, 125000, 625000],
+            autoClicker: [2000, 10000, 50000, 250000, 1250000],
+            crit: [5000, 25000, 125000, 625000, 3125000]
+        };
+        
+        function formatNumber(num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
+        
+        // ========== ИСПРАВЛЕННЫЙ ОФФЛАЙН ДОХОД ==========
+        
+        function calculateOfflineEarnings() {
+            if (!gameState) return;
+            
+            const now = Date.now();
+            const lastOnline = gameState.lastOnlineTime || now;
+            const secondsPassed = Math.floor((now - lastOnline) / 1000);
+            
+            // Если прошло больше 10 секунд, начисляем доход
+            if (secondsPassed > 10) {
+                let offlineIncome = 0;
+                
+                // Доход от автокликера
+                if (gameState.autoClickerLevel > 0) {
+                    offlineIncome += gameState.autoClickerLevel * secondsPassed;
+                }
+                
+                // Доход от бизнесов
+                if (gameState.myBusinesses && gameState.myBusinesses.length > 0) {
+                    gameState.myBusinesses.forEach(business => {
+                        if (business && business.level > 0) {
+                            const template = businessTemplates[business.templateId];
+                            if (template) {
+                                const businessIncome = template.baseIncome * business.level * secondsPassed;
+                                offlineIncome += businessIncome;
+                                business.totalEarned = (business.totalEarned || 0) + businessIncome;
+                            }
+                        }
+                    });
+                }
+                
+                // Доход от недвижимости (раз в час - пересчитываем пропорционально)
+                const hourlyProperties = [
+                    ...(gameState.houses || []).filter(h => h && h.owned),
+                    ...(gameState.cars || []).filter(c => c && c.owned),
+                    ...(gameState.planes || []).filter(p => p && p.owned),
+                    ...(gameState.ships || []).filter(s => s && s.owned)
+                ];
+                
+                hourlyProperties.forEach(prop => {
+                    if (prop && prop.income) {
+                        // Доход указан в час, пересчитываем за прошедшие секунды
+                        const secondsIncome = (prop.income / 3600) * secondsPassed;
+                        offlineIncome += secondsIncome;
+                    }
+                });
+                
+                if (offlineIncome > 0) {
+                    const earned = Math.floor(offlineIncome);
+                    gameState.balance = (gameState.balance || 0) + earned;
+                    gameState.totalEarned = (gameState.totalEarned || 0) + earned;
+                    
+                    // Показываем уведомление
+                    if (earned > 0) {
+                        const minutes = Math.floor(secondsPassed / 60);
+                        const seconds = secondsPassed % 60;
+                        alert(`⏱️ ВАС НЕ БЫЛО ${minutes} МИН ${seconds} СЕК\n💰 ЗАРАБОТАНО: ${formatNumber(earned)} МОНЕТ!`);
+                        
+                        // Показываем бейдж оффлайн дохода
+                        const badge = document.getElementById('offlineBadge');
+                        if (badge) {
+                            badge.style.display = 'inline-block';
+                            badge.textContent = `⏱️ +${formatNumber(earned)} ЗА ОФФЛАЙН`;
+                            setTimeout(() => {
+                                badge.style.display = 'none';
+                            }, 5000);
+                        }
+                    }
+                }
+            }
+            
+            // Обновляем время последнего онлайн
+            gameState.lastOnlineTime = now;
+        }
+        
         // Загрузка игры пользователя по логину
         function loadUserGame(login) {
             if (usersDatabase[login]) {
-                gameState = usersDatabase[login].gameState;
+                gameState = JSON.parse(JSON.stringify(usersDatabase[login].gameState));
                 settings = usersDatabase[login].settings || { soundEnabled: true, effectsEnabled: true };
                 currentUser = login;
                 currentUserLogin = login;
+                
+                // Рассчитываем оффлайн доход при загрузке
+                calculateOfflineEarnings();
                 
                 document.getElementById('cloudBadge').style.display = 'inline-block';
                 document.getElementById('username').innerHTML = `👑 ${login} <span class="cloud-badge">☁️ ОБЛАКО</span>`;
@@ -823,6 +927,7 @@
         
         // Создание нового пользователя
         function createNewUser(login, password) {
+            const now = Date.now();
             const newGame = {
                 balance: 0,
                 diamonds: 10,
@@ -835,7 +940,7 @@
                 totalClicks: 0,
                 totalEarned: 0,
                 playTime: 0,
-                lastOnlineTime: Date.now(),
+                lastOnlineTime: now,
                 lastWeeklyReward: 0,
                 myBusinesses: [],
                 houses: [
@@ -873,7 +978,8 @@
                 password: password,
                 gameState: newGame,
                 settings: newSettings,
-                registeredAt: Date.now()
+                registeredAt: now,
+                lastOnline: now
             };
             
             saveUsersDatabase();
@@ -889,7 +995,7 @@
         // Сохранение игры в облако
         function saveGameToCloud() {
             if (currentUserLogin && usersDatabase[currentUserLogin]) {
-                usersDatabase[currentUserLogin].gameState = gameState;
+                usersDatabase[currentUserLogin].gameState = JSON.parse(JSON.stringify(gameState));
                 usersDatabase[currentUserLogin].settings = settings;
                 usersDatabase[currentUserLogin].lastOnline = Date.now();
                 saveUsersDatabase();
@@ -903,8 +1009,8 @@
                 
                 // Сохраняем локально для быстрого доступа
                 const localSave = {
-                    gameState: gameState,
-                    settings: settings,
+                    gameState: JSON.parse(JSON.stringify(gameState)),
+                    settings: JSON.parse(JSON.stringify(settings)),
                     login: currentUserLogin
                 };
                 localStorage.setItem('imperiaClickerLocal', JSON.stringify(localSave));
@@ -925,6 +1031,10 @@
                         settings = data.settings;
                         currentUser = data.login;
                         currentUserLogin = data.login;
+                        
+                        // Рассчитываем оффлайн доход при загрузке
+                        calculateOfflineEarnings();
+                        
                         document.getElementById('cloudBadge').style.display = 'inline-block';
                         document.getElementById('username').innerHTML = `👑 ${data.login} <span class="cloud-badge">☁️ ОБЛАКО</span>`;
                         return true;
@@ -1035,6 +1145,7 @@
             
             updateUI();
             renderTab('home');
+            updateTopPlayers();
         }
         
         // Обновление топа (теперь общий для всех)
@@ -1043,10 +1154,12 @@
             
             // Собираем всех игроков из базы
             for (let login in usersDatabase) {
-                topPlayers.push({
-                    nickname: login,
-                    totalEarned: usersDatabase[login].gameState.totalEarned || 0
-                });
+                if (usersDatabase[login] && usersDatabase[login].gameState) {
+                    topPlayers.push({
+                        nickname: login,
+                        totalEarned: usersDatabase[login].gameState.totalEarned || 0
+                    });
+                }
             }
             
             // Сортируем по заработку
@@ -1072,7 +1185,7 @@
             else if (myIndex === 2) reward = 100;
             
             if (reward > 0) {
-                gameState.diamonds += reward;
+                gameState.diamonds = (gameState.diamonds || 0) + reward;
                 gameState.lastWeeklyReward = Date.now();
                 alert(`🏆 Вы получили недельную награду: ${reward}💎 за ${myIndex+1} место!`);
                 saveGame();
@@ -1086,56 +1199,33 @@
             return myIndex + 1;
         }
         
-        // ========== БИЗНЕСЫ ==========
-        
-        const businessTemplates = [
-            { id: 0, name: "🚕 ТАКСОПАРК", baseIncome: 1, baseUpgradeCost: 1000, upgradeTime: 30, maxLevel: 20 },
-            { id: 1, name: "🍔 РЕСТОРАН", baseIncome: 2, baseUpgradeCost: 5000, upgradeTime: 60, maxLevel: 20 },
-            { id: 2, name: "⛽ ЗАПРАВКА", baseIncome: 5, baseUpgradeCost: 25000, upgradeTime: 120, maxLevel: 20 },
-            { id: 3, name: "🏭 ЗАВОД", baseIncome: 10, baseUpgradeCost: 100000, upgradeTime: 180, maxLevel: 20 },
-            { id: 4, name: "🏨 ОТЕЛЬ", baseIncome: 20, baseUpgradeCost: 500000, upgradeTime: 300, maxLevel: 20 },
-            { id: 5, name: "🎰 КАЗИНО", baseIncome: 50, baseUpgradeCost: 2500000, upgradeTime: 600, maxLevel: 20 },
-            { id: 6, name: "🏦 БАНК", baseIncome: 100, baseUpgradeCost: 10000000, upgradeTime: 1200, maxLevel: 20 },
-            { id: 7, name: "🛳️ ПОРТ", baseIncome: 200, baseUpgradeCost: 50000000, upgradeTime: 2400, maxLevel: 20 },
-            { id: 8, name: "✈️ АЭРОПОРТ", baseIncome: 500, baseUpgradeCost: 250000000, upgradeTime: 4800, maxLevel: 20 },
-            { id: 9, name: "🏛️ ИМПЕРИЯ", baseIncome: 1000, baseUpgradeCost: 1000000000, upgradeTime: 9600, maxLevel: 20 }
-        ];
-        
-        const upgradePrices = {
-            clickPower: [1000, 5000, 25000, 125000, 625000],
-            autoClicker: [2000, 10000, 50000, 250000, 1250000],
-            crit: [5000, 25000, 125000, 625000, 3125000]
-        };
-        
-        function formatNumber(num) {
-            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-        }
-        
         function updateUI() {
             if (!currentUser || !gameState) return;
             
-            document.getElementById('balance').textContent = formatNumber(Math.floor(gameState.balance));
-            document.getElementById('diamonds').textContent = gameState.diamonds;
-            document.getElementById('level').textContent = gameState.level;
+            document.getElementById('balance').textContent = formatNumber(Math.floor(gameState.balance || 0));
+            document.getElementById('diamonds').textContent = gameState.diamonds || 0;
+            document.getElementById('level').textContent = gameState.level || 1;
             
-            const expNeeded = gameState.level * 1000;
-            const expPercent = (gameState.exp / expNeeded) * 100;
+            const expNeeded = (gameState.level || 1) * 1000;
+            const expPercent = ((gameState.exp || 0) / expNeeded) * 100;
             document.getElementById('levelProgress').style.width = Math.min(expPercent, 100) + '%';
         }
         
         // Звук клика
         function playClickSound() {
             if (!settings.soundEnabled) return;
-            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            oscillator.type = 'sine';
-            oscillator.frequency.value = 800;
-            gainNode.gain.value = 0.1;
-            oscillator.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-            oscillator.start();
-            oscillator.stop(audioCtx.currentTime + 0.1);
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                oscillator.type = 'sine';
+                oscillator.frequency.value = 800;
+                gainNode.gain.value = 0.1;
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.1);
+            } catch(e) {}
         }
         
         // Эффект всплывающей монетки
@@ -1153,22 +1243,22 @@
         function handleClick(event) {
             if (!currentUser || !gameState) return;
             
-            let power = gameState.clickPower * (1 + gameState.clickPowerLevel * 0.5);
+            let power = (gameState.clickPower || 1) * (1 + (gameState.clickPowerLevel || 0) * 0.5);
             
-            if (Math.random() * 100 < gameState.critLevel * 10) {
+            if (Math.random() * 100 < (gameState.critLevel || 0) * 10) {
                 power *= 10;
             }
             
             const earned = Math.floor(power);
-            gameState.balance += earned;
-            gameState.totalClicks++;
-            gameState.totalEarned += earned;
-            gameState.exp += earned / 100;
+            gameState.balance = (gameState.balance || 0) + earned;
+            gameState.totalClicks = (gameState.totalClicks || 0) + 1;
+            gameState.totalEarned = (gameState.totalEarned || 0) + earned;
+            gameState.exp = (gameState.exp || 0) + earned / 100;
             
-            while (gameState.exp >= gameState.level * 1000) {
-                gameState.exp -= gameState.level * 1000;
-                gameState.level++;
-                gameState.diamonds += gameState.level * 5;
+            while (gameState.exp >= (gameState.level || 1) * 1000) {
+                gameState.exp -= (gameState.level || 1) * 1000;
+                gameState.level = (gameState.level || 1) + 1;
+                gameState.diamonds = (gameState.diamonds || 0) + (gameState.level * 5);
             }
             
             playClickSound();
@@ -1178,7 +1268,7 @@
             
             updateUI();
             saveGame();
-            updateTopPlayers(); // Обновляем топ после заработка
+            updateTopPlayers();
             renderCurrentTab();
         }
         
@@ -1210,17 +1300,25 @@
         }
         
         function renderHome(content) {
-            const power = gameState.clickPower * (1 + gameState.clickPowerLevel * 0.5);
-            const totalIncome = gameState.autoClickerLevel + 
-                gameState.myBusinesses.reduce((sum, b) => {
-                    const template = businessTemplates[b.templateId];
-                    return sum + (template.baseIncome * b.level);
+            const power = (gameState.clickPower || 1) * (1 + (gameState.clickPowerLevel || 0) * 0.5);
+            let totalIncome = gameState.autoClickerLevel || 0;
+            
+            if (gameState.myBusinesses && gameState.myBusinesses.length > 0) {
+                totalIncome += gameState.myBusinesses.reduce((sum, b) => {
+                    if (b && b.level > 0) {
+                        const template = businessTemplates[b.templateId];
+                        if (template) {
+                            return sum + (template.baseIncome * b.level);
+                        }
+                    }
+                    return sum;
                 }, 0);
+            }
             
             content.innerHTML = `
                 <div id="home-content">
                     <div class="clicker-area" onclick="handleClick(event)">
-                        <div class="per-second">⏱️ ДОХОД/СЕК: ${totalIncome}</div>
+                        <div class="per-second">⏱️ ДОХОД/СЕК: ${Math.floor(totalIncome)}</div>
                         <div class="click-btn" id="clickButton">
                             👆
                             <span>+${formatNumber(Math.floor(power))}</span>
@@ -1273,31 +1371,33 @@
         function renderMyBusiness(content) {
             let html = '<div class="card"><div class="card-title">💼 МОИ БИЗНЕСЫ</div>';
             
-            if (gameState.myBusinesses.length === 0) {
+            if (!gameState.myBusinesses || gameState.myBusinesses.length === 0) {
                 html += '<div style="text-align:center; padding:30px;">У ВАС НЕТ БИЗНЕСОВ</div>';
             } else {
                 gameState.myBusinesses.forEach((business, index) => {
+                    if (!business) return;
                     const template = businessTemplates[business.templateId];
-                    const upgrading = business.upgradeEnd > Date.now();
+                    if (!template) return;
+                    const upgrading = business.upgradeEnd && business.upgradeEnd > Date.now();
                     const timeLeft = upgrading ? Math.ceil((business.upgradeEnd - Date.now()) / 1000) : 0;
                     
                     html += `
                         <div class="business-item" onclick="openBusiness(${index})">
                             <div class="business-header">
                                 <span class="business-name">${template.name} #${index + 1}</span>
-                                <span class="business-level">${business.level}/${template.maxLevel}</span>
+                                <span class="business-level">${business.level || 1}/${template.maxLevel}</span>
                             </div>
                             <div class="business-stats">
-                                <span>💰 +${template.baseIncome * business.level}/сек</span>
-                                <span>📈 ${formatNumber(Math.floor(business.totalEarned))}</span>
+                                <span>💰 +${(template.baseIncome * (business.level || 1))}/сек</span>
+                                <span>📈 ${formatNumber(Math.floor(business.totalEarned || 0))}</span>
                             </div>
                             ${upgrading ? `
                                 <div class="business-progress">
-                                    <div class="business-bar" style="width: ${((Date.now() - business.lastUpgrade) / (business.upgradeEnd - business.lastUpgrade) * 100)}%"></div>
+                                    <div class="business-bar" style="width: ${((Date.now() - (business.lastUpgrade || Date.now())) / ((business.upgradeEnd || Date.now()) - (business.lastUpgrade || Date.now())) * 100) || 0}%"></div>
                                 </div>
                                 <div class="upgrade-time">⏱️ УЛУЧШЕНИЕ: ${timeLeft}С</div>
-                            ` : business.level < template.maxLevel ? `
-                                <div class="upgrade-time">💰 УЛУЧШИТЬ: ${formatNumber(business.upgradeCost)}</div>
+                            ` : (business.level || 1) < template.maxLevel ? `
+                                <div class="upgrade-time">💰 УЛУЧШИТЬ: ${formatNumber(business.upgradeCost || 0)}</div>
                             ` : '<div style="color:#ffd700; text-align:center;">МАКСИМАЛЬНЫЙ УРОВЕНЬ</div>'}
                         </div>
                     `;
@@ -1316,7 +1416,7 @@
             let html = '<div class="modal-title">🏪 КУПИТЬ БИЗНЕС</div>';
             
             businessTemplates.forEach(template => {
-                const ownedCount = gameState.myBusinesses.filter(b => b.templateId === template.id).length;
+                const ownedCount = gameState.myBusinesses ? gameState.myBusinesses.filter(b => b && b.templateId === template.id).length : 0;
                 
                 html += `
                     <div class="business-item" style="cursor:pointer;" onclick="buyBusinessFromModal(${template.id})">
@@ -1349,7 +1449,7 @@
             const template = businessTemplates.find(t => t.id === templateId);
             if (!template) return;
             
-            const ownedCount = gameState.myBusinesses.filter(b => b.templateId === templateId).length;
+            const ownedCount = gameState.myBusinesses ? gameState.myBusinesses.filter(b => b && b.templateId === templateId).length : 0;
             
             if (ownedCount >= 10) {
                 alert('❌ НЕЛЬЗЯ КУПИТЬ БОЛЬШЕ 10 БИЗНЕСОВ ЭТОГО ТИПА!');
@@ -1358,8 +1458,10 @@
             
             const price = template.baseUpgradeCost;
             
-            if (gameState.balance >= price) {
-                gameState.balance -= price;
+            if ((gameState.balance || 0) >= price) {
+                gameState.balance = (gameState.balance || 0) - price;
+                
+                if (!gameState.myBusinesses) gameState.myBusinesses = [];
                 
                 const newBusiness = {
                     id: Date.now() + Math.random(),
@@ -1385,10 +1487,11 @@
         }
         
         function calculateBusinessTotalSpent(business, template) {
+            if (!business || !template) return 0;
             let totalSpent = template.baseUpgradeCost;
             
             let currentCost = template.baseUpgradeCost;
-            for (let i = 1; i < business.level; i++) {
+            for (let i = 1; i < (business.level || 1); i++) {
                 currentCost = Math.floor(currentCost * 2.5);
                 totalSpent += currentCost;
             }
@@ -1397,10 +1500,12 @@
         }
         
         function openBusiness(index) {
+            if (!gameState.myBusinesses || !gameState.myBusinesses[index]) return;
             const business = gameState.myBusinesses[index];
-            if (!business) return;
             
             const template = businessTemplates[business.templateId];
+            if (!template) return;
+            
             const totalSpent = calculateBusinessTotalSpent(business, template);
             const sellPrice = Math.floor(totalSpent * 0.5);
             
@@ -1411,16 +1516,16 @@
                 <div class="modal-title">${template.name} #${index + 1}</div>
                 <div style="text-align:center;">
                     <div style="font-size:48px; margin:15px;">${template.name.charAt(0)}</div>
-                    <div style="margin:10px;">📊 УРОВЕНЬ: ${business.level}/${template.maxLevel}</div>
-                    <div style="margin:10px;">💰 ДОХОД: +${template.baseIncome * business.level}/сек</div>
-                    <div style="margin:10px;">📈 ВСЕГО ЗАРАБОТАНО: ${formatNumber(Math.floor(business.totalEarned))}</div>
+                    <div style="margin:10px;">📊 УРОВЕНЬ: ${business.level || 1}/${template.maxLevel}</div>
+                    <div style="margin:10px;">💰 ДОХОД: +${template.baseIncome * (business.level || 1)}/сек</div>
+                    <div style="margin:10px;">📈 ВСЕГО ЗАРАБОТАНО: ${formatNumber(Math.floor(business.totalEarned || 0))}</div>
                     <div style="margin:10px;">💸 ВСЕГО ВЛОЖЕНО: ${formatNumber(totalSpent)}</div>
                     <div style="margin:10px;">🏷️ ЦЕНА ПРОДАЖИ: ${formatNumber(sellPrice)} (50%)</div>
-                    <div style="margin:10px;">⏱️ ВРЕМЯ УЛУЧШЕНИЯ: ${business.upgradeTime}С</div>
+                    <div style="margin:10px;">⏱️ ВРЕМЯ УЛУЧШЕНИЯ: ${business.upgradeTime || template.upgradeTime}С</div>
             `;
             
-            if (business.level < template.maxLevel) {
-                const upgrading = business.upgradeEnd > Date.now();
+            if ((business.level || 1) < template.maxLevel) {
+                const upgrading = business.upgradeEnd && business.upgradeEnd > Date.now();
                 if (upgrading) {
                     const timeLeft = Math.ceil((business.upgradeEnd - Date.now()) / 1000);
                     content += `
@@ -1432,7 +1537,7 @@
                     content += `
                         <div style="margin:15px;">
                             <div class="btn btn-gold" onclick="startUpgrade(${index})">
-                                🚀 УЛУЧШИТЬ (${formatNumber(business.upgradeCost)}💰)
+                                🚀 УЛУЧШИТЬ (${formatNumber(business.upgradeCost || 0)}💰)
                             </div>
                         </div>
                     `;
@@ -1455,16 +1560,18 @@
         }
         
         function sellBusiness(index) {
+            if (!gameState.myBusinesses || !gameState.myBusinesses[index]) return;
             const business = gameState.myBusinesses[index];
-            if (!business) return;
             
             const template = businessTemplates[business.templateId];
+            if (!template) return;
+            
             const totalSpent = calculateBusinessTotalSpent(business, template);
             const sellPrice = Math.floor(totalSpent * 0.5);
             
             if (confirm(`Продать ${template.name} #${index + 1} за ${formatNumber(sellPrice)}💰?`)) {
                 gameState.myBusinesses.splice(index, 1);
-                gameState.balance += sellPrice;
+                gameState.balance = (gameState.balance || 0) + sellPrice;
                 
                 saveGame();
                 updateUI();
@@ -1475,56 +1582,57 @@
         }
         
         function startUpgrade(index) {
+            if (!gameState.myBusinesses || !gameState.myBusinesses[index]) return;
             const business = gameState.myBusinesses[index];
-            if (!business) return;
             
             const template = businessTemplates[business.templateId];
+            if (!template) return;
             
-            if (business.level >= template.maxLevel) {
+            if ((business.level || 1) >= template.maxLevel) {
                 alert('❌ Достигнут максимальный уровень!');
                 return;
             }
             
-            if (business.upgradeEnd > Date.now()) {
+            if (business.upgradeEnd && business.upgradeEnd > Date.now()) {
                 alert('⏱️ Улучшение уже идет!');
                 return;
             }
             
-            if (gameState.balance < business.upgradeCost) {
+            if ((gameState.balance || 0) < (business.upgradeCost || 0)) {
                 alert('❌ Недостаточно монет!');
                 return;
             }
             
-            gameState.balance -= business.upgradeCost;
+            gameState.balance = (gameState.balance || 0) - (business.upgradeCost || 0);
             
             business.lastUpgrade = Date.now();
-            business.upgradeEnd = Date.now() + (business.upgradeTime * 1000);
+            business.upgradeEnd = Date.now() + ((business.upgradeTime || template.upgradeTime) * 1000);
             
             saveGame();
             updateUI();
             closeBusinessModal();
             renderCurrentTab();
             
-            alert(`✅ Улучшение запущено! Бизнес будет улучшен через ${business.upgradeTime} секунд.`);
+            alert(`✅ Улучшение запущено! Бизнес будет улучшен через ${business.upgradeTime || template.upgradeTime} секунд.`);
             
             setTimeout(() => {
-                if (business.upgradeEnd > 0 && business.upgradeEnd <= Date.now() && business.level < template.maxLevel) {
-                    business.level++;
-                    business.upgradeCost = Math.floor(business.upgradeCost * 2.5);
-                    business.upgradeTime = Math.floor(business.upgradeTime * 1.3);
+                if (business.upgradeEnd && business.upgradeEnd <= Date.now() && (business.level || 1) < template.maxLevel) {
+                    business.level = (business.level || 1) + 1;
+                    business.upgradeCost = Math.floor((business.upgradeCost || template.baseUpgradeCost) * 2.5);
+                    business.upgradeTime = Math.floor((business.upgradeTime || template.upgradeTime) * 1.3);
                     business.upgradeEnd = 0;
                     
                     saveGame();
                     updateUI();
                     renderCurrentTab();
                     
-                    if (business.level < template.maxLevel) {
+                    if ((business.level || 1) < template.maxLevel) {
                         alert(`✅ ${template.name} улучшен до ${business.level} уровня!`);
                     } else {
                         alert(`🎉 ${template.name} достиг максимального (20) уровня!`);
                     }
                 }
-            }, business.upgradeTime * 1000);
+            }, (business.upgradeTime || template.upgradeTime) * 1000);
         }
         
         function closeBusinessModal() {
@@ -1532,13 +1640,16 @@
         }
         
         function checkBusinessUpgrades() {
+            if (!gameState || !gameState.myBusinesses) return;
             const now = Date.now();
             gameState.myBusinesses.forEach(business => {
+                if (!business) return;
                 const template = businessTemplates[business.templateId];
-                if (business.upgradeEnd > 0 && business.upgradeEnd <= now && business.level < template.maxLevel) {
-                    business.level++;
-                    business.upgradeCost = Math.floor(business.upgradeCost * 2.5);
-                    business.upgradeTime = Math.floor(business.upgradeTime * 1.3);
+                if (!template) return;
+                if (business.upgradeEnd && business.upgradeEnd > 0 && business.upgradeEnd <= now && (business.level || 1) < template.maxLevel) {
+                    business.level = (business.level || 1) + 1;
+                    business.upgradeCost = Math.floor((business.upgradeCost || template.baseUpgradeCost) * 2.5);
+                    business.upgradeTime = Math.floor((business.upgradeTime || template.upgradeTime) * 1.3);
                     business.upgradeEnd = 0;
                     saveGame();
                     renderCurrentTab();
@@ -1549,10 +1660,10 @@
         // ========== НЕДВИЖИМОСТЬ ==========
         
         function renderProperty(content) {
-            const housesOwned = gameState.houses.filter(h => h.owned).length;
-            const carsOwned = gameState.cars.filter(c => c.owned).length;
-            const planesOwned = gameState.planes.filter(p => p.owned).length;
-            const shipsOwned = gameState.ships.filter(s => s.owned).length;
+            const housesOwned = gameState.houses ? gameState.houses.filter(h => h && h.owned).length : 0;
+            const carsOwned = gameState.cars ? gameState.cars.filter(c => c && c.owned).length : 0;
+            const planesOwned = gameState.planes ? gameState.planes.filter(p => p && p.owned).length : 0;
+            const shipsOwned = gameState.ships ? gameState.ships.filter(s => s && s.owned).length : 0;
             
             content.innerHTML = `
                 <div class="card">
@@ -1590,6 +1701,7 @@
         }
         
         function showPropertyCategory(category) {
+            if (!gameState[category]) return;
             const items = gameState[category];
             const titles = {
                 houses: '🏠 ДОМА',
@@ -1604,13 +1716,14 @@
             let html = `<div class="modal-title">${titles[category]}</div>`;
             
             items.forEach(item => {
+                if (!item) return;
                 html += `
                     <div class="property-item">
-                        <div class="property-emoji">${item.emoji}</div>
+                        <div class="property-emoji">${item.emoji || '🏠'}</div>
                         <div class="property-details">
-                            <div class="property-title">${item.name}</div>
-                            <div class="property-price">💰 ${formatNumber(item.price)}</div>
-                            <div class="property-income">⏱️ +${item.income}/ЧАС</div>
+                            <div class="property-title">${item.name || 'Без названия'}</div>
+                            <div class="property-price">💰 ${formatNumber(item.price || 0)}</div>
+                            <div class="property-income">⏱️ +${item.income || 0}/ЧАС</div>
                         </div>
                         ${item.owned ? 
                             '<span class="property-owned">ВЛАДЕЮ</span>' : 
@@ -1627,11 +1740,12 @@
         }
         
         function buyProperty(category, id) {
+            if (!gameState[category] || !gameState[category][id]) return;
             const item = gameState[category][id];
             if (item.owned) return;
             
-            if (gameState.balance >= item.price) {
-                gameState.balance -= item.price;
+            if ((gameState.balance || 0) >= (item.price || 0)) {
+                gameState.balance = (gameState.balance || 0) - (item.price || 0);
                 item.owned = true;
                 saveGame();
                 updateUI();
@@ -1649,17 +1763,18 @@
             
             let html = '<div class="modal-title">🚗 МОЙ ГАРАЖ</div>';
             
-            const ownedCars = gameState.cars.filter(c => c.owned);
+            const ownedCars = gameState.cars ? gameState.cars.filter(c => c && c.owned) : [];
             if (ownedCars.length === 0) {
                 html += '<div style="text-align:center; padding:20px;">У ВАС НЕТ МАШИН</div>';
             } else {
                 ownedCars.forEach(car => {
+                    if (!car) return;
                     html += `
                         <div class="property-item">
-                            <div class="property-emoji">${car.emoji}</div>
+                            <div class="property-emoji">${car.emoji || '🚗'}</div>
                             <div class="property-details">
-                                <div class="property-title">${car.name}</div>
-                                <div class="property-income">⏱️ +${car.income}/ЧАС</div>
+                                <div class="property-title">${car.name || 'Машина'}</div>
+                                <div class="property-income">⏱️ +${car.income || 0}/ЧАС</div>
                             </div>
                             <span class="property-owned">ВЛАДЕЮ</span>
                         </div>
@@ -1678,17 +1793,18 @@
             
             let html = '<div class="modal-title">🏠 МОИ ДОМА</div>';
             
-            const ownedHouses = gameState.houses.filter(h => h.owned);
+            const ownedHouses = gameState.houses ? gameState.houses.filter(h => h && h.owned) : [];
             if (ownedHouses.length === 0) {
                 html += '<div style="text-align:center; padding:20px;">У ВАС НЕТ ДОМОВ</div>';
             } else {
                 ownedHouses.forEach(house => {
+                    if (!house) return;
                     html += `
                         <div class="property-item">
-                            <div class="property-emoji">${house.emoji}</div>
+                            <div class="property-emoji">${house.emoji || '🏠'}</div>
                             <div class="property-details">
-                                <div class="property-title">${house.name}</div>
-                                <div class="property-income">⏱️ +${house.income}/ЧАС</div>
+                                <div class="property-title">${house.name || 'Дом'}</div>
+                                <div class="property-income">⏱️ +${house.income || 0}/ЧАС</div>
                             </div>
                             <span class="property-owned">ВЛАДЕЮ</span>
                         </div>
@@ -1707,17 +1823,18 @@
             
             let html = '<div class="modal-title">✈️ МОИ САМОЛЕТЫ</div>';
             
-            const ownedPlanes = gameState.planes.filter(p => p.owned);
+            const ownedPlanes = gameState.planes ? gameState.planes.filter(p => p && p.owned) : [];
             if (ownedPlanes.length === 0) {
                 html += '<div style="text-align:center; padding:20px;">У ВАС НЕТ САМОЛЕТОВ</div>';
             } else {
                 ownedPlanes.forEach(plane => {
+                    if (!plane) return;
                     html += `
                         <div class="property-item">
-                            <div class="property-emoji">${plane.emoji}</div>
+                            <div class="property-emoji">${plane.emoji || '✈️'}</div>
                             <div class="property-details">
-                                <div class="property-title">${plane.name}</div>
-                                <div class="property-income">⏱️ +${plane.income}/ЧАС</div>
+                                <div class="property-title">${plane.name || 'Самолет'}</div>
+                                <div class="property-income">⏱️ +${plane.income || 0}/ЧАС</div>
                             </div>
                             <span class="property-owned">ВЛАДЕЮ</span>
                         </div>
@@ -1736,17 +1853,18 @@
             
             let html = '<div class="modal-title">🚢 МОИ КОРАБЛИ</div>';
             
-            const ownedShips = gameState.ships.filter(s => s.owned);
+            const ownedShips = gameState.ships ? gameState.ships.filter(s => s && s.owned) : [];
             if (ownedShips.length === 0) {
                 html += '<div style="text-align:center; padding:20px;">У ВАС НЕТ КОРАБЛЕЙ</div>';
             } else {
                 ownedShips.forEach(ship => {
+                    if (!ship) return;
                     html += `
                         <div class="property-item">
-                            <div class="property-emoji">${ship.emoji}</div>
+                            <div class="property-emoji">${ship.emoji || '🚢'}</div>
                             <div class="property-details">
-                                <div class="property-title">${ship.name}</div>
-                                <div class="property-income">⏱️ +${ship.income}/ЧАС</div>
+                                <div class="property-title">${ship.name || 'Корабль'}</div>
+                                <div class="property-income">⏱️ +${ship.income || 0}/ЧАС</div>
                             </div>
                             <span class="property-owned">ВЛАДЕЮ</span>
                         </div>
@@ -1766,36 +1884,36 @@
         function renderShop(content) {
             let html = '<div class="card"><div class="card-title">🏪 МАГАЗИН УЛУЧШЕНИЙ</div>';
             
-            if (gameState.clickPowerLevel < 5) {
+            if ((gameState.clickPowerLevel || 0) < 5) {
                 html += `
                     <div class="shop-item">
                         <div class="item-info">
-                            <div class="item-name">💪 СИЛА КЛИКА +${gameState.clickPowerLevel + 1}</div>
-                            <div class="item-price">💰 ${formatNumber(upgradePrices.clickPower[gameState.clickPowerLevel])}</div>
+                            <div class="item-name">💪 СИЛА КЛИКА +${(gameState.clickPowerLevel || 0) + 1}</div>
+                            <div class="item-price">💰 ${formatNumber(upgradePrices.clickPower[gameState.clickPowerLevel || 0])}</div>
                         </div>
                         <button class="buy-btn" onclick="buyUpgrade('clickPower')">↑</button>
                     </div>
                 `;
             }
             
-            if (gameState.autoClickerLevel < 5) {
+            if ((gameState.autoClickerLevel || 0) < 5) {
                 html += `
                     <div class="shop-item">
                         <div class="item-info">
-                            <div class="item-name">🤖 АВТОКЛИКЕР +${gameState.autoClickerLevel + 1}</div>
-                            <div class="item-price">💰 ${formatNumber(upgradePrices.autoClicker[gameState.autoClickerLevel])}</div>
+                            <div class="item-name">🤖 АВТОКЛИКЕР +${(gameState.autoClickerLevel || 0) + 1}</div>
+                            <div class="item-price">💰 ${formatNumber(upgradePrices.autoClicker[gameState.autoClickerLevel || 0])}</div>
                         </div>
                         <button class="buy-btn" onclick="buyUpgrade('autoClicker')">↑</button>
                     </div>
                 `;
             }
             
-            if (gameState.critLevel < 5) {
+            if ((gameState.critLevel || 0) < 5) {
                 html += `
                     <div class="shop-item">
                         <div class="item-info">
                             <div class="item-name">⚡ КРИТ +10%</div>
-                            <div class="item-price">💰 ${formatNumber(upgradePrices.crit[gameState.critLevel])}</div>
+                            <div class="item-price">💰 ${formatNumber(upgradePrices.crit[gameState.critLevel || 0])}</div>
                         </div>
                         <button class="buy-btn" onclick="buyUpgrade('crit')">↑</button>
                     </div>
@@ -1817,14 +1935,14 @@
         }
         
         function buyUpgrade(type) {
-            const level = gameState[type + 'Level'];
+            const level = gameState[type + 'Level'] || 0;
             if (level >= 5) return;
             
             const price = upgradePrices[type][level];
             
-            if (gameState.balance >= price) {
-                gameState.balance -= price;
-                gameState[type + 'Level']++;
+            if ((gameState.balance || 0) >= price) {
+                gameState.balance = (gameState.balance || 0) - price;
+                gameState[type + 'Level'] = (gameState[type + 'Level'] || 0) + 1;
                 saveGame();
                 updateUI();
                 renderCurrentTab();
@@ -1835,9 +1953,9 @@
         }
         
         function exchangeDiamonds() {
-            if (gameState.diamonds >= 1) {
-                gameState.diamonds--;
-                gameState.balance += 1000;
+            if ((gameState.diamonds || 0) >= 1) {
+                gameState.diamonds = (gameState.diamonds || 0) - 1;
+                gameState.balance = (gameState.balance || 0) + 1000;
                 saveGame();
                 updateUI();
                 renderCurrentTab();
@@ -1848,18 +1966,26 @@
         }
         
         function renderStats(content) {
-            const totalIncome = gameState.autoClickerLevel + 
-                gameState.myBusinesses.reduce((sum, b) => {
-                    const template = businessTemplates[b.templateId];
-                    return sum + (template.baseIncome * b.level);
-                }, 0);
+            let totalIncome = gameState.autoClickerLevel || 0;
             
-            const ownedBusinesses = gameState.myBusinesses.length;
+            if (gameState.myBusinesses && gameState.myBusinesses.length > 0) {
+                totalIncome += gameState.myBusinesses.reduce((sum, b) => {
+                    if (b && b.level > 0) {
+                        const template = businessTemplates[b.templateId];
+                        if (template) {
+                            return sum + (template.baseIncome * b.level);
+                        }
+                    }
+                    return sum;
+                }, 0);
+            }
+            
+            const ownedBusinesses = gameState.myBusinesses ? gameState.myBusinesses.length : 0;
             const ownedProperties = [
-                ...gameState.houses.filter(h => h.owned),
-                ...gameState.cars.filter(c => c.owned),
-                ...gameState.planes.filter(p => p.owned),
-                ...gameState.ships.filter(s => s.owned)
+                ...(gameState.houses || []).filter(h => h && h.owned),
+                ...(gameState.cars || []).filter(c => c && c.owned),
+                ...(gameState.planes || []).filter(p => p && p.owned),
+                ...(gameState.ships || []).filter(s => s && s.owned)
             ].length;
             
             content.innerHTML = `
@@ -1868,15 +1994,15 @@
                     
                     <div class="property-item" style="justify-content:space-between;">
                         <span>👆 ВСЕГО КЛИКОВ</span>
-                        <span style="color:#ffd700;">${formatNumber(gameState.totalClicks)}</span>
+                        <span style="color:#ffd700;">${formatNumber(gameState.totalClicks || 0)}</span>
                     </div>
                     <div class="property-item" style="justify-content:space-between;">
                         <span>💰 ЗАРАБОТАНО</span>
-                        <span style="color:#ffd700;">${formatNumber(Math.floor(gameState.totalEarned))}</span>
+                        <span style="color:#ffd700;">${formatNumber(Math.floor(gameState.totalEarned || 0))}</span>
                     </div>
                     <div class="property-item" style="justify-content:space-between;">
                         <span>⏱️ ДОХОД/СЕК</span>
-                        <span style="color:#ffd700;">${totalIncome}</span>
+                        <span style="color:#ffd700;">${Math.floor(totalIncome)}</span>
                     </div>
                     <div class="property-item" style="justify-content:space-between;">
                         <span>💼 БИЗНЕСОВ</span>
@@ -1888,11 +2014,11 @@
                     </div>
                     <div class="property-item" style="justify-content:space-between;">
                         <span>🎮 В ИГРЕ</span>
-                        <span style="color:#ffd700;">${Math.floor(gameState.playTime / 60)} МИН</span>
+                        <span style="color:#ffd700;">${Math.floor((gameState.playTime || 0) / 60)} МИН</span>
                     </div>
                     <div class="property-item" style="justify-content:space-between;">
                         <span>💎 АЛМАЗЫ</span>
-                        <span style="color:#ffd700;">${gameState.diamonds}</span>
+                        <span style="color:#ffd700;">${gameState.diamonds || 0}</span>
                     </div>
                     
                     <div style="margin-top:20px;">
@@ -1960,28 +2086,29 @@
         
         function saveNickname() {
             const newNick = document.getElementById('nicknameInput').value.trim();
-            if (newNick) {
-                if (usersDatabase[newNick] && newNick !== currentUser) {
-                    alert('❌ Такой логин уже занят!');
-                    return;
-                }
-                
-                // Меняем логин в базе
-                if (currentUserLogin) {
-                    const userData = usersDatabase[currentUserLogin];
-                    delete usersDatabase[currentUserLogin];
-                    usersDatabase[newNick] = userData;
-                    currentUserLogin = newNick;
-                    currentUser = newNick;
-                    saveUsersDatabase();
-                }
-                
-                document.getElementById('username').innerHTML = `👑 ${newNick} <span class="cloud-badge">☁️ ОБЛАКО</span>`;
-                saveGame();
-                closeNicknameModal();
-                renderCurrentTab();
-                updateTopPlayers();
+            if (!newNick) return;
+            
+            if (usersDatabase[newNick] && newNick !== currentUser) {
+                alert('❌ Такой логин уже занят!');
+                return;
             }
+            
+            // Меняем логин в базе
+            if (currentUserLogin) {
+                const userData = usersDatabase[currentUserLogin];
+                delete usersDatabase[currentUserLogin];
+                userData.settings.nickname = newNick;
+                usersDatabase[newNick] = userData;
+                currentUserLogin = newNick;
+                currentUser = newNick;
+                saveUsersDatabase();
+            }
+            
+            document.getElementById('username').innerHTML = `👑 ${newNick} <span class="cloud-badge">☁️ ОБЛАКО</span>`;
+            saveGame();
+            closeNicknameModal();
+            renderCurrentTab();
+            updateTopPlayers();
         }
         
         function resetGame() {
@@ -1989,7 +2116,8 @@
                 localStorage.removeItem('imperiaClickerLocal');
                 if (currentUserLogin) {
                     // Обнуляем прогресс, но сохраняем аккаунт
-                    createNewUser(currentUserLogin, usersDatabase[currentUserLogin].password);
+                    const password = usersDatabase[currentUserLogin].password;
+                    createNewUser(currentUserLogin, password);
                     startGame();
                 } else {
                     location.reload();
@@ -2002,25 +2130,33 @@
         setInterval(() => {
             if (!currentUser || !gameState) return;
             
+            let income = 0;
+            
             if (gameState.autoClickerLevel > 0) {
-                gameState.balance += gameState.autoClickerLevel;
-                gameState.totalEarned += gameState.autoClickerLevel;
+                income += gameState.autoClickerLevel;
             }
             
-            gameState.myBusinesses.forEach(business => {
-                if (business.level > 0) {
-                    const template = businessTemplates[business.templateId];
-                    const income = template.baseIncome * business.level;
-                    gameState.balance += income;
-                    gameState.totalEarned += income;
-                    business.totalEarned += income;
-                }
-            });
+            if (gameState.myBusinesses && gameState.myBusinesses.length > 0) {
+                gameState.myBusinesses.forEach(business => {
+                    if (business && business.level > 0) {
+                        const template = businessTemplates[business.templateId];
+                        if (template) {
+                            const businessIncome = template.baseIncome * business.level;
+                            income += businessIncome;
+                            business.totalEarned = (business.totalEarned || 0) + businessIncome;
+                        }
+                    }
+                });
+            }
             
-            gameState.playTime++;
+            if (income > 0) {
+                gameState.balance = (gameState.balance || 0) + income;
+                gameState.totalEarned = (gameState.totalEarned || 0) + income;
+            }
+            
+            gameState.playTime = (gameState.playTime || 0) + 1;
             updateUI();
             saveGame();
-            updateTopPlayers(); // Обновляем топ
         }, 1000);
         
         // ========== НАВИГАЦИЯ ==========
