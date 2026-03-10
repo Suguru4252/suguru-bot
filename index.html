@@ -14,7 +14,6 @@
             -webkit-tap-highlight-color: transparent;
         }
         
-        /* ========== ОТКЛЮЧЕНИЕ PULL-TO-REFRESH ========== */
         html, body {
             overscroll-behavior: none;
             overflow: hidden;
@@ -23,7 +22,6 @@
             height: 100%;
             margin: 0;
             padding: 0;
-            touch-action: pan-y pinch-zoom;
         }
         
         body {
@@ -286,6 +284,20 @@
             width: 100%;
             margin: 5px 0;
             font-size: 16px;
+        }
+        
+        .btn-crypto-portfolio {
+            background: linear-gradient(135deg, #7b1fa2 0%, #4a0072 100%);
+            border: 2px solid #ffd700;
+            color: white;
+            padding: 12px 15px;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin: 5px 0 15px 0;
+            font-size: 16px;
+            text-align: center;
         }
         
         .input-field {
@@ -629,6 +641,29 @@
             border-radius: 20px;
             font-size: 14px;
             cursor: pointer;
+        }
+        
+        .crypto-portfolio-stats {
+            background: rgba(123, 31, 162, 0.2);
+            border: 2px solid #7b1fa2;
+            border-radius: 15px;
+            padding: 15px;
+            margin: 10px 0 20px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+        }
+        
+        .crypto-portfolio-label {
+            font-size: 14px;
+            color: #b39ddb;
+        }
+        
+        .crypto-portfolio-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #ffd700;
         }
         
         .collection-grid {
@@ -993,6 +1028,10 @@
         <div class="modal-content" id="cryptoModalContent"></div>
     </div>
     
+    <div class="modal" id="portfolioModal">
+        <div class="modal-content" id="portfolioModalContent"></div>
+    </div>
+    
     <div class="modal" id="nicknameModal">
         <div class="modal-content">
             <div class="modal-title">✏️ ИЗМЕНИТЬ НИК</div>
@@ -1004,7 +1043,7 @@
     
     <script>
         // ========== НАСТРОЙКИ ==========
-        const APP_VERSION = '2.0.3';
+        const APP_VERSION = '2.0.4';
         let currentUser = "ИГРОК";
         let currentUserId = null;
         let gameState = null;
@@ -1459,6 +1498,100 @@
                 newPrice = Math.min(newPrice, crypto.basePrice * 10);
                 return Math.floor(newPrice);
             });
+        }
+        
+        // Функция для подсчета общего портфеля крипты
+        function calculateTotalCryptoPortfolio() {
+            if (!gameState || !cryptoPrices) return 0;
+            
+            let total = 0;
+            gameState.crypto.forEach(c => {
+                if (c.owned > 0) {
+                    const cryptoData = cryptoCurrencies.find(cr => cr.id === c.id);
+                    if (cryptoData) {
+                        const price = cryptoPrices[c.id] || cryptoData.basePrice;
+                        total += price * c.owned;
+                    }
+                }
+            });
+            return total;
+        }
+        
+        // Функция для отображения портфеля в модальном окне
+        function showCryptoPortfolio() {
+            if (!gameState) return;
+            
+            const modal = document.getElementById('portfolioModal');
+            const modalContent = document.getElementById('portfolioModalContent');
+            
+            let totalPortfolio = calculateTotalCryptoPortfolio();
+            let totalIncome = 0;
+            
+            let html = '<div class="modal-title">📊 МОЙ КРИПТОПОРТФЕЛЬ</div>';
+            
+            // Общая стоимость
+            html += `
+                <div style="background: rgba(123, 31, 162, 0.3); border-radius: 15px; padding: 15px; margin-bottom: 20px; text-align: center;">
+                    <div style="font-size: 14px; color: #b39ddb;">💰 ОБЩАЯ СТОИМОСТЬ</div>
+                    <div style="font-size: 24px; font-weight: bold; color: #ffd700;">${formatFullNumber(totalPortfolio)}</div>
+                </div>
+            `;
+            
+            // Список крипты в портфеле
+            let hasCrypto = false;
+            gameState.crypto.forEach(c => {
+                if (c.owned > 0) {
+                    hasCrypto = true;
+                    const cryptoData = cryptoCurrencies.find(cr => cr.id === c.id);
+                    if (cryptoData) {
+                        const price = cryptoPrices[c.id] || cryptoData.basePrice;
+                        const value = price * c.owned;
+                        const incomePerSec = Math.floor(price / 1000) * c.owned;
+                        totalIncome += incomePerSec;
+                        
+                        html += `
+                            <div style="background: rgba(0, 0, 0, 0.3); border-radius: 10px; padding: 12px; margin-bottom: 10px; border-left: 4px solid #00c853;">
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span style="font-weight: bold; color: #00c853;">${cryptoData.emoji} ${cryptoData.name}</span>
+                                    <span style="color: #ffd700;">${formatFullNumber(c.owned)} шт</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+                                    <span style="font-size: 14px; color: #b39ddb;">Стоимость:</span>
+                                    <span style="color: #ffd700;">${formatFullNumber(value)}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; font-size: 12px;">
+                                    <span style="color: #b39ddb;">Цена:</span>
+                                    <span style="color: #4CAF50;">${formatFullNumber(price)}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; font-size: 12px;">
+                                    <span style="color: #b39ddb;">Доход/сек:</span>
+                                    <span style="color: #ff9800;">+${formatFullNumber(incomePerSec)}</span>
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+            });
+            
+            if (!hasCrypto) {
+                html += '<div style="text-align: center; padding: 30px; color: #666;">У вас пока нет криптовалюты</div>';
+            } else {
+                html += `
+                    <div style="background: rgba(76, 175, 80, 0.1); border-radius: 10px; padding: 10px; margin-top: 15px; text-align: center;">
+                        <div style="font-size: 14px; color: #b39ddb;">⏱️ ОБЩИЙ ДОХОД/СЕК</div>
+                        <div style="font-size: 18px; color: #4CAF50;">+${formatFullNumber(totalIncome)}</div>
+                    </div>
+                `;
+            }
+            
+            html += '<div class="close-btn" onclick="closePortfolioModal()">ЗАКРЫТЬ</div>';
+            
+            modalContent.innerHTML = html;
+            modal.classList.add('active');
+        }
+        
+        function closePortfolioModal() {
+            document.getElementById('portfolioModal').classList.remove('active');
         }
         
         // ========== ЭКРАН ПРИВЕТСТВИЯ ==========
@@ -2027,9 +2160,18 @@
             });
         }
         
-        // ========== КРИПТА (рендер без кнопки обновления) ==========
+        // ========== КРИПТА (рендер с кнопкой портфеля) ==========
         function renderCrypto(content) {
             let html = '<div class="card"><div class="card-title">📈 КРИПТОРЫНОК</div>';
+            
+            // Кнопка портфеля вверху
+            let totalPortfolio = calculateTotalCryptoPortfolio();
+            html += `
+                <div class="btn-crypto-portfolio" onclick="showCryptoPortfolio()">
+                    📊 МОЙ ПОРТФЕЛЬ: ${formatFullNumber(totalPortfolio)} 💰
+                </div>
+            `;
+            
             html += '<div style="text-align:center; margin-bottom:15px; color:#00c853; font-size:14px;">⏱️ Цены обновляются каждые 10 минут</div>';
             
             if (gameState.specialItem && !gameState.specialItem.owned) {
@@ -2386,6 +2528,7 @@
             }
             
             let totalCrypto = gameState.crypto.reduce((sum, c) => sum + c.owned, 0);
+            let totalPortfolio = calculateTotalCryptoPortfolio();
             
             const myRank = getPlayerRank();
             
@@ -2414,8 +2557,12 @@
                         <span style="color:#ffd700;">${totalCollections}/100+</span>
                     </div>
                     <div class="property-item" style="justify-content:space-between;">
-                        <span>📈 КРИПТА</span>
+                        <span>📈 КРИПТА (шт)</span>
                         <span style="color:#ffd700;">${formatFullNumber(totalCrypto)} монет</span>
+                    </div>
+                    <div class="property-item" style="justify-content:space-between;">
+                        <span>💰 ПОРТФЕЛЬ</span>
+                        <span style="color:#ffd700;">${formatFullNumber(totalPortfolio)}</span>
                     </div>
                     <div class="property-item" style="justify-content:space-between;">
                         <span>🏆 МЕСТО В ТОПЕ</span>
@@ -2641,6 +2788,8 @@
             window.showCollection = showCollection;
             window.buyCollectionItem = buyCollectionItem;
             window.closeCollectionModal = closeCollectionModal;
+            window.showCryptoPortfolio = showCryptoPortfolio;
+            window.closePortfolioModal = closePortfolioModal;
             window.buyUpgrade = buyUpgrade;
             window.exchangeDiamonds = exchangeDiamonds;
             window.resetGame = resetGame;
