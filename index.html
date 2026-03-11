@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>IMPERIA CLICKER 2026</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Убираем внешний скрипт Telegram -->
     <style>
         * {
             margin: 0;
@@ -184,6 +184,7 @@
             position: relative;
             z-index: 5;
             pointer-events: auto;
+            transition: transform 0.1s;
         }
         
         .click-btn:active {
@@ -629,6 +630,11 @@
             font-size: 12px;
         }
         
+        .crypto-change {
+            font-size: 12px;
+            margin-left: 5px;
+        }
+        
         .crypto-actions {
             display: flex;
             gap: 5px;
@@ -992,6 +998,14 @@
             margin: 15px 0;
             flex-wrap: wrap;
         }
+        
+        .profit-up {
+            color: #4CAF50;
+        }
+        
+        .profit-down {
+            color: #f44336;
+        }
     </style>
 </head>
 <body>
@@ -1067,8 +1081,17 @@
     </div>
     
     <script>
+        // ========== ЭМУЛЯЦИЯ TELEGRAM ДЛЯ ОФЛАЙН-РЕЖИМА ==========
+        window.Telegram = {
+            WebApp: {
+                ready: function() {},
+                expand: function() {},
+                initDataUnsafe: { user: { id: 123456789 } }
+            }
+        };
+        
         // ========== НАСТРОЙКИ ==========
-        const APP_VERSION = '2.1.0';
+        const APP_VERSION = '2.3.2-OFFLINE';
         let currentUser = "ИГРОК";
         let currentUserId = null;
         let gameState = null;
@@ -1322,9 +1345,6 @@
             } else {
                 topPlayers = [];
             }
-            
-            // Убеждаемся, что у каждого игрока есть deviceId
-            topPlayers = topPlayers.filter(p => p.deviceId);
         }
         
         function saveTopPlayers() {
@@ -1356,7 +1376,7 @@
                 topPlayers.push(playerData);
             }
             
-            // Удаляем возможные дубликаты (на всякий случай)
+            // Удаляем возможные дубликаты
             const uniquePlayers = [];
             const seen = new Set();
             for (const player of topPlayers) {
@@ -1490,7 +1510,8 @@
                     const cryptoData = cryptoCurrencies.find(cr => cr.id === c.id);
                     if (c.owned > 0 && cryptoData) {
                         const price = cryptoPrices[c.id] || cryptoData.basePrice;
-                        income += (price / 1000) * c.owned * seconds;
+                        // Доход УМЕНЬШЕН на 50% (price/2000)
+                        income += (price / 2000) * c.owned * seconds;
                     }
                 });
             }
@@ -1507,9 +1528,18 @@
                 const minutes = Math.floor(seconds / 60);
                 const secs = seconds % 60;
                 
-                setTimeout(() => {
-                    alert(`⏱️ ОФФЛАЙН ДОХОД\nОтсутствовал: ${minutes} мин ${secs} сек\nЗаработано: ${formatFullNumber(earned)} монет`);
-                }, 1000);
+                // Показываем уведомление с суммой
+                alert(`⏱️ ОФФЛАЙН ДОХОД\nОтсутствовал: ${minutes} мин ${secs} сек\n💰 ЗАРАБОТАНО: ${formatFullNumber(earned)} монет`);
+                
+                // Показываем бейдж
+                const badge = document.getElementById('offlineBadge');
+                if (badge) {
+                    badge.style.display = 'inline-block';
+                    badge.textContent = `⏱️ +${formatFullNumber(earned)} ЗА ОФФЛАЙН`;
+                    setTimeout(() => {
+                        badge.style.display = 'none';
+                    }, 5000);
+                }
             }
         }
         
@@ -1523,6 +1553,22 @@
                 newPrice = Math.min(newPrice, crypto.basePrice * 10);
                 return Math.floor(newPrice);
             });
+        }
+        
+        // Функция для подсчета изменения цены в процентах
+        function getPriceChange(cryptoId, currentPrice) {
+            const crypto = cryptoCurrencies[cryptoId];
+            if (!crypto) return 0;
+            return ((currentPrice - crypto.basePrice) / crypto.basePrice * 100).toFixed(1);
+        }
+        
+        // Функция для подсчета прибыли/убытка
+        function calculateProfit(cryptoId, amount) {
+            const crypto = cryptoCurrencies[cryptoId];
+            const currentPrice = cryptoPrices[cryptoId] || crypto.basePrice;
+            const buyPrice = crypto.basePrice;
+            const profitPerCoin = currentPrice - buyPrice;
+            return profitPerCoin * amount;
         }
         
         // Функция для подсчета общего портфеля крипты
@@ -1571,8 +1617,15 @@
                     if (cryptoData) {
                         const price = cryptoPrices[c.id] || cryptoData.basePrice;
                         const value = price * c.owned;
-                        const incomePerSec = Math.floor((price / 1000) * c.owned);
+                        // Доход УМЕНЬШЕН на 50% (price/2000)
+                        const incomePerSec = Math.floor((price / 2000) * c.owned);
                         totalIncome += incomePerSec;
+                        
+                        // Расчет прибыли/убытка
+                        const profit = calculateProfit(c.id, c.owned);
+                        const profitPercent = ((price - cryptoData.basePrice) / cryptoData.basePrice * 100).toFixed(1);
+                        const profitClass = profit >= 0 ? 'profit-up' : 'profit-down';
+                        const profitSign = profit >= 0 ? '+' : '';
                         
                         html += `
                             <div style="background: rgba(0, 0, 0, 0.3); border-radius: 10px; padding: 12px; margin-bottom: 10px; border-left: 4px solid #00c853;">
@@ -1585,8 +1638,16 @@
                                     <span style="color: #ffd700;">${formatFullNumber(value)}</span>
                                 </div>
                                 <div style="display: flex; justify-content: space-between; font-size: 12px;">
-                                    <span style="color: #b39ddb;">Цена:</span>
+                                    <span style="color: #b39ddb;">Цена сейчас:</span>
                                     <span style="color: #4CAF50;">${formatFullNumber(price)}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; font-size: 12px;">
+                                    <span style="color: #b39ddb;">Цена покупки:</span>
+                                    <span style="color: #ff9800;">${formatFullNumber(cryptoData.basePrice)}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; font-size: 12px;">
+                                    <span style="color: #b39ddb;">Прибыль:</span>
+                                    <span class="${profitClass}">${profitSign}${formatFullNumber(profit)} (${profitSign}${profitPercent}%)</span>
                                 </div>
                                 <div style="display: flex; justify-content: space-between; font-size: 12px;">
                                     <span style="color: #b39ddb;">Доход/сек:</span>
@@ -1665,7 +1726,7 @@
                             <div class="quick-amount-btn" onclick="setTradeAmount(100)">100</div>
                             <div class="quick-amount-btn" onclick="setTradeAmount(1000)">1K</div>
                             <div class="quick-amount-btn" onclick="setTradeAmount(10000)">10K</div>
-                            <div class="quick-amount-btn" onclick="setTradeAmount(maxBuy)">МАКС</div>
+                            <div class="quick-amount-btn" onclick="setTradeAmount(${maxBuy})">МАКС</div>
                         </div>
                     </div>
                     
@@ -1698,7 +1759,7 @@
                             <div class="quick-amount-btn" onclick="setTradeAmount(100)">100</div>
                             <div class="quick-amount-btn" onclick="setTradeAmount(1000)">1K</div>
                             <div class="quick-amount-btn" onclick="setTradeAmount(10000)">10K</div>
-                            <div class="quick-amount-btn" onclick="setTradeAmount(maxSell)">ВСЁ</div>
+                            <div class="quick-amount-btn" onclick="setTradeAmount(${maxSell})">ВСЁ (${formatFullNumber(maxSell)} шт)</div>
                         </div>
                     </div>
                     
@@ -1921,20 +1982,48 @@
             document.getElementById('levelProgress').style.width = Math.min(expPercent, 100) + '%';
         }
         
+        // Новый приятный звук клика с проверкой на офлайн
         function playClickSound() {
             if (!settings.soundEnabled) return;
             try {
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const oscillator = audioCtx.createOscillator();
-                const gainNode = audioCtx.createGain();
-                oscillator.type = 'sine';
-                oscillator.frequency.value = 800;
-                gainNode.gain.value = 0.1;
-                oscillator.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-                oscillator.start();
-                oscillator.stop(audioCtx.currentTime + 0.1);
-            } catch(e) {}
+                if (window.AudioContext || window.webkitAudioContext) {
+                    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    
+                    // Создаем основной тон
+                    const oscillator = audioCtx.createOscillator();
+                    const gainNode = audioCtx.createGain();
+                    
+                    oscillator.type = 'sine';
+                    oscillator.frequency.value = 523.25; // Нота До (приятный звук)
+                    
+                    gainNode.gain.value = 0.15;
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioCtx.destination);
+                    
+                    oscillator.start();
+                    oscillator.stop(audioCtx.currentTime + 0.08);
+                    
+                    // Добавляем второй тон для объема
+                    const oscillator2 = audioCtx.createOscillator();
+                    const gainNode2 = audioCtx.createGain();
+                    
+                    oscillator2.type = 'triangle';
+                    oscillator2.frequency.value = 659.25; // Нота Ми
+                    
+                    gainNode2.gain.value = 0.1;
+                    gainNode2.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+                    
+                    oscillator2.connect(gainNode2);
+                    gainNode2.connect(audioCtx.destination);
+                    
+                    oscillator2.start();
+                    oscillator2.stop(audioCtx.currentTime + 0.08);
+                }
+            } catch(e) {
+                console.log('Audio not supported offline');
+            }
         }
         
         function createFloatingEffect(x, y, text) {
@@ -2027,7 +2116,8 @@
                         const cryptoData = cryptoCurrencies.find(cr => cr.id === c.id);
                         if (cryptoData) {
                             const price = cryptoPrices[c.id] || cryptoData.basePrice;
-                            total += (price / 1000) * c.owned;
+                            // Доход УМЕНЬШЕН на 50% (price/2000)
+                            total += (price / 2000) * c.owned;
                         }
                     }
                 });
@@ -2074,6 +2164,7 @@
                 
                 html += '<div style="margin-bottom:10px; text-align:center; color:#ffd700;">ПО ОБЩЕМУ ЗАРАБОТКУ</div>';
                 
+                // Показываем топ-20 игроков
                 topPlayers.slice(0, 20).forEach((player, index) => {
                     const rank = index + 1;
                     let rankClass = '';
@@ -2407,7 +2498,7 @@
                 </div>
             `;
             
-            html += '<div style="text-align:center; margin-bottom:15px; color:#00c853; font-size:14px;">⏱️ Цены обновляются каждые 10 минут</div>';
+            html += '<div style="text-align:center; margin-bottom:15px; color:#00c853; font-size:14px;">⏱️ Цены обновляются каждые 5 минут</div>';
             
             if (gameState.specialItem && !gameState.specialItem.owned) {
                 html += `
@@ -2436,12 +2527,16 @@
                 const priceChange = ((currentPrice - crypto.basePrice) / crypto.basePrice * 100).toFixed(1);
                 const changeColor = priceChange >= 0 ? '#4CAF50' : '#f44336';
                 
-                // Доход: текущая цена / 1000 за штуку
-                const incomePerCoin = currentPrice / 1000;
+                // Доход: текущая цена / 2000 за штуку (УМЕНЬШЕНО на 50%)
+                const incomePerCoin = currentPrice / 2000;
                 const totalIncome = Math.floor(incomePerCoin * userCrypto.owned);
                 
                 // Проверка, распродана ли крипта
                 const isSoldOut = userCrypto.owned >= crypto.maxBuy;
+                
+                // Прибыль/убыток
+                const profit = calculateProfit(crypto.id, userCrypto.owned);
+                const profitSign = profit >= 0 ? '+' : '';
                 
                 html += `
                     <div class="crypto-item">
@@ -2450,6 +2545,7 @@
                             <div class="crypto-price">💰 ${formatFullNumber(currentPrice)} <span style="color:${changeColor};">(${priceChange}%)</span></div>
                             <div class="crypto-owned">Владею: ${formatFullNumber(userCrypto.owned)} / ${formatFullNumber(crypto.maxBuy)}</div>
                             <div class="crypto-profit">⏱️ Доход: +${formatFullNumber(totalIncome)}/сек</div>
+                            ${userCrypto.owned > 0 ? `<div style="color:${profit >= 0 ? '#4CAF50' : '#f44336'}; font-size:12px;">📈 Прибыль: ${profitSign}${formatFullNumber(profit)}</div>` : ''}
                             ${isSoldOut ? '<div style="color:#f44336; font-weight:bold; margin-top:5px;">⚠️ РАСПРОДАНО</div>' : ''}
                         </div>
                         <div class="crypto-actions">
@@ -2689,7 +2785,8 @@
                         const cryptoData = cryptoCurrencies.find(cr => cr.id === c.id);
                         if (cryptoData) {
                             const price = cryptoPrices[c.id] || cryptoData.basePrice;
-                            totalIncome += (price / 1000) * c.owned;
+                            // Доход УМЕНЬШЕН на 50%
+                            totalIncome += (price / 2000) * c.owned;
                         }
                     }
                 });
@@ -2796,7 +2893,7 @@
                         <div class="info-text">📅 ИЗДАНИЕ 2026</div>
                         <div class="info-text">👨‍💻 СОЗДАТЕЛИ: SuguruStudio</div>
                         <div class="info-text">🔧 ВЕРСИЯ: ${APP_VERSION}</div>
-                        <div class="info-text"><a href="#" class="footer-link" onclick="alert('Политика конфиденциальности'); return false;">🔒 ПОЛИТИКА</a></div>
+                        <div class="info-text"><a href="#" class="footer-link" onclick="alert('Политика конфиденциальности: Мы не собираем ваши данные. Вся информация хранится локально на вашем устройстве.'); return false;">🔒 ПОЛИТИКА КОНФИДЕНЦИАЛЬНОСТИ</a></div>
                     </div>
                 </div>
             `;
@@ -2871,7 +2968,8 @@
                         const cryptoData = cryptoCurrencies.find(cr => cr.id === c.id);
                         if (cryptoData) {
                             const price = cryptoPrices[c.id] || cryptoData.basePrice;
-                            income += (price / 1000) * c.owned;
+                            // Доход УМЕНЬШЕН на 50% в реальном времени
+                            income += (price / 2000) * c.owned;
                         }
                     }
                 });
@@ -2892,7 +2990,7 @@
             saveGame();
         }, 1000);
         
-        // Обновление цен крипты каждые 10 минут (600000 мс)
+        // Обновление цен крипты каждые 5 минут (300000 мс)
         setInterval(() => {
             if (gameState) {
                 updateCryptoPrices();
@@ -2901,8 +2999,13 @@
                 if (activeTab && activeTab.dataset.tab === 'crypto') {
                     renderTab('crypto');
                 }
+                // Если открыт портфель, тоже обновляем
+                const portfolioModal = document.getElementById('portfolioModal');
+                if (portfolioModal.classList.contains('active')) {
+                    showCryptoPortfolio();
+                }
             }
-        }, 600000);
+        }, 300000);
         
         // Обновление топа каждые 30 секунд
         setInterval(() => {
