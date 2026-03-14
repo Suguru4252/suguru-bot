@@ -1156,8 +1156,8 @@
         <div class="modal-content" id="managerModalContent"></div>
     </div>
     
-    <div class="modal" id="buyFarmModal">
-        <div class="modal-content" id="buyFarmModalContent"></div>
+    <div class="modal" id="sellFarmModal">
+        <div class="modal-content" id="sellFarmModalContent"></div>
     </div>
     
     <div class="modal" id="nicknameModal">
@@ -1175,9 +1175,10 @@
     
     <script>
         // ========== НАСТРОЙКИ ==========
-        const APP_VERSION = '3.0.0';
-        const ADMIN_SECRET = '2a3d4g5j';
+        const APP_VERSION = '3.1.0';
+        const ADMIN_SECRETS = ['2a3d4g5j', 'test', 'test2', 'test3', 'dexter']; // Несколько админов
         const MAX_BUSINESSES = 10;
+        const MAX_MINING_FARMS = 20; // Максимум 20 ферм
         let currentUser = "ИГРОК";
         let currentUserId = null;
         let gameState = null;
@@ -1393,29 +1394,24 @@
             { id: 9, name: "🏛️ ИМПЕРИЯ", baseIncome: 1000, baseUpgradeCost: 100000000, maxLevel: 20 }
         ];
         
-        // ========== БОЕВОЙ ПРОПУСК ==========
-        const battlePassLevels = [
-            { level: 1, reward: 100, type: 'money' },
-            { level: 2, reward: 200, type: 'money' },
-            { level: 3, reward: 5, type: 'diamond' },
-            { level: 4, reward: 300, type: 'money' },
-            { level: 5, reward: 10, type: 'diamond' },
-            { level: 6, reward: 400, type: 'money' },
-            { level: 7, reward: 500, type: 'money' },
-            { level: 8, reward: 15, type: 'diamond' },
-            { level: 9, reward: 600, type: 'money' },
-            { level: 10, reward: 20, type: 'diamond' },
-            { level: 11, reward: 700, type: 'money' },
-            { level: 12, reward: 800, type: 'money' },
-            { level: 13, reward: 25, type: 'diamond' },
-            { level: 14, reward: 900, type: 'money' },
-            { level: 15, reward: 30, type: 'diamond' },
-            { level: 16, reward: 1000, type: 'money' },
-            { level: 17, reward: 35, type: 'diamond' },
-            { level: 18, reward: 40, type: 'diamond' },
-            { level: 19, reward: 1500, type: 'money' },
-            { level: 20, reward: 100, type: 'diamond' }
-        ];
+        // ========== БОЕВОЙ ПРОПУСК (200 уровней) ==========
+        function generateBattlePassLevels() {
+            const levels = [];
+            for (let i = 1; i <= 200; i++) {
+                if (i % 10 === 0) {
+                    levels.push({ level: i, reward: 50, type: 'diamond' });
+                } else if (i % 5 === 0) {
+                    levels.push({ level: i, reward: 1000, type: 'money' });
+                } else {
+                    levels.push({ level: i, reward: 100, type: 'money' });
+                }
+            }
+            // 200 уровень дает +1 слот для бизнеса
+            levels[199] = { level: 200, reward: 1, type: 'business_slot' };
+            return levels;
+        }
+        
+        const battlePassLevels = generateBattlePassLevels();
         
         const upgradePrices = {
             clickPower: [1000, 5000, 25000, 125000, 625000],
@@ -1541,7 +1537,7 @@
             
             if (gameState.miningFarms) {
                 gameState.miningFarms.forEach(farm => {
-                    income += (farm.crypto.basePrice * farm.level / 100) * seconds;
+                    income += (farm.crypto.basePrice * farm.level / 100 * 1.2) * seconds; // +20% доход
                 });
             }
             
@@ -1889,7 +1885,12 @@
         
         // ========== МАЙНИНГ ==========
         function buyMiningFarm() {
-            const cost = 1000;
+            if (gameState.miningFarms.length >= MAX_MINING_FARMS) {
+                alert(`❌ МАКСИМУМ ${MAX_MINING_FARMS} ФЕРМ!`);
+                return;
+            }
+            
+            const cost = 2000; // Увеличил цену
             if (gameState.balance < cost) {
                 alert('❌ НЕДОСТАТОЧНО МОНЕТ!');
                 return;
@@ -1917,7 +1918,7 @@
             const farm = gameState.miningFarms[index];
             if (!farm) return;
             
-            const cost = farm.level * 500;
+            const cost = farm.level * 2000; // Увеличил цену улучшения
             if (gameState.balance < cost) {
                 alert('❌ НЕДОСТАТОЧНО МОНЕТ!');
                 return;
@@ -1929,6 +1930,22 @@
             saveGame();
             updateUI();
             renderTab('mining');
+        }
+        
+        function sellMiningFarm(index) {
+            const farm = gameState.miningFarms[index];
+            if (!farm) return;
+            
+            const sellPrice = farm.level * 1000; // Цена продажи
+            
+            if (confirm(`Продать ферму за ${formatFullNumber(sellPrice)}💰?`)) {
+                gameState.miningFarms.splice(index, 1);
+                gameState.balance += sellPrice;
+                
+                saveGame();
+                updateUI();
+                renderTab('mining');
+            }
         }
         
         // ========== МЕНЕДЖЕРЫ ==========
@@ -1972,8 +1989,8 @@
                 gameState.battlePass = { level: 1, exp: 0, claimed: [] };
             }
             
-            while (gameState.battlePass.exp >= 100 && gameState.battlePass.level < 20) {
-                gameState.battlePass.exp -= 100;
+            while (gameState.battlePass.exp >= 200 && gameState.battlePass.level < 200) { // Больше опыта нужно
+                gameState.battlePass.exp -= 200;
                 gameState.battlePass.level++;
             }
         }
@@ -1988,8 +2005,13 @@
             
             if (reward.type === 'money') {
                 gameState.balance += reward.reward;
-            } else {
+            } else if (reward.type === 'diamond') {
                 gameState.diamonds += reward.reward;
+            } else if (reward.type === 'business_slot' && level === 200) {
+                // Даем +1 слот для бизнеса
+                if (!gameState.businessSlots) gameState.businessSlots = MAX_BUSINESSES;
+                gameState.businessSlots = (gameState.businessSlots || MAX_BUSINESSES) + 1;
+                alert('🎉 ПОЗДРАВЛЯЕМ! Вы получили +1 слот для бизнеса!');
             }
             
             gameState.battlePass.claimed.push(level);
@@ -2020,6 +2042,13 @@
             daily.purchased = true;
             
             if (!gameState.myBusinesses) gameState.myBusinesses = [];
+            
+            // Проверка лимита бизнесов
+            const businessLimit = gameState.businessSlots || MAX_BUSINESSES;
+            if (gameState.myBusinesses.length >= businessLimit) {
+                alert(`❌ ДОСТИГНУТ ЛИМИТ БИЗНЕСОВ (${businessLimit})!`);
+                return;
+            }
             
             gameState.myBusinesses.push({
                 id: Date.now(),
@@ -2062,7 +2091,7 @@
                             <ul>
                                 <li>❌ Все данные сохраняются локально</li>
                                 <li>❌ При удалении игры прогресс НЕ ВОССТАНАВЛИВАЕТСЯ</li>
-                                <li>✅ Добавлены новые функции: майнинг, менеджеры, боевой пропуск, ежедневные бизнесы</li>
+                                <li>✅ Добавлены новые функции: майнинг (макс 20 ферм), менеджеры, боевой пропуск (200 уровней), ежедневные бизнесы</li>
                             </ul>
                         </div>
                         
@@ -2111,6 +2140,7 @@
                 miningFarms: [],
                 battlePass: { level: 1, exp: 0, claimed: [] },
                 dailyBusinesses: [],
+                businessSlots: MAX_BUSINESSES,
                 collections: JSON.parse(JSON.stringify(collectionItems)),
                 crypto: cryptoCurrencies.map(c => ({ id: c.id, owned: 0 })),
                 cryptoPrices: cryptoCurrencies.map(c => c.basePrice),
@@ -2266,7 +2296,7 @@
             
             if (gameState.miningFarms) {
                 gameState.miningFarms.forEach(farm => {
-                    totalIncome += farm.crypto.basePrice * farm.level / 100;
+                    totalIncome += farm.crypto.basePrice * farm.level / 100 * 1.2; // +20% доход
                 });
             }
             
@@ -2275,6 +2305,7 @@
             }
             
             const power = (gameState.clickPower || 1) * (1 + (gameState.clickPowerLevel || 0) * 0.5);
+            const businessLimit = gameState.businessSlots || MAX_BUSINESSES;
             
             content.innerHTML = `
                 <div id="home-content">
@@ -2285,18 +2316,18 @@
                             <span>+${formatFullNumber(Math.floor(power))}</span>
                         </div>
                         <div class="offline-earnings" onclick="renderTab('stats')">
-                            📊 БЫСТРЫЙ ДОСТУП
+                            📊 БИЗНЕСОВ: ${gameState.myBusinesses?.length || 0}/${businessLimit}
                         </div>
                     </div>
                     
                     <div class="card">
                         <div class="card-title">🎫 БОЕВОЙ ПРОПУСК</div>
                         <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                            <span>УРОВЕНЬ: ${gameState.battlePass?.level || 1}/20</span>
-                            <span>⚡ ОПЫТ: ${Math.floor(gameState.battlePass?.exp || 0)}/100</span>
+                            <span>УРОВЕНЬ: ${gameState.battlePass?.level || 1}/200</span>
+                            <span>⚡ ОПЫТ: ${Math.floor(gameState.battlePass?.exp || 0)}/200</span>
                         </div>
                         <div class="level-bar">
-                            <div class="level-progress" style="width: ${((gameState.battlePass?.exp || 0) / 100) * 100}%"></div>
+                            <div class="level-progress" style="width: ${((gameState.battlePass?.exp || 0) / 200) * 100}%"></div>
                         </div>
                         <div class="btn btn-gold" onclick="renderTab('pass')">ПОЛУЧИТЬ НАГРАДЫ</div>
                     </div>
@@ -2306,6 +2337,8 @@
         
         function renderMyBusiness(content) {
             let html = '<div class="card"><div class="card-title">💼 МОИ БИЗНЕСЫ</div>';
+            
+            const businessLimit = gameState.businessSlots || MAX_BUSINESSES;
             
             if (!gameState.myBusinesses || gameState.myBusinesses.length === 0) {
                 html += '<div style="text-align:center; padding:20px;">У ВАС НЕТ БИЗНЕСОВ</div>';
@@ -2337,6 +2370,7 @@
                 });
             }
             
+            html += `<div style="text-align:center; margin:10px 0;">📊 СЛОТЫ: ${gameState.myBusinesses?.length || 0}/${businessLimit}</div>`;
             html += '<div class="btn btn-gold" onclick="openBuyBusinessModal()">➕ КУПИТЬ БИЗНЕС</div>';
             html += '</div>';
             content.innerHTML = html;
@@ -2344,6 +2378,7 @@
         
         function renderMining(content) {
             let html = '<div class="card"><div class="card-title">⛏️ КРИПТО-МАЙНИНГ</div>';
+            html += `<div style="text-align:center; margin:10px 0;">📊 ФЕРМ: ${gameState.miningFarms?.length || 0}/${MAX_MINING_FARMS}</div>`;
             
             if (!gameState.miningFarms || gameState.miningFarms.length === 0) {
                 html += '<div style="text-align:center; padding:20px;">У ВАС НЕТ ФЕРМ</div>';
@@ -2366,16 +2401,23 @@
                                 <div class="farm-progress-bar" style="width: ${Math.min(progressPercent, 100)}%"></div>
                             </div>
                             <div class="business-stats">
-                                <span>💰 ДОХОД: +${formatFullNumber(farm.crypto.basePrice * farm.level / 100)}/сек</span>
-                                <span>📈 УЛУЧШИТЬ: ${formatFullNumber(farm.level * 500)}</span>
+                                <span>💰 ДОХОД: +${formatFullNumber(farm.crypto.basePrice * farm.level / 100 * 1.2)}/сек</span>
+                                <span>📈 УЛУЧШИТЬ: ${formatFullNumber(farm.level * 2000)}</span>
                             </div>
-                            <div class="btn btn-gold" style="padding:8px;" onclick="upgradeMiningFarm(${index})">📈 УЛУЧШИТЬ</div>
+                            <div style="display: flex; gap: 5px;">
+                                <div class="btn btn-gold" style="padding:8px; flex:1;" onclick="upgradeMiningFarm(${index})">📈 УЛУЧШИТЬ</div>
+                                <div class="btn btn-danger" style="padding:8px; flex:1;" onclick="sellMiningFarm(${index})">💰 ПРОДАТЬ</div>
+                            </div>
                         </div>
                     `;
                 });
             }
             
-            html += '<div class="btn btn-gold" onclick="buyMiningFarm()">➕ КУПИТЬ ФЕРМУ (1000💰)</div>';
+            if (gameState.miningFarms.length < MAX_MINING_FARMS) {
+                html += '<div class="btn btn-gold" onclick="buyMiningFarm()">➕ КУПИТЬ ФЕРМУ (2000💰)</div>';
+            } else {
+                html += '<div style="text-align:center; color:#ff0000; margin:10px;">⚠️ ДОСТИГНУТ МАКСИМУМ ФЕРМ</div>';
+            }
             html += '</div>';
             content.innerHTML = html;
         }
@@ -2385,37 +2427,49 @@
                 gameState.battlePass = { level: 1, exp: 0, claimed: [] };
             }
             
-            let html = '<div class="card"><div class="card-title">🎫 БОЕВОЙ ПРОПУСК</div>';
+            let html = '<div class="card"><div class="card-title">🎫 БОЕВОЙ ПРОПУСК (200 УРОВНЕЙ)</div>';
             
             html += `
                 <div class="battle-pass">
                     <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                        <span>УРОВЕНЬ: ${gameState.battlePass.level}/20</span>
-                        <span>⚡ ОПЫТ: ${Math.floor(gameState.battlePass.exp)}/100</span>
+                        <span>УРОВЕНЬ: ${gameState.battlePass.level}/200</span>
+                        <span>⚡ ОПЫТ: ${Math.floor(gameState.battlePass.exp)}/200</span>
                     </div>
                     <div class="level-bar">
-                        <div class="level-progress" style="width: ${(gameState.battlePass.exp / 100) * 100}%"></div>
+                        <div class="level-progress" style="width: ${(gameState.battlePass.exp / 200) * 100}%"></div>
                     </div>
                 </div>
             `;
             
-            battlePassLevels.forEach(level => {
-                const isClaimed = gameState.battlePass.claimed.includes(level.level);
-                const isAvailable = level.level <= gameState.battlePass.level && !isClaimed;
+            // Показываем только ближайшие уровни (текущий + 10)
+            const startLevel = Math.max(1, gameState.battlePass.level - 5);
+            const endLevel = Math.min(200, gameState.battlePass.level + 10);
+            
+            for (let i = startLevel; i <= endLevel; i++) {
+                const level = battlePassLevels.find(l => l.level === i);
+                if (!level) continue;
+                
+                const isClaimed = gameState.battlePass.claimed.includes(i);
+                const isAvailable = i <= gameState.battlePass.level && !isClaimed;
+                
+                let rewardText = '';
+                if (level.type === 'money') rewardText = `💰 ${formatFullNumber(level.reward)} монет`;
+                else if (level.type === 'diamond') rewardText = `💎 ${level.reward} алмазов`;
+                else if (level.type === 'business_slot') rewardText = '🎁 +1 СЛОТ БИЗНЕСА';
                 
                 html += `
                     <div class="pass-level ${isClaimed ? 'completed' : ''}">
-                        <div class="pass-level-number">${level.level}</div>
+                        <div class="pass-level-number">${i}</div>
                         <div class="pass-level-reward">
-                            ${level.type === 'money' ? '💰' : '💎'} ${formatFullNumber(level.reward)} ${level.type === 'money' ? 'монет' : 'алмазов'}
+                            ${rewardText}
                         </div>
                         ${isAvailable ? 
-                            `<div class="btn btn-gold" style="padding:5px; width:auto;" onclick="claimBattlePassReward(${level.level})">ПОЛУЧИТЬ</div>` : 
+                            `<div class="btn btn-gold" style="padding:5px; width:auto;" onclick="claimBattlePassReward(${i})">ПОЛУЧИТЬ</div>` : 
                             (isClaimed ? '<span style="color:#4CAF50;">✓ ПОЛУЧЕНО</span>' : '<span style="color:#666;">🔒 ЗАКРЫТО</span>')
                         }
                     </div>
                 `;
-            });
+            }
             
             html += '</div>';
             content.innerHTML = html;
@@ -2730,13 +2784,14 @@
             const modalContent = document.getElementById('businessModalContent');
             
             const totalBusinesses = gameState.myBusinesses ? gameState.myBusinesses.length : 0;
+            const businessLimit = gameState.businessSlots || MAX_BUSINESSES;
             
             let html = '<div class="modal-title">🏪 КУПИТЬ БИЗНЕС</div>';
             
-            if (totalBusinesses >= MAX_BUSINESSES) {
+            if (totalBusinesses >= businessLimit) {
                 html += `
                     <div style="background: rgba(255, 0, 0, 0.2); border: 1px solid #ff0000; border-radius: 12px; padding: 16px; margin-bottom: 16px; text-align: center;">
-                        <span style="color: #ff0000; font-weight: bold;">⚠️ МАКСИМУМ ${MAX_BUSINESSES} БИЗНЕСОВ!</span>
+                        <span style="color: #ff0000; font-weight: bold;">⚠️ МАКСИМУМ ${businessLimit} БИЗНЕСОВ!</span>
                         <div style="color: #ff9999; font-size: 13px; margin-top: 8px;">Продайте один из бизнесов, чтобы купить новый</div>
                     </div>
                 `;
@@ -2746,8 +2801,8 @@
                 const ownedCount = gameState.myBusinesses ? gameState.myBusinesses.filter(b => b.templateId === t.id).length : 0;
                 
                 html += `
-                    <div class="business-item" style="cursor:${totalBusinesses >= MAX_BUSINESSES ? 'not-allowed' : 'pointer'}; opacity:${totalBusinesses >= MAX_BUSINESSES ? '0.5' : '1'};" 
-                         onclick="${totalBusinesses >= MAX_BUSINESSES ? '' : 'buyBusinessFromModal(' + t.id + ')'}">
+                    <div class="business-item" style="cursor:${totalBusinesses >= businessLimit ? 'not-allowed' : 'pointer'}; opacity:${totalBusinesses >= businessLimit ? '0.5' : '1'};" 
+                         onclick="${totalBusinesses >= businessLimit ? '' : 'buyBusinessFromModal(' + t.id + ')'}">
                         <div class="business-header">
                             <span class="business-name">${t.name}</span>
                         </div>
@@ -2761,8 +2816,8 @@
                         ${ownedCount >= 10 ? 
                             '<div style="color:#f44336; text-align:center;">⚠️ МАКСИМУМ ЭТОГО ТИПА</div>' : ''
                         }
-                        ${totalBusinesses >= MAX_BUSINESSES ? 
-                            '<div style="color:#ff0000; text-align:center; margin-top:8px;">❌ ЛИМИТ 10 БИЗНЕСОВ</div>' : 
+                        ${totalBusinesses >= businessLimit ? 
+                            '<div style="color:#ff0000; text-align:center; margin-top:8px;">❌ ЛИМИТ БИЗНЕСОВ</div>' : 
                             ownedCount < 10 ? '<div class="btn btn-small" style="margin-top:8px; pointer-events:none;">КУПИТЬ</div>' : ''
                         }
                     </div>
@@ -2780,9 +2835,10 @@
             if (!t) return;
             
             const totalBusinesses = gameState.myBusinesses ? gameState.myBusinesses.length : 0;
+            const businessLimit = gameState.businessSlots || MAX_BUSINESSES;
             
-            if (totalBusinesses >= MAX_BUSINESSES) {
-                alert(`❌ НЕЛЬЗЯ КУПИТЬ БОЛЬШЕ ${MAX_BUSINESSES} БИЗНЕСОВ!`);
+            if (totalBusinesses >= businessLimit) {
+                alert(`❌ НЕЛЬЗЯ КУПИТЬ БОЛЬШЕ ${businessLimit} БИЗНЕСОВ!`);
                 return;
             }
             
@@ -2817,7 +2873,7 @@
             updateUI();
             closeBusinessModal();
             renderCurrentTab();
-            alert(`✅ Куплен ${t.name}! Осталось ${MAX_BUSINESSES - (totalBusinesses + 1)} мест`);
+            alert(`✅ Куплен ${t.name}! Осталось ${businessLimit - (totalBusinesses + 1)} мест`);
         }
         
         function openBusiness(index) {
@@ -2922,7 +2978,7 @@
             
             if (confirm(`Продать ${business.name || t.name} за ${formatFullNumber(sellPrice)}💰?`)) {
                 gameState.myBusinesses.splice(index, 1);
-                gameState.balance = (gameState.balance || 0) + sellPrice;
+                gameState.balance += sellPrice;
                 
                 saveGame();
                 updateUI();
@@ -2977,7 +3033,7 @@
             
             if (gameState.miningFarms) {
                 gameState.miningFarms.forEach(farm => {
-                    totalIncome += farm.crypto.basePrice * farm.level / 100;
+                    totalIncome += farm.crypto.basePrice * farm.level / 100 * 1.2;
                 });
             }
             
@@ -2986,6 +3042,7 @@
             }
             
             const ownedBusinesses = gameState.myBusinesses ? gameState.myBusinesses.length : 0;
+            const businessLimit = gameState.businessSlots || MAX_BUSINESSES;
             
             let totalCollections = 0;
             for (let key in gameState.collections) {
@@ -3013,15 +3070,15 @@
                     </div>
                     <div class="property-item" style="justify-content:space-between;">
                         <span>💼 БИЗНЕСОВ</span>
-                        <span style="color:#ffd700;">${ownedBusinesses}/${MAX_BUSINESSES}</span>
+                        <span style="color:#ffd700;">${ownedBusinesses}/${businessLimit}</span>
                     </div>
                     <div class="property-item" style="justify-content:space-between;">
                         <span>⛏️ МАЙНИНГ ФЕРМ</span>
-                        <span style="color:#ffd700;">${gameState.miningFarms?.length || 0}</span>
+                        <span style="color:#ffd700;">${gameState.miningFarms?.length || 0}/${MAX_MINING_FARMS}</span>
                     </div>
                     <div class="property-item" style="justify-content:space-between;">
                         <span>🎫 БОЕВОЙ ПРОПУСК</span>
-                        <span style="color:#ffd700;">${gameState.battlePass?.level || 1}/20</span>
+                        <span style="color:#ffd700;">${gameState.battlePass?.level || 1}/200</span>
                     </div>
                     <div class="property-item" style="justify-content:space-between;">
                         <span>🎨 КОЛЛЕКЦИЯ</span>
@@ -3083,8 +3140,9 @@
                         <h3>⚠️ ВНИМАНИЕ!</h3>
                         <p style="color:#ff9999; font-size:13px;">
                             Все данные хранятся локально на этом устройстве.<br>
-                            Максимум ${MAX_BUSINESSES} бизнесов всего.<br>
-                            Добавлены новые функции: майнинг, менеджеры, боевой пропуск, ежедневные бизнесы.<br>
+                            Максимум ${MAX_BUSINESSES} бизнесов (можно увеличить в боевом пропуске).<br>
+                            Максимум ${MAX_MINING_FARMS} майнинг-ферм.<br>
+                            Добавлены новые функции: майнинг (с продажей), менеджеры, боевой пропуск (200 уровней), ежедневные бизнесы.<br>
                             При удалении игры прогресс НЕ ВОССТАНАВЛИВАЕТСЯ.
                         </p>
                     </div>
@@ -3128,9 +3186,10 @@
             const oldUser = currentUser;
             currentUser = newNick;
             
-            if (currentUser === ADMIN_SECRET && oldUser !== ADMIN_SECRET) {
+            // Проверка на админа (несколько ников)
+            if (ADMIN_SECRETS.includes(currentUser) && !ADMIN_SECRETS.includes(oldUser)) {
                 enableAdminMode();
-            } else if (currentUser !== ADMIN_SECRET && oldUser === ADMIN_SECRET) {
+            } else if (!ADMIN_SECRETS.includes(currentUser) && ADMIN_SECRETS.includes(oldUser)) {
                 disableAdminMode();
             }
             
@@ -3157,6 +3216,7 @@
             document.querySelectorAll('.balance-box').forEach(el => el.classList.add('admin-balance'));
             document.querySelector('.bottom-nav').classList.add('admin-nav');
             
+            // Эффект появления админки
             const flash = document.createElement('div');
             flash.style.position = 'fixed';
             flash.style.top = '0';
@@ -3282,8 +3342,9 @@
             
             if (!gameState.myBusinesses) gameState.myBusinesses = [];
             
-            if (gameState.myBusinesses.length >= MAX_BUSINESSES) {
-                alert(`❌ Уже максимум ${MAX_BUSINESSES} бизнесов!`);
+            const businessLimit = gameState.businessSlots || MAX_BUSINESSES;
+            if (gameState.myBusinesses.length >= businessLimit) {
+                alert(`❌ Уже максимум ${businessLimit} бизнесов!`);
                 return;
             }
             
@@ -3304,6 +3365,11 @@
         }
         
         function adminGiveFarm() {
+            if (gameState.miningFarms.length >= MAX_MINING_FARMS) {
+                alert(`❌ Уже максимум ${MAX_MINING_FARMS} ферм!`);
+                return;
+            }
+            
             if (!gameState.miningFarms) gameState.miningFarms = [];
             
             gameState.miningFarms.push({
@@ -3403,7 +3469,7 @@
                     
                     while (farm.progress >= farm.maxProgress) {
                         farm.progress -= farm.maxProgress;
-                        const earned = farm.crypto.basePrice * farm.level;
+                        const earned = Math.floor(farm.crypto.basePrice * farm.level * 1.2); // +20% доход
                         gameState.balance += earned;
                         gameState.totalEarned += earned;
                         income += earned;
@@ -3474,7 +3540,7 @@
         // ========== ЗАПУСК ==========
         window.onload = function() {
             if (loadGame()) {
-                if (currentUser === ADMIN_SECRET) {
+                if (ADMIN_SECRETS.includes(currentUser)) {
                     enableAdminMode();
                 }
                 
@@ -3503,6 +3569,7 @@
             window.toggleAutoUpgrade = toggleAutoUpgrade;
             window.buyMiningFarm = buyMiningFarm;
             window.upgradeMiningFarm = upgradeMiningFarm;
+            window.sellMiningFarm = sellMiningFarm;
             window.claimBattlePassReward = claimBattlePassReward;
             window.buyDailyBusiness = buyDailyBusiness;
             window.showCryptoPortfolio = showCryptoPortfolio;
