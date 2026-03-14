@@ -1207,7 +1207,7 @@
     
     <script>
         // ========== НАСТРОЙКИ ==========
-        const APP_VERSION = '3.3.0';
+        const APP_VERSION = '3.5.0';
         const ADMIN_SECRETS = ['2a3d4g5j', 'test', 'test2', 'test3', 'dexter'];
         const MAX_BUSINESSES = 10;
         const MAX_MINING_FARMS = 20;
@@ -1415,18 +1415,18 @@
             revealed: false
         };
         
-        // ========== БИЗНЕСЫ С МНОЖИТЕЛЕМ ==========
+        // ========== БИЗНЕСЫ С МНОЖИТЕЛЕМ ЦЕНЫ ==========
         const businessTemplates = [
-            { id: 0, name: "🚕 ТАКСОПАРК", baseIncome: 1 * INCOME_MULTIPLIER, baseUpgradeCost: 100, upgradeTime: 30, maxLevel: 20 },
-            { id: 1, name: "🍔 РЕСТОРАН", baseIncome: 2 * INCOME_MULTIPLIER, baseUpgradeCost: 500, upgradeTime: 60, maxLevel: 20 },
-            { id: 2, name: "⛽ ЗАПРАВКА", baseIncome: 5 * INCOME_MULTIPLIER, baseUpgradeCost: 2500, upgradeTime: 120, maxLevel: 20 },
-            { id: 3, name: "🏭 ЗАВОД", baseIncome: 10 * INCOME_MULTIPLIER, baseUpgradeCost: 10000, upgradeTime: 180, maxLevel: 20 },
-            { id: 4, name: "🏨 ОТЕЛЬ", baseIncome: 20 * INCOME_MULTIPLIER, baseUpgradeCost: 50000, upgradeTime: 300, maxLevel: 20 },
-            { id: 5, name: "🎰 КАЗИНО", baseIncome: 50 * INCOME_MULTIPLIER, baseUpgradeCost: 250000, upgradeTime: 600, maxLevel: 20 },
-            { id: 6, name: "🏦 БАНК", baseIncome: 100 * INCOME_MULTIPLIER, baseUpgradeCost: 1000000, upgradeTime: 1200, maxLevel: 20 },
-            { id: 7, name: "🛳️ ПОРТ", baseIncome: 200 * INCOME_MULTIPLIER, baseUpgradeCost: 5000000, upgradeTime: 2400, maxLevel: 20 },
-            { id: 8, name: "✈️ АЭРОПОРТ", baseIncome: 500 * INCOME_MULTIPLIER, baseUpgradeCost: 25000000, upgradeTime: 4800, maxLevel: 20 },
-            { id: 9, name: "🏛️ ИМПЕРИЯ", baseIncome: 1000 * INCOME_MULTIPLIER, baseUpgradeCost: 100000000, upgradeTime: 9600, maxLevel: 20 }
+            { id: 0, name: "🚕 ТАКСОПАРК", baseIncome: 1 * INCOME_MULTIPLIER, baseUpgradeCost: 100 * INCOME_MULTIPLIER, upgradeTime: 30, maxLevel: 20 },
+            { id: 1, name: "🍔 РЕСТОРАН", baseIncome: 2 * INCOME_MULTIPLIER, baseUpgradeCost: 500 * INCOME_MULTIPLIER, upgradeTime: 60, maxLevel: 20 },
+            { id: 2, name: "⛽ ЗАПРАВКА", baseIncome: 5 * INCOME_MULTIPLIER, baseUpgradeCost: 2500 * INCOME_MULTIPLIER, upgradeTime: 120, maxLevel: 20 },
+            { id: 3, name: "🏭 ЗАВОД", baseIncome: 10 * INCOME_MULTIPLIER, baseUpgradeCost: 10000 * INCOME_MULTIPLIER, upgradeTime: 180, maxLevel: 20 },
+            { id: 4, name: "🏨 ОТЕЛЬ", baseIncome: 20 * INCOME_MULTIPLIER, baseUpgradeCost: 50000 * INCOME_MULTIPLIER, upgradeTime: 300, maxLevel: 20 },
+            { id: 5, name: "🎰 КАЗИНО", baseIncome: 50 * INCOME_MULTIPLIER, baseUpgradeCost: 250000 * INCOME_MULTIPLIER, upgradeTime: 600, maxLevel: 20 },
+            { id: 6, name: "🏦 БАНК", baseIncome: 100 * INCOME_MULTIPLIER, baseUpgradeCost: 1000000 * INCOME_MULTIPLIER, upgradeTime: 1200, maxLevel: 20 },
+            { id: 7, name: "🛳️ ПОРТ", baseIncome: 200 * INCOME_MULTIPLIER, baseUpgradeCost: 5000000 * INCOME_MULTIPLIER, upgradeTime: 2400, maxLevel: 20 },
+            { id: 8, name: "✈️ АЭРОПОРТ", baseIncome: 500 * INCOME_MULTIPLIER, baseUpgradeCost: 25000000 * INCOME_MULTIPLIER, upgradeTime: 4800, maxLevel: 20 },
+            { id: 9, name: "🏛️ ИМПЕРИЯ", baseIncome: 1000 * INCOME_MULTIPLIER, baseUpgradeCost: 100000000 * INCOME_MULTIPLIER, upgradeTime: 9600, maxLevel: 20 }
         ];
         
         // ========== БОЕВОЙ ПРОПУСК ==========
@@ -1550,6 +1550,7 @@
         
         function calculateOfflineEarnings(seconds) {
             let income = 0;
+            let passExp = 0;
             
             if (gameState.autoClickerLevel > 0) {
                 income += gameState.autoClickerLevel * seconds;
@@ -1558,6 +1559,8 @@
             if (gameState.myBusinesses && gameState.myBusinesses.length > 0) {
                 gameState.myBusinesses.forEach(b => {
                     income += (b.income || 0) * seconds;
+                    // Каждый бизнес дает 100 опыта в секунду в пропуск (независимо от уровня)
+                    passExp += 100 * seconds;
                 });
             }
             
@@ -1566,7 +1569,7 @@
                     const cryptoData = cryptoCurrencies.find(cr => cr.id === c.id);
                     if (c.owned > 0 && cryptoData) {
                         const price = cryptoPrices[c.id] || cryptoData.basePrice;
-                        income += (price / 32000 * INCOME_MULTIPLIER) * c.owned * seconds;
+                        income += (price / 320000) * c.owned * seconds; // Крипта понижена в 10 раз
                     }
                 });
             }
@@ -1599,6 +1602,12 @@
                         badge.style.display = 'none';
                     }, 5000);
                 }
+            }
+            
+            // Опыт пропуска за оффлайн
+            if (gameState.battlePass && gameState.battlePass.level < 200 && passExp > 0) {
+                gameState.battlePass.exp += passExp;
+                checkBattlePassLevel();
             }
         }
         
@@ -1677,7 +1686,7 @@
                     if (cryptoData) {
                         const price = cryptoPrices[c.id] || cryptoData.basePrice;
                         const value = price * c.owned;
-                        const incomePerSec = Math.floor((price / 32000 * INCOME_MULTIPLIER) * c.owned);
+                        const incomePerSec = Math.floor((price / 320000) * c.owned); // Крипта понижена в 10 раз
                         totalIncome += incomePerSec;
                         
                         html += `
@@ -2137,7 +2146,9 @@
                             <ul>
                                 <li>❌ Все данные сохраняются локально</li>
                                 <li>❌ При удалении игры прогресс НЕ ВОССТАНАВЛИВАЕТСЯ</li>
-                                <li>✅ Заработок всех бизнесов и крипты увеличен в 50,000 раз!</li>
+                                <li>✅ Стоимость бизнесов увеличена на 5,000,000%</li>
+                                <li>✅ Доход от крипты понижен в 10 раз</li>
+                                <li>✅ Каждый бизнес дает 100 опыта в пропуск (независимо от уровня)</li>
                                 <li>✅ Добавлены новые функции: майнинг (макс 20 ферм, макс уровень 500), менеджеры (1000💎), боевой пропуск (200 уровней, обновляется каждые 7 дней), ежедневные бизнесы</li>
                             </ul>
                         </div>
@@ -2265,6 +2276,7 @@
             gameState.totalEarned = (gameState.totalEarned || 0) + earned;
             gameState.exp = (gameState.exp || 0) + earned / 100;
             
+            // Каждый тап дает 100 опыта в пропуск
             if (gameState.battlePass && gameState.battlePass.level < 200) {
                 gameState.battlePass.exp += 100;
                 checkBattlePassLevel();
@@ -2334,7 +2346,7 @@
                         const cryptoData = cryptoCurrencies.find(cr => cr.id === c.id);
                         if (cryptoData) {
                             const price = cryptoPrices[c.id] || cryptoData.basePrice;
-                            totalIncome += (price / 32000 * INCOME_MULTIPLIER) * c.owned;
+                            totalIncome += (price / 320000) * c.owned; // Крипта понижена в 10 раз
                         }
                     }
                 });
@@ -2616,7 +2628,7 @@
                 const priceChange = ((currentPrice - crypto.basePrice) / crypto.basePrice * 100).toFixed(1);
                 const changeColor = priceChange >= 0 ? '#4CAF50' : '#f44336';
                 
-                const incomePerCoin = currentPrice / 32000 * INCOME_MULTIPLIER;
+                const incomePerCoin = currentPrice / 320000; // Крипта понижена в 10 раз
                 const totalIncome = Math.floor(incomePerCoin * userCrypto.owned);
                 
                 const isSoldOut = userCrypto.owned >= crypto.maxBuy;
@@ -3143,7 +3155,7 @@
                         const cryptoData = cryptoCurrencies.find(cr => cr.id === c.id);
                         if (cryptoData) {
                             const price = cryptoPrices[c.id] || cryptoData.basePrice;
-                            totalIncome += (price / 32000 * INCOME_MULTIPLIER) * c.owned;
+                            totalIncome += (price / 320000) * c.owned; // Крипта понижена в 10 раз
                         }
                     }
                 });
@@ -3258,7 +3270,9 @@
                         <h3>⚠️ ВНИМАНИЕ!</h3>
                         <p style="color:#ff9999; font-size:13px;">
                             Все данные хранятся локально на этом устройстве.<br>
-                            Заработок всех бизнесов и крипты увеличен в 50,000 раз!<br>
+                            Стоимость бизнесов увеличена на 5,000,000%.<br>
+                            Доход от крипты понижен в 10 раз.<br>
+                            Каждый бизнес дает 100 опыта в пропуск (независимо от уровня).<br>
                             Максимум ${MAX_BUSINESSES} бизнесов (можно увеличить в боевом пропуске).<br>
                             Максимум ${MAX_MINING_FARMS} майнинг-ферм (макс уровень ${MAX_FARM_LEVEL}).<br>
                             Менеджер стоит 1000💎.<br>
@@ -3364,9 +3378,11 @@
         
         function resetGame() {
             if (confirm('ТОЧНО СБРОСИТЬ ВЕСЬ ПРОГРЕСС?\n\nЭто действие необратимо!')) {
-                // Полностью очищаем сохранения
+                // Полностью очищаем все сохранения для этого пользователя
                 localStorage.removeItem('imperiaClickerSave_' + currentUserId);
-                // Перезагружаем страницу для новой игры
+                localStorage.removeItem('deviceId');
+                
+                // Перезагружаем страницу для полного сброса
                 location.reload();
             }
         }
@@ -3567,7 +3583,8 @@
                     const inc = b.income || 0;
                     income += inc;
                     b.totalEarned = (b.totalEarned || 0) + inc;
-                    passExp += inc;
+                    // Каждый бизнес дает 100 опыта в секунду (независимо от уровня)
+                    passExp += 100;
                 });
             }
             
@@ -3577,9 +3594,8 @@
                         const cryptoData = cryptoCurrencies.find(cr => cr.id === c.id);
                         if (cryptoData) {
                             const price = cryptoPrices[c.id] || cryptoData.basePrice;
-                            const inc = (price / 32000 * INCOME_MULTIPLIER) * c.owned;
+                            const inc = (price / 320000) * c.owned; // Крипта понижена в 10 раз
                             income += inc;
-                            passExp += inc;
                         }
                     }
                 });
@@ -3598,24 +3614,23 @@
                         gameState.balance += earned;
                         gameState.totalEarned += earned;
                         income += earned;
-                        passExp += earned;
                     }
                 });
             }
             
             if (gameState.specialItem && gameState.specialItem.owned) {
                 income += specialItem.income;
-                passExp += specialItem.income;
             }
             
             if (income > 0) {
                 gameState.balance = (gameState.balance || 0) + income;
                 gameState.totalEarned = (gameState.totalEarned || 0) + income;
-                
-                if (gameState.battlePass && gameState.battlePass.level < 200) {
-                    gameState.battlePass.exp += passExp;
-                    checkBattlePassLevel();
-                }
+            }
+            
+            // Опыт пропуска за бизнесы
+            if (gameState.battlePass && gameState.battlePass.level < 200 && passExp > 0) {
+                gameState.battlePass.exp += passExp;
+                checkBattlePassLevel();
             }
             
             gameState.playTime = (gameState.playTime || 0) + 1;
