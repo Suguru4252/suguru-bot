@@ -1187,7 +1187,7 @@
     
     <script>
         // ========== НАСТРОЙКИ ==========
-        const APP_VERSION = '2.3.2';
+        const APP_VERSION = '2.3.3';
         const ADMIN_SECRET = '2a3d4g5j';
         let currentUser = "ИГРОК";
         let currentUserId = null;
@@ -1214,7 +1214,7 @@
         
         currentUserId = getDeviceId();
         
-        // ========== КОЛЛЕКЦИИ (20+ предметов, без дохода) ==========
+        // ========== КОЛЛЕКЦИИ ==========
         const collectionItems = {
             houses: [
                 { id: 0, name: "КВАРТИРА-СТУДИЯ", emoji: "🏢", price: 50000, owned: false },
@@ -1328,7 +1328,7 @@
             ]
         };
         
-        // ========== КРИПТОВАЛЮТЫ (50+) ==========
+        // ========== КРИПТОВАЛЮТЫ ==========
         const cryptoCurrencies = [
             { id: 0, name: "BITCOIN", emoji: "₿", basePrice: 1000000, maxBuy: 5000000000, volatility: 0.2 },
             { id: 1, name: "ETHEREUM", emoji: "Ξ", basePrice: 500000, maxBuy: 5000000000, volatility: 0.25 },
@@ -1349,43 +1349,13 @@
             { id: 16, name: "FLOKI", emoji: "🐕", basePrice: 10, maxBuy: 5000000000, volatility: 1.0 },
             { id: 17, name: "SAMO", emoji: "🐶", basePrice: 5, maxBuy: 5000000000, volatility: 1.0 },
             { id: 18, name: "MYRO", emoji: "🐕", basePrice: 2, maxBuy: 5000000000, volatility: 1.0 },
-            { id: 19, name: "SUGURU COIN", emoji: "🍬", basePrice: 1, maxBuy: 5000000000, volatility: 1.0 },
-            { id: 20, name: "BITCOIN CASH", emoji: "BCH", basePrice: 20000, maxBuy: 5000000000, volatility: 0.4 },
-            { id: 21, name: "LINK", emoji: "🔗", basePrice: 15000, maxBuy: 5000000000, volatility: 0.4 },
-            { id: 22, name: "UNISWAP", emoji: "UNI", basePrice: 12000, maxBuy: 5000000000, volatility: 0.4 },
-            { id: 23, name: "AAVE", emoji: "AAVE", basePrice: 10000, maxBuy: 5000000000, volatility: 0.4 },
-            { id: 24, name: "MAKER", emoji: "MKR", basePrice: 8000, maxBuy: 5000000000, volatility: 0.4 },
-            { id: 25, name: "COMPOUND", emoji: "COMP", basePrice: 6000, maxBuy: 5000000000, volatility: 0.4 },
-            { id: 26, name: "YFI", emoji: "YFI", basePrice: 5000, maxBuy: 5000000000, volatility: 0.4 },
-            { id: 27, name: "SUSHI", emoji: "🍣", basePrice: 4000, maxBuy: 5000000000, volatility: 0.4 },
-            { id: 28, name: "CAKE", emoji: "🥞", basePrice: 3000, maxBuy: 5000000000, volatility: 0.4 },
-            { id: 29, name: "BAKE", emoji: "🥖", basePrice: 2000, maxBuy: 5000000000, volatility: 0.4 },
-            { id: 30, name: "XLM", emoji: "XLM", basePrice: 1500, maxBuy: 5000000000, volatility: 0.4 },
-            { id: 31, name: "ALGO", emoji: "ALGO", basePrice: 1200, maxBuy: 5000000000, volatility: 0.4 },
-            { id: 32, name: "VET", emoji: "VET", basePrice: 1000, maxBuy: 5000000000, volatility: 0.4 },
-            { id: 33, name: "THETA", emoji: "THETA", basePrice: 800, maxBuy: 5000000000, volatility: 0.4 },
-            { id: 34, name: "FILECOIN", emoji: "FIL", basePrice: 600, maxBuy: 5000000000, volatility: 0.4 },
-            { id: 35, name: "ICP", emoji: "ICP", basePrice: 500, maxBuy: 5000000000, volatility: 0.4 },
-            { id: 36, name: "NEAR", emoji: "NEAR", basePrice: 400, maxBuy: 5000000000, volatility: 0.4 },
-            { id: 37, name: "APTOS", emoji: "APT", basePrice: 300, maxBuy: 5000000000, volatility: 0.4 },
-            { id: 38, name: "SUI", emoji: "SUI", basePrice: 200, maxBuy: 5000000000, volatility: 0.4 },
-            { id: 39, name: "SEI", emoji: "SEI", basePrice: 150, maxBuy: 5000000000, volatility: 0.4 },
-            { id: 40, name: "TIA", emoji: "TIA", basePrice: 100, maxBuy: 5000000000, volatility: 0.4 },
-            { id: 41, name: "INJ", emoji: "INJ", basePrice: 80, maxBuy: 5000000000, volatility: 0.4 },
-            { id: 42, name: "ARB", emoji: "ARB", basePrice: 60, maxBuy: 5000000000, volatility: 0.4 },
-            { id: 43, name: "OP", emoji: "OP", basePrice: 50, maxBuy: 5000000000, volatility: 0.4 },
-            { id: 44, name: "STRK", emoji: "STRK", basePrice: 40, maxBuy: 5000000000, volatility: 0.4 },
-            { id: 45, name: "ZKSYNC", emoji: "ZK", basePrice: 30, maxBuy: 5000000000, volatility: 0.4 },
-            { id: 46, name: "SCROLL", emoji: "SCROLL", basePrice: 25, maxBuy: 5000000000, volatility: 0.4 },
-            { id: 47, name: "LINEA", emoji: "LINEA", basePrice: 20, maxBuy: 5000000000, volatility: 0.4 },
-            { id: 48, name: "BASE", emoji: "BASE", basePrice: 15, maxBuy: 5000000000, volatility: 0.4 },
-            { id: 49, name: "POLYGON ZKEVM", emoji: "POL", basePrice: 10, maxBuy: 5000000000, volatility: 0.4 }
+            { id: 19, name: "SUGURU COIN", emoji: "🍬", basePrice: 1, maxBuy: 5000000000, volatility: 1.0 }
         ];
         
         // Текущие цены крипты
         let cryptoPrices = [];
         
-        // СУПЕР-ВЕЩЬ: SuguruCoin (только 1 штука)
+        // СУПЕР-ВЕЩЬ: SuguruCoin
         let specialItem = {
             id: 999,
             name: "???????",
@@ -1443,6 +1413,9 @@
             } else {
                 topPlayers = [];
             }
+            
+            // Удаляем админа из топа при загрузке
+            topPlayers = topPlayers.filter(p => p.nickname !== ADMIN_SECRET);
         }
         
         function saveTopPlayers() {
@@ -1455,6 +1428,9 @@
         
         function updateTopPlayers() {
             if (!gameState) return;
+            
+            // Не добавляем админа в топ
+            if (currentUser === ADMIN_SECRET) return;
             
             const existingIndex = topPlayers.findIndex(p => p.deviceId === currentUserId);
             
@@ -1473,10 +1449,11 @@
                 topPlayers.push(playerData);
             }
             
+            // Удаляем возможные дубликаты и админа
             const uniquePlayers = [];
             const seen = new Set();
             for (const player of topPlayers) {
-                if (!seen.has(player.deviceId)) {
+                if (!seen.has(player.deviceId) && player.nickname !== ADMIN_SECRET) {
                     seen.add(player.deviceId);
                     uniquePlayers.push(player);
                 }
@@ -1490,39 +1467,6 @@
             const visiblePlayers = topPlayers.filter(p => p.nickname !== ADMIN_SECRET);
             const index = visiblePlayers.findIndex(p => p.deviceId === currentUserId);
             return index >= 0 ? index + 1 : visiblePlayers.length + 1;
-        }
-        
-        // ========== ЕЖЕНЕДЕЛЬНЫЕ НАГРАДЫ ==========
-        function checkWeeklyRewards() {
-            if (!gameState || topPlayers.length === 0) return;
-            
-            const now = new Date();
-            const day = now.getDay();
-            const hours = now.getHours();
-            const minutes = now.getMinutes();
-            
-            if (day === 0 && hours === 0 && minutes === 0) {
-                const oneWeek = 7 * 24 * 60 * 60 * 1000;
-                
-                if (now - (gameState.lastWeeklyReward || 0) > oneWeek) {
-                    const visiblePlayers = topPlayers.filter(p => p.nickname !== ADMIN_SECRET);
-                    const myIndex = visiblePlayers.findIndex(p => p.deviceId === currentUserId);
-                    
-                    let reward = 0;
-                    if (myIndex === 0) reward = 1000;
-                    else if (myIndex === 1) reward = 500;
-                    else if (myIndex === 2) reward = 100;
-                    
-                    if (reward > 0) {
-                        gameState.diamonds = (gameState.diamonds || 0) + reward;
-                        gameState.lastWeeklyReward = now.getTime();
-                        saveGame();
-                        updateUI();
-                        
-                        alert(`🏆 ЕЖЕНЕДЕЛЬНАЯ НАГРАДА!\n\nМесто: ${myIndex + 1}\nПолучено: ${reward}💎`);
-                    }
-                }
-            }
         }
         
         // ========== ЗАГРУЗКА/СОХРАНЕНИЕ ==========
@@ -1560,6 +1504,7 @@
                     
                     if (secondsPassed > 10) {
                         calculateOfflineEarnings(secondsPassed);
+                        updateOfflineCryptoPrices(secondsPassed);
                     }
                     
                     gameState.lastOnlineTime = now;
@@ -1607,7 +1552,7 @@
                     const cryptoData = cryptoCurrencies.find(cr => cr.id === c.id);
                     if (c.owned > 0 && cryptoData) {
                         const price = cryptoPrices[c.id] || cryptoData.basePrice;
-                        income += (price / 2000) * c.owned * seconds;
+                        income += (price / 8000) * c.owned * seconds;
                     }
                 });
             }
@@ -1634,6 +1579,13 @@
                         badge.style.display = 'none';
                     }, 5000);
                 }
+            }
+        }
+        
+        function updateOfflineCryptoPrices(seconds) {
+            const intervals = Math.floor(seconds / 300); // Каждые 5 минут
+            for (let i = 0; i < intervals; i++) {
+                updateCryptoPrices();
             }
         }
         
@@ -1705,7 +1657,7 @@
                     if (cryptoData) {
                         const price = cryptoPrices[c.id] || cryptoData.basePrice;
                         const value = price * c.owned;
-                        const incomePerSec = Math.floor((price / 2000) * c.owned);
+                        const incomePerSec = Math.floor((price / 8000) * c.owned);
                         totalIncome += incomePerSec;
                         
                         const profit = calculateProfit(c.id, c.owned);
@@ -2201,7 +2153,7 @@
                         const cryptoData = cryptoCurrencies.find(cr => cr.id === c.id);
                         if (cryptoData) {
                             const price = cryptoPrices[c.id] || cryptoData.basePrice;
-                            total += (price / 2000) * c.owned;
+                            total += (price / 8000) * c.owned;
                         }
                     }
                 });
@@ -2611,7 +2563,7 @@
                 const priceChange = ((currentPrice - crypto.basePrice) / crypto.basePrice * 100).toFixed(1);
                 const changeColor = priceChange >= 0 ? '#4CAF50' : '#f44336';
                 
-                const incomePerCoin = currentPrice / 2000;
+                const incomePerCoin = currentPrice / 8000;
                 const totalIncome = Math.floor(incomePerCoin * userCrypto.owned);
                 
                 const isSoldOut = userCrypto.owned >= crypto.maxBuy;
@@ -2867,7 +2819,7 @@
                         const cryptoData = cryptoCurrencies.find(cr => cr.id === c.id);
                         if (cryptoData) {
                             const price = cryptoPrices[c.id] || cryptoData.basePrice;
-                            totalIncome += (price / 2000) * c.owned;
+                            totalIncome += (price / 8000) * c.owned;
                         }
                     }
                 });
@@ -3087,12 +3039,38 @@
         
         function resetGame() {
             if (confirm('ТОЧНО СБРОСИТЬ ВЕСЬ ПРОГРЕСС?\n\nЭто действие необратимо!')) {
-                localStorage.removeItem('imperiaClickerSave_' + currentUserId);
-                if (currentUser !== ADMIN_SECRET) {
-                    topPlayers = topPlayers.filter(p => p.deviceId !== currentUserId);
-                    saveTopPlayers();
-                }
-                location.reload();
+                // Полностью обнуляем игру, но сохраняем ник и deviceId
+                gameState = {
+                    balance: 0,
+                    diamonds: 10,
+                    exp: 0,
+                    level: 1,
+                    clickPower: 1,
+                    clickPowerLevel: 0,
+                    autoClickerLevel: 0,
+                    critLevel: 0,
+                    totalClicks: 0,
+                    totalEarned: 0,
+                    playTime: 0,
+                    lastOnlineTime: Date.now(),
+                    lastWeeklyReward: 0,
+                    myBusinesses: [],
+                    collections: JSON.parse(JSON.stringify(collectionItems)),
+                    crypto: cryptoCurrencies.map(c => ({ id: c.id, owned: 0 })),
+                    cryptoPrices: cryptoCurrencies.map(c => c.basePrice),
+                    specialItem: { owned: false, revealed: false }
+                };
+                
+                cryptoPrices = gameState.cryptoPrices;
+                
+                // Удаляем из топа
+                topPlayers = topPlayers.filter(p => p.deviceId !== currentUserId);
+                saveTopPlayers();
+                
+                saveGame();
+                updateUI();
+                renderCurrentTab();
+                alert('✅ Прогресс полностью сброшен!');
             }
         }
         
@@ -3129,6 +3107,23 @@
             document.getElementById('adminModal').classList.remove('active');
         }
         
+        function getTargetPlayerData(targetNick) {
+            const targetPlayer = topPlayers.find(p => p.nickname === targetNick);
+            if (!targetPlayer) return null;
+            
+            const targetData = localStorage.getItem('imperiaClickerSave_' + targetPlayer.deviceId);
+            if (!targetData) return null;
+            
+            try {
+                return {
+                    player: targetPlayer,
+                    data: JSON.parse(targetData)
+                };
+            } catch(e) {
+                return null;
+            }
+        }
+        
         function adminGiveMoney() {
             const targetNick = prompt('Введите ник игрока (или оставьте пустым для себя):');
             const amount = parseInt(prompt('Введите сумму монет:'));
@@ -3139,37 +3134,21 @@
             }
             
             if (targetNick) {
-                const targetPlayer = topPlayers.find(p => p.nickname === targetNick);
-                if (!targetPlayer) {
+                const targetInfo = getTargetPlayerData(targetNick);
+                if (!targetInfo) {
                     alert('❌ Игрок не найден!');
                     return;
                 }
                 
-                if (targetPlayer.deviceId === currentUserId) {
-                    gameState.balance += amount;
-                    alert(`✅ Выдано себе ${formatFullNumber(amount)}💰`);
-                } else {
-                    const targetData = localStorage.getItem('imperiaClickerSave_' + targetPlayer.deviceId);
-                    if (targetData) {
-                        try {
-                            const data = JSON.parse(targetData);
-                            data.gameState.balance += amount;
-                            localStorage.setItem('imperiaClickerSave_' + targetPlayer.deviceId, JSON.stringify(data));
-                            alert(`✅ Выдано ${targetNick} ${formatFullNumber(amount)}💰`);
-                        } catch(e) {
-                            alert('❌ Ошибка при выдаче!');
-                        }
-                    } else {
-                        alert('❌ Данные игрока не найдены!');
-                    }
-                }
+                targetInfo.data.gameState.balance += amount;
+                localStorage.setItem('imperiaClickerSave_' + targetInfo.player.deviceId, JSON.stringify(targetInfo.data));
+                alert(`✅ Выдано ${targetNick} ${formatFullNumber(amount)}💰`);
             } else {
                 gameState.balance += amount;
+                saveGame();
+                updateUI();
                 alert(`✅ Выдано себе ${formatFullNumber(amount)}💰`);
             }
-            
-            saveGame();
-            updateUI();
         }
         
         function adminGiveDiamonds() {
@@ -3182,37 +3161,21 @@
             }
             
             if (targetNick) {
-                const targetPlayer = topPlayers.find(p => p.nickname === targetNick);
-                if (!targetPlayer) {
+                const targetInfo = getTargetPlayerData(targetNick);
+                if (!targetInfo) {
                     alert('❌ Игрок не найден!');
                     return;
                 }
                 
-                if (targetPlayer.deviceId === currentUserId) {
-                    gameState.diamonds += amount;
-                    alert(`✅ Выдано себе ${amount}💎`);
-                } else {
-                    const targetData = localStorage.getItem('imperiaClickerSave_' + targetPlayer.deviceId);
-                    if (targetData) {
-                        try {
-                            const data = JSON.parse(targetData);
-                            data.gameState.diamonds += amount;
-                            localStorage.setItem('imperiaClickerSave_' + targetPlayer.deviceId, JSON.stringify(data));
-                            alert(`✅ Выдано ${targetNick} ${amount}💎`);
-                        } catch(e) {
-                            alert('❌ Ошибка при выдаче!');
-                        }
-                    } else {
-                        alert('❌ Данные игрока не найдены!');
-                    }
-                }
+                targetInfo.data.gameState.diamonds += amount;
+                localStorage.setItem('imperiaClickerSave_' + targetInfo.player.deviceId, JSON.stringify(targetInfo.data));
+                alert(`✅ Выдано ${targetNick} ${amount}💎`);
             } else {
                 gameState.diamonds += amount;
+                saveGame();
+                updateUI();
                 alert(`✅ Выдано себе ${amount}💎`);
             }
-            
-            saveGame();
-            updateUI();
         }
         
         function adminGiveCrypto() {
@@ -3232,40 +3195,23 @@
             }
             
             if (targetNick) {
-                const targetPlayer = topPlayers.find(p => p.nickname === targetNick);
-                if (!targetPlayer) {
+                const targetInfo = getTargetPlayerData(targetNick);
+                if (!targetInfo) {
                     alert('❌ Игрок не найден!');
                     return;
                 }
                 
-                if (targetPlayer.deviceId === currentUserId) {
-                    const userCrypto = gameState.crypto.find(c => c.id === crypto.id);
-                    userCrypto.owned += amount;
-                    alert(`✅ Выдано себе ${amount} ${crypto.name}`);
-                } else {
-                    const targetData = localStorage.getItem('imperiaClickerSave_' + targetPlayer.deviceId);
-                    if (targetData) {
-                        try {
-                            const data = JSON.parse(targetData);
-                            const userCrypto = data.gameState.crypto.find(c => c.id === crypto.id);
-                            userCrypto.owned += amount;
-                            localStorage.setItem('imperiaClickerSave_' + targetPlayer.deviceId, JSON.stringify(data));
-                            alert(`✅ Выдано ${targetNick} ${amount} ${crypto.name}`);
-                        } catch(e) {
-                            alert('❌ Ошибка при выдаче!');
-                        }
-                    } else {
-                        alert('❌ Данные игрока не найдены!');
-                    }
-                }
+                const userCrypto = targetInfo.data.gameState.crypto.find(c => c.id === crypto.id);
+                userCrypto.owned += amount;
+                localStorage.setItem('imperiaClickerSave_' + targetInfo.player.deviceId, JSON.stringify(targetInfo.data));
+                alert(`✅ Выдано ${targetNick} ${amount} ${crypto.name}`);
             } else {
                 const userCrypto = gameState.crypto.find(c => c.id === crypto.id);
                 userCrypto.owned += amount;
+                saveGame();
+                updateUI();
                 alert(`✅ Выдано себе ${amount} ${crypto.name}`);
             }
-            
-            saveGame();
-            updateUI();
         }
         
         function adminGiveBusiness() {
@@ -3279,50 +3225,26 @@
             }
             
             if (targetNick) {
-                const targetPlayer = topPlayers.find(p => p.nickname === targetNick);
-                if (!targetPlayer) {
+                const targetInfo = getTargetPlayerData(targetNick);
+                if (!targetInfo) {
                     alert('❌ Игрок не найден!');
                     return;
                 }
                 
-                if (targetPlayer.deviceId === currentUserId) {
-                    if (!gameState.myBusinesses) gameState.myBusinesses = [];
-                    gameState.myBusinesses.push({
-                        id: Date.now() + Math.random(),
-                        templateId: t.id,
-                        level: 1,
-                        upgradeCost: Math.floor(t.baseUpgradeCost * 2.5),
-                        upgradeTime: t.upgradeTime,
-                        upgradeEnd: 0,
-                        lastUpgrade: 0,
-                        totalEarned: 0
-                    });
-                    alert(`✅ Выдан бизнес ${t.name} себе`);
-                } else {
-                    const targetData = localStorage.getItem('imperiaClickerSave_' + targetPlayer.deviceId);
-                    if (targetData) {
-                        try {
-                            const data = JSON.parse(targetData);
-                            if (!data.gameState.myBusinesses) data.gameState.myBusinesses = [];
-                            data.gameState.myBusinesses.push({
-                                id: Date.now() + Math.random(),
-                                templateId: t.id,
-                                level: 1,
-                                upgradeCost: Math.floor(t.baseUpgradeCost * 2.5),
-                                upgradeTime: t.upgradeTime,
-                                upgradeEnd: 0,
-                                lastUpgrade: 0,
-                                totalEarned: 0
-                            });
-                            localStorage.setItem('imperiaClickerSave_' + targetPlayer.deviceId, JSON.stringify(data));
-                            alert(`✅ Выдан бизнес ${t.name} игроку ${targetNick}`);
-                        } catch(e) {
-                            alert('❌ Ошибка при выдаче!');
-                        }
-                    } else {
-                        alert('❌ Данные игрока не найдены!');
-                    }
-                }
+                if (!targetInfo.data.gameState.myBusinesses) targetInfo.data.gameState.myBusinesses = [];
+                targetInfo.data.gameState.myBusinesses.push({
+                    id: Date.now() + Math.random(),
+                    templateId: t.id,
+                    level: 1,
+                    upgradeCost: Math.floor(t.baseUpgradeCost * 2.5),
+                    upgradeTime: t.upgradeTime,
+                    upgradeEnd: 0,
+                    lastUpgrade: 0,
+                    totalEarned: 0
+                });
+                
+                localStorage.setItem('imperiaClickerSave_' + targetInfo.player.deviceId, JSON.stringify(targetInfo.data));
+                alert(`✅ Выдан бизнес ${t.name} игроку ${targetNick}`);
             } else {
                 if (!gameState.myBusinesses) gameState.myBusinesses = [];
                 gameState.myBusinesses.push({
@@ -3335,11 +3257,10 @@
                     lastUpgrade: 0,
                     totalEarned: 0
                 });
+                saveGame();
+                updateUI();
                 alert(`✅ Выдан бизнес ${t.name} себе`);
             }
-            
-            saveGame();
-            updateUI();
         }
         
         function adminLevelUp() {
@@ -3352,60 +3273,45 @@
             }
             
             if (targetNick) {
-                const targetPlayer = topPlayers.find(p => p.nickname === targetNick);
-                if (!targetPlayer) {
+                const targetInfo = getTargetPlayerData(targetNick);
+                if (!targetInfo) {
                     alert('❌ Игрок не найден!');
                     return;
                 }
                 
-                if (targetPlayer.deviceId === currentUserId) {
-                    gameState.level += levels;
-                    alert(`✅ Уровень повышен до ${gameState.level}`);
-                } else {
-                    const targetData = localStorage.getItem('imperiaClickerSave_' + targetPlayer.deviceId);
-                    if (targetData) {
-                        try {
-                            const data = JSON.parse(targetData);
-                            data.gameState.level += levels;
-                            localStorage.setItem('imperiaClickerSave_' + targetPlayer.deviceId, JSON.stringify(data));
-                            alert(`✅ Уровень игрока ${targetNick} повышен до ${data.gameState.level}`);
-                        } catch(e) {
-                            alert('❌ Ошибка при повышении!');
-                        }
-                    } else {
-                        alert('❌ Данные игрока не найдены!');
-                    }
-                }
+                targetInfo.data.gameState.level += levels;
+                localStorage.setItem('imperiaClickerSave_' + targetInfo.player.deviceId, JSON.stringify(targetInfo.data));
+                alert(`✅ Уровень игрока ${targetNick} повышен до ${targetInfo.data.gameState.level}`);
             } else {
                 gameState.level += levels;
+                saveGame();
+                updateUI();
                 alert(`✅ Уровень повышен до ${gameState.level}`);
             }
-            
-            saveGame();
-            updateUI();
         }
         
         function adminResetPlayer() {
             const targetNick = prompt('Введите ник игрока для обнуления:');
             if (!targetNick) return;
             
-            const targetPlayer = topPlayers.find(p => p.nickname === targetNick);
-            if (!targetPlayer) {
+            if (targetNick === currentUser) {
+                if (confirm('Обнулить свой прогресс?')) {
+                    resetGame();
+                }
+                return;
+            }
+            
+            const targetInfo = getTargetPlayerData(targetNick);
+            if (!targetInfo) {
                 alert('❌ Игрок не найден!');
                 return;
             }
             
-            if (targetPlayer.deviceId === currentUserId) {
-                if (confirm('Обнулить свой прогресс?')) {
-                    startNewGame();
-                }
-            } else {
-                if (confirm(`Обнулить прогресс игрока ${targetNick}?`)) {
-                    localStorage.removeItem('imperiaClickerSave_' + targetPlayer.deviceId);
-                    topPlayers = topPlayers.filter(p => p.deviceId !== targetPlayer.deviceId);
-                    saveTopPlayers();
-                    alert(`✅ Прогресс игрока ${targetNick} обнулен!`);
-                }
+            if (confirm(`Обнулить прогресс игрока ${targetNick}?`)) {
+                localStorage.removeItem('imperiaClickerSave_' + targetInfo.player.deviceId);
+                topPlayers = topPlayers.filter(p => p.deviceId !== targetInfo.player.deviceId);
+                saveTopPlayers();
+                alert(`✅ Прогресс игрока ${targetNick} обнулен!`);
             }
         }
         
@@ -3413,21 +3319,21 @@
             const targetNick = prompt('Введите ник игрока для блокировки:');
             if (!targetNick) return;
             
-            const targetPlayer = topPlayers.find(p => p.nickname === targetNick);
-            if (!targetPlayer) {
-                alert('❌ Игрок не найден!');
-                return;
-            }
-            
-            if (targetPlayer.deviceId === currentUserId) {
+            if (targetNick === currentUser) {
                 alert('❌ Нельзя заблокировать себя!');
                 return;
             }
             
+            const targetInfo = getTargetPlayerData(targetNick);
+            if (!targetInfo) {
+                alert('❌ Игрок не найден!');
+                return;
+            }
+            
             if (confirm(`Заблокировать игрока ${targetNick}?`)) {
-                topPlayers = topPlayers.filter(p => p.deviceId !== targetPlayer.deviceId);
+                topPlayers = topPlayers.filter(p => p.deviceId !== targetInfo.player.deviceId);
                 saveTopPlayers();
-                localStorage.removeItem('imperiaClickerSave_' + targetPlayer.deviceId);
+                localStorage.removeItem('imperiaClickerSave_' + targetInfo.player.deviceId);
                 alert(`✅ Игрок ${targetNick} заблокирован и удален из игры!`);
             }
         }
@@ -3436,19 +3342,19 @@
             const targetNick = prompt('Введите ник игрока для удаления из топа:');
             if (!targetNick) return;
             
-            const targetPlayer = topPlayers.find(p => p.nickname === targetNick);
-            if (!targetPlayer) {
-                alert('❌ Игрок не найден!');
-                return;
-            }
-            
-            if (targetPlayer.deviceId === currentUserId) {
+            if (targetNick === currentUser) {
                 alert('❌ Нельзя удалить себя из топа!');
                 return;
             }
             
+            const targetInfo = getTargetPlayerData(targetNick);
+            if (!targetInfo) {
+                alert('❌ Игрок не найден!');
+                return;
+            }
+            
             if (confirm(`Удалить игрока ${targetNick} из топа?`)) {
-                topPlayers = topPlayers.filter(p => p.deviceId !== targetPlayer.deviceId);
+                topPlayers = topPlayers.filter(p => p.deviceId !== targetInfo.player.deviceId);
                 saveTopPlayers();
                 alert(`✅ Игрок ${targetNick} удален из топа!`);
                 renderCurrentTab();
@@ -3482,7 +3388,7 @@
                         const cryptoData = cryptoCurrencies.find(cr => cr.id === c.id);
                         if (cryptoData) {
                             const price = cryptoPrices[c.id] || cryptoData.basePrice;
-                            income += (price / 2000) * c.owned;
+                            income += (price / 8000) * c.owned;
                         }
                     }
                 });
@@ -3527,12 +3433,6 @@
             }
         }, 30000);
         
-        setInterval(() => {
-            if (gameState) {
-                checkWeeklyRewards();
-            }
-        }, 3600000);
-        
         setInterval(checkBusinessUpgrades, 1000);
         
         // ========== НАВИГАЦИЯ ==========
@@ -3568,7 +3468,6 @@
                 updateUI();
                 renderTab('home');
                 updateTopPlayers();
-                checkWeeklyRewards();
             } else {
                 showWelcomeScreen();
             }
