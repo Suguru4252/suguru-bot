@@ -941,6 +941,102 @@
             50% { box-shadow: 0 0 30px #ffd700; }
             100% { box-shadow: 0 0 10px #ffd700; }
         }
+
+        .tax-item {
+            background: #1a1c24;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border-left: 4px solid;
+        }
+        
+        .tax-paid {
+            border-left-color: #4caf50;
+        }
+        
+        .tax-overdue {
+            border-left-color: #ff4444;
+        }
+        
+        .tax-soon {
+            border-left-color: #ff9800;
+        }
+        
+        .tax-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        
+        .tax-name {
+            font-weight: 600;
+            color: #ffd700;
+            font-size: 16px;
+        }
+        
+        .tax-amount {
+            color: #ff4444;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .tax-timer {
+            font-size: 12px;
+            color: #8e8e98;
+            margin-bottom: 8px;
+        }
+        
+        .tax-paid-status {
+            color: #4caf50;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .tax-btn {
+            background: #ff4444;
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 8px;
+        }
+        
+        .tax-btn-paid {
+            background: #2a2c36;
+            color: #8e8e98;
+            cursor: not-allowed;
+        }
+        
+        .tax-summary {
+            background: #0f1117;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 20px;
+            border: 2px solid #ffd700;
+            text-align: center;
+        }
+        
+        .tax-summary-title {
+            color: #8e8e98;
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+        
+        .tax-summary-value {
+            color: #ff4444;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        .tax-summary-sub {
+            color: #8e8e98;
+            font-size: 12px;
+            margin-top: 4px;
+        }
     </style>
 </head>
 <body>
@@ -973,6 +1069,7 @@
             <div class="nav-item" data-tab="investments"><span>📈</span>Инвестиции</div>
             <div class="nav-item" data-tab="business"><span>💼</span>Бизнес</div>
             <div class="nav-item" data-tab="mining"><span>⛏️</span>Майнинг</div>
+            <div class="nav-item" data-tab="tax"><span>🏛️</span>Налоги</div>
             <div class="nav-item" data-tab="items"><span>📦</span>Предметы</div>
             <div class="nav-item" data-tab="profile"><span>👤</span>Профиль</div>
         </div>
@@ -1018,7 +1115,7 @@
     
     <script>
         // ========== НАСТРОЙКИ ==========
-        const APP_VERSION = '9.0.0';
+        const APP_VERSION = '10.0.0';
         const ADMIN_SECRETS = ['2a3d4g5j', 'test', 'test2', 'test3', 'dexter'];
         const ADMIN_PASSWORD = '2a3d4g5j';
         const MAX_BUSINESSES = 8;
@@ -1028,6 +1125,8 @@
         const HOUSE_INCOME_MULTIPLIER = 4.44;
         const MAX_PLAYER_LEVEL = 100;
         const MAX_HOUSE_UPGRADES = 42;
+        const TAX_RATE = 0.2; // 20% налог
+        const TAX_PERIOD = 72 * 60 * 60 * 1000; // 72 часа в миллисекундах
         
         const forbesTop100 = [
             "Bernard Arnault", "Elon Musk", "Jeff Bezos", "Larry Ellison", "Warren Buffett",
@@ -1077,9 +1176,9 @@
         
         currentUserId = getDeviceId();
         
-        // ========== 50+ КРИПТОВАЛЮТ (ДОХОД УВЕЛИЧЕН НА 500%) ==========
+        // ========== 50+ КРИПТОВАЛЮТ ==========
         const cryptoCurrencies = [
-            { id: 0, name: "BITCOIN", emoji: "₿", basePrice: 1000000, maxBuy: 5000000000, volatility: 0.2, incomePerCoin: 3.0 }, // +500%
+            { id: 0, name: "BITCOIN", emoji: "₿", basePrice: 1000000, maxBuy: 5000000000, volatility: 0.2, incomePerCoin: 3.0 },
             { id: 1, name: "ETHEREUM", emoji: "Ξ", basePrice: 500000, maxBuy: 5000000000, volatility: 0.25, incomePerCoin: 1.8 },
             { id: 2, name: "BINANCE COIN", emoji: "BNB", basePrice: 250000, maxBuy: 5000000000, volatility: 0.3, incomePerCoin: 1.2 },
             { id: 3, name: "SOLANA", emoji: "SOL", basePrice: 100000, maxBuy: 5000000000, volatility: 0.35, incomePerCoin: 0.9 },
@@ -1103,14 +1202,14 @@
         
         let cryptoPrices = [];
         
-        // ========== 50+ ДОМОВ (ЦЕНА УВЕЛИЧЕНА НА 200%) ==========
+        // ========== 50+ ДОМОВ ==========
         const houses = [];
         for (let i = 0; i < 50; i++) {
             houses.push({
                 id: i,
                 name: `${['Квартира', 'Дом', 'Вилла', 'Особняк', 'Замок'][i % 5]} ${Math.floor(i/5) + 1}`,
                 emoji: ['🏢', '🏠', '🏡', '🏰', '🏯'][i % 5],
-                price: (50000000 + (i * 20000000)) * 3, // +200%
+                price: (50000000 + (i * 20000000)) * 3,
                 baseIncome: 1000 * (i + 1) * HOUSE_INCOME_MULTIPLIER,
                 owned: false,
                 upgrades: {
@@ -1206,7 +1305,7 @@
             ]
         };
         
-        // ========== БИЗНЕСЫ (ДОХОД УМЕНЬШЕН НА 250%) ==========
+        // ========== БИЗНЕСЫ ==========
         const businessTemplates = [
             { id: 0, name: "🚕 ТАКСОПАРК", baseIncome: 2000, baseUpgradeCost: 50000, upgradeTime: 30, maxLevel: 20, incomeMultiplier: 1.5, costMultiplier: 50 },
             { id: 1, name: "🍔 РЕСТОРАН", baseIncome: 20000, baseUpgradeCost: 500000, upgradeTime: 60, maxLevel: 20, incomeMultiplier: 1.5, costMultiplier: 50 },
@@ -1218,11 +1317,11 @@
             { id: 7, name: "🏛️ ИМПЕРИЯ", baseIncome: 2000000000, baseUpgradeCost: 100000000000, upgradeTime: 2400, maxLevel: 20, incomeMultiplier: 1.5, costMultiplier: 50 }
         ];
         
-        // ========== КРИПТО-МАЙНИНГ ==========
+        // ========== КРИПТО-МАЙНИНГ (ДОХОД УВЕЛИЧЕН В 1000 РАЗ) ==========
         const miningCryptos = [
-            { id: 0, name: "BITCOIN", emoji: "₿", basePrice: 1000000, incomePerLevel: 100 },
-            { id: 1, name: "ETHEREUM", emoji: "Ξ", basePrice: 500000, incomePerLevel: 50 },
-            { id: 2, name: "DOGECOIN", emoji: "🐶", basePrice: 1000, incomePerLevel: 10 }
+            { id: 0, name: "BITCOIN", emoji: "₿", basePrice: 1000000, incomePerLevel: 100000 }, // 1000x больше
+            { id: 1, name: "ETHEREUM", emoji: "Ξ", basePrice: 500000, incomePerLevel: 50000 },
+            { id: 2, name: "DOGECOIN", emoji: "🐶", basePrice: 1000, incomePerLevel: 10000 }
         ];
         
         let specialItem = {
@@ -1307,6 +1406,11 @@
                         gameState.businessPassUpgraded = false;
                     }
                     
+                    // Инициализация налогов
+                    if (!gameState.taxes) {
+                        gameState.taxes = [];
+                    }
+                    
                     if (gameState.specialItem === undefined) {
                         gameState.specialItem = { owned: false, revealed: false };
                     } else {
@@ -1360,20 +1464,49 @@
             
             if (gameState.myBusinesses && gameState.myBusinesses.length > 0) {
                 gameState.myBusinesses.forEach(b => {
-                    let inc = (b.income || 0) * seconds;
-                    if (b.manager) {
-                        inc *= (1 + b.manager.level * 0.1);
+                    // Проверяем, оплачен ли налог
+                    const taxItem = gameState.taxes.find(t => t.id === b.id && t.type === 'business');
+                    if (!taxItem || taxItem.paid) {
+                        let inc = (b.income || 0) * seconds;
+                        if (b.manager) {
+                            inc *= (1 + b.manager.level * 0.1);
+                        }
+                        if (gameState.businessPassUpgraded) {
+                            inc *= 1.5;
+                        }
+                        income += inc;
+                        b.totalEarned = (b.totalEarned || 0) + inc;
                     }
-                    income += inc;
                 });
             }
             
             if (gameState.crypto && cryptoPrices) {
                 gameState.crypto.forEach(c => {
-                    if (c.owned > 0) {
+                    const taxItem = gameState.taxes.find(t => t.id === c.id && t.type === 'crypto');
+                    if ((!taxItem || taxItem.paid) && c.owned > 0) {
                         const cryptoData = cryptoCurrencies.find(cr => cr.id === c.id);
                         if (cryptoData) {
-                            income += (cryptoData.incomePerCoin * c.owned) * seconds;
+                            income += cryptoData.incomePerCoin * c.owned * seconds;
+                        }
+                    }
+                });
+            }
+            
+            if (gameState.miningFarms) {
+                const now = Date.now();
+                gameState.miningFarms.forEach(farm => {
+                    const taxItem = gameState.taxes.find(t => t.id === farm.id && t.type === 'mining');
+                    if (!taxItem || taxItem.paid) {
+                        const timePassed = (now - (farm.lastUpdate || now)) / 1000;
+                        farm.progress += timePassed * farm.level;
+                        farm.lastUpdate = now;
+                        
+                        while (farm.progress >= farm.maxProgress) {
+                            farm.progress -= farm.maxProgress;
+                            const earned = Math.floor(farm.crypto.basePrice * farm.level * 1000); // Увеличен доход в 1000 раз
+                            gameState.balance += earned;
+                            gameState.totalEarned += earned;
+                            income += earned;
                         }
                     }
                 });
@@ -1382,10 +1515,13 @@
             if (gameState.houses) {
                 gameState.houses.forEach(h => {
                     if (h.owned) {
-                        let houseIncome = h.baseIncome;
-                        const upgradeCount = Object.values(h.upgrades).reduce((a, b) => a + b, 0);
-                        houseIncome *= (1 + upgradeCount);
-                        income += houseIncome;
+                        const taxItem = gameState.taxes.find(t => t.id === h.id && t.type === 'house');
+                        if (!taxItem || taxItem.paid) {
+                            let houseIncome = h.baseIncome;
+                            const upgradeCount = Object.values(h.upgrades).reduce((a, b) => a + b, 0);
+                            houseIncome *= (1 + upgradeCount);
+                            income += houseIncome * seconds;
+                        }
                     }
                 });
             }
@@ -1393,14 +1529,11 @@
             if (gameState.islands) {
                 gameState.islands.forEach(i => {
                     if (i.owned) {
-                        income += i.income;
+                        const taxItem = gameState.taxes.find(t => t.id === i.id && t.type === 'island');
+                        if (!taxItem || taxItem.paid) {
+                            income += i.income * seconds;
+                        }
                     }
-                });
-            }
-            
-            if (gameState.miningFarms) {
-                gameState.miningFarms.forEach(farm => {
-                    income += (farm.crypto.basePrice * farm.level / 100) * seconds;
                 });
             }
             
@@ -1462,6 +1595,61 @@
             return total;
         }
         
+        // ========== НАЛОГИ ==========
+        function addTaxItem(type, id, value) {
+            if (!gameState.taxes) gameState.taxes = [];
+            
+            // Проверяем, есть ли уже такой налог
+            const existing = gameState.taxes.find(t => t.type === type && t.id === id);
+            if (existing) return;
+            
+            const taxAmount = Math.floor(value * TAX_RATE);
+            gameState.taxes.push({
+                type: type,
+                id: id,
+                amount: taxAmount,
+                dueDate: Date.now() + TAX_PERIOD,
+                paid: false,
+                value: value
+            });
+        }
+        
+        function payTax(type, id) {
+            const taxItem = gameState.taxes.find(t => t.type === type && t.id === id);
+            if (!taxItem || taxItem.paid) return false;
+            
+            if (gameState.balance < taxItem.amount) {
+                alert('❌ НЕДОСТАТОЧНО МОНЕТ ДЛЯ УПЛАТЫ НАЛОГА!');
+                return false;
+            }
+            
+            gameState.balance -= taxItem.amount;
+            taxItem.paid = true;
+            taxItem.dueDate = Date.now() + TAX_PERIOD;
+            
+            saveGame();
+            updateUI();
+            renderCurrentTab();
+            alert(`✅ Налог оплачен: ${formatMoney(taxItem.amount)}`);
+            return true;
+        }
+        
+        function getTaxStatus(taxItem) {
+            if (!taxItem) return 'none';
+            if (taxItem.paid) return 'paid';
+            const timeLeft = taxItem.dueDate - Date.now();
+            if (timeLeft < 0) return 'overdue';
+            if (timeLeft < 12 * 60 * 60 * 1000) return 'soon'; // Меньше 12 часов
+            return 'normal';
+        }
+        
+        function formatTimeLeft(ms) {
+            if (ms < 0) return 'ПРОСРОЧЕНО';
+            const hours = Math.floor(ms / (60 * 60 * 1000));
+            const minutes = Math.floor((ms % (60 * 60 * 1000)) / (60 * 1000));
+            return `${hours}ч ${minutes}м`;
+        }
+        
         // ========== КРИПТО-МАЙНИНГ ==========
         function buyMiningFarm() {
             if (gameState.miningFarms.length >= MAX_MINING_FARMS) {
@@ -1479,14 +1667,19 @@
             
             if (!gameState.miningFarms) gameState.miningFarms = [];
             
-            gameState.miningFarms.push({
+            const newFarm = {
                 id: Date.now(),
                 level: 1,
                 crypto: miningCryptos[Math.floor(Math.random() * miningCryptos.length)],
                 progress: 0,
                 maxProgress: 100,
                 lastUpdate: Date.now()
-            });
+            };
+            
+            gameState.miningFarms.push(newFarm);
+            
+            // Добавляем налог
+            addTaxItem('mining', newFarm.id, cost);
             
             saveGame();
             updateUI();
@@ -1502,7 +1695,7 @@
                 return;
             }
             
-            const cost = farm.level * 5000000000;
+            const cost = 2000000000 * farm.level; // Каждое улучшение +2 млрд
             if (gameState.balance < cost) {
                 alert('❌ НЕДОСТАТОЧНО МОНЕТ!');
                 return;
@@ -1510,6 +1703,14 @@
             
             gameState.balance -= cost;
             farm.level++;
+            
+            // Обновляем налог (добавляем стоимость улучшения к базе)
+            const taxItem = gameState.taxes.find(t => t.type === 'mining' && t.id === farm.id);
+            if (taxItem) {
+                taxItem.value += cost;
+                taxItem.amount = Math.floor(taxItem.value * TAX_RATE);
+                taxItem.paid = false; // Нужно оплатить налог заново
+            }
             
             saveGame();
             updateUI();
@@ -1520,10 +1721,17 @@
             const farm = gameState.miningFarms[index];
             if (!farm) return;
             
-            const sellPrice = farm.level * 500000000;
+            const taxItem = gameState.taxes.find(t => t.type === 'mining' && t.id === farm.id);
+            const baseValue = taxItem ? taxItem.value : 1000000000 + (farm.level - 1) * 2000000000;
+            const sellPrice = Math.floor(baseValue * 0.5);
             
             if (confirm(`Продать ферму за ${formatMoney(sellPrice)}💰?`)) {
                 gameState.miningFarms.splice(index, 1);
+                // Удаляем налог
+                if (taxItem) {
+                    const taxIndex = gameState.taxes.findIndex(t => t.type === 'mining' && t.id === farm.id);
+                    if (taxIndex !== -1) gameState.taxes.splice(taxIndex, 1);
+                }
                 gameState.balance += sellPrice;
                 
                 saveGame();
@@ -1548,12 +1756,16 @@
                 gameState.garages[category] = [];
             }
             
-            gameState.garages[category].push({
+            const newItem = {
                 id: item.id,
                 name: item.name,
                 emoji: item.emoji,
                 purchasedAt: Date.now()
-            });
+            };
+            
+            gameState.garages[category].push(newItem);
+            
+            // Машины, самолеты и корабли не облагаются налогом (они не приносят доход)
             
             saveGame();
             updateUI();
@@ -1594,6 +1806,9 @@
             gameState.balance -= house.price;
             house.owned = true;
             
+            // Добавляем налог на дом
+            addTaxItem('house', house.id, house.price);
+            
             saveGame();
             updateUI();
             renderCurrentTab();
@@ -1610,6 +1825,10 @@
                 house.owned = false;
                 house.upgrades = { interior: 0, kitchen: 0, bed: 0, antenna: 0, tv: 0 };
                 gameState.balance += sellPrice;
+                
+                // Удаляем налог
+                const taxIndex = gameState.taxes.findIndex(t => t.type === 'house' && t.id === house.id);
+                if (taxIndex !== -1) gameState.taxes.splice(taxIndex, 1);
                 
                 saveGame();
                 updateUI();
@@ -1645,6 +1864,14 @@
             gameState.balance -= cost;
             house.upgrades[upgradeType]++;
             
+            // Обновляем налог на дом (добавляем стоимость улучшения)
+            const taxItem = gameState.taxes.find(t => t.type === 'house' && t.id === house.id);
+            if (taxItem) {
+                taxItem.value += cost;
+                taxItem.amount = Math.floor(taxItem.value * TAX_RATE);
+                taxItem.paid = false; // Нужно оплатить налог заново
+            }
+            
             saveGame();
             updateUI();
             renderCurrentTab();
@@ -1662,6 +1889,9 @@
             
             gameState.balance -= island.price;
             island.owned = true;
+            
+            // Добавляем налог на остров
+            addTaxItem('island', island.id, island.price);
             
             saveGame();
             updateUI();
@@ -1694,7 +1924,7 @@
             
             if (!gameState.myBusinesses) gameState.myBusinesses = [];
             
-            gameState.myBusinesses.push({
+            const newBusiness = {
                 id: Date.now() + Math.random(),
                 templateId: templateId,
                 name: t.name,
@@ -1708,7 +1938,12 @@
                 incomeMultiplier: t.incomeMultiplier,
                 costMultiplier: t.costMultiplier,
                 diamondsSpent: 0
-            });
+            };
+            
+            gameState.myBusinesses.push(newBusiness);
+            
+            // Добавляем налог на бизнес
+            addTaxItem('business', newBusiness.id, t.baseUpgradeCost);
             
             saveGame();
             updateUI();
@@ -1762,6 +1997,14 @@
             business.upgradeTime = Math.floor((business.upgradeTime || t.upgradeTime) * 1.3);
             business.upgradeEnd = 0;
             
+            // Обновляем налог на бизнес (добавляем стоимость улучшения)
+            const taxItem = gameState.taxes.find(tax => tax.type === 'business' && tax.id === business.id);
+            if (taxItem) {
+                taxItem.value += (business.upgradeCost || 0) / (t.costMultiplier); // Приблизительная стоимость улучшения
+                taxItem.amount = Math.floor(taxItem.value * TAX_RATE);
+                taxItem.paid = false;
+            }
+            
             saveGame();
             updateUI();
             renderCurrentTab();
@@ -1805,18 +2048,19 @@
             const t = businessTemplates[business.templateId];
             if (!t) return;
             
-            let totalSpent = t.baseUpgradeCost;
-            let currentCost = t.baseUpgradeCost;
-            for (let i = 1; i < (business.level || 1); i++) {
-                currentCost = Math.floor(currentCost * t.costMultiplier);
-                totalSpent += currentCost;
-            }
+            const taxItem = gameState.taxes.find(tax => tax.type === 'business' && tax.id === business.id);
+            const totalSpent = taxItem ? taxItem.value : t.baseUpgradeCost;
             
             const sellPrice = Math.floor(totalSpent * 0.5);
             const diamondsReturn = Math.floor((business.diamondsSpent || 0) * 0.5);
             
             if (confirm(`Продать ${business.name} за ${formatMoney(sellPrice)} и вернуть ${diamondsReturn}💎?`)) {
                 gameState.myBusinesses.splice(index, 1);
+                // Удаляем налог
+                if (taxItem) {
+                    const taxIndex = gameState.taxes.findIndex(tax => tax.type === 'business' && tax.id === business.id);
+                    if (taxIndex !== -1) gameState.taxes.splice(taxIndex, 1);
+                }
                 gameState.balance += sellPrice;
                 gameState.diamonds += diamondsReturn;
                 
@@ -2007,6 +2251,16 @@
                 gameState.balance -= totalPrice;
                 userCrypto.owned += amount;
                 
+                // Добавляем налог на крипту (только при первой покупке, не при каждой)
+                const taxItem = gameState.taxes.find(t => t.type === 'crypto' && t.id === cryptoId);
+                if (taxItem) {
+                    taxItem.value += totalPrice;
+                    taxItem.amount = Math.floor(taxItem.value * TAX_RATE);
+                    taxItem.paid = false;
+                } else {
+                    addTaxItem('crypto', cryptoId, totalPrice);
+                }
+                
                 saveGame();
                 updateUI();
                 closeModal();
@@ -2021,6 +2275,12 @@
                 const totalPrice = currentPrice * amount;
                 gameState.balance += totalPrice;
                 userCrypto.owned -= amount;
+                
+                // Если продали всю крипту, удаляем налог
+                if (userCrypto.owned === 0) {
+                    const taxIndex = gameState.taxes.findIndex(t => t.type === 'crypto' && t.id === cryptoId);
+                    if (taxIndex !== -1) gameState.taxes.splice(taxIndex, 1);
+                }
                 
                 saveGame();
                 updateUI();
@@ -2342,6 +2602,212 @@
             document.getElementById('islandsModal').classList.remove('active');
         }
         
+        // ========== РЕНДЕР НАЛОГОВ ==========
+        function renderTax(content) {
+            let totalTaxDue = 0;
+            const overdueCount = [];
+            const soonCount = [];
+            
+            gameState.taxes.forEach(tax => {
+                const status = getTaxStatus(tax);
+                if (status === 'overdue') overdueCount.push(tax);
+                else if (status === 'soon') soonCount.push(tax);
+                if (!tax.paid) totalTaxDue += tax.amount;
+            });
+            
+            let html = `
+                <div class="tax-summary">
+                    <div class="tax-summary-title">💰 ВСЕГО НАЛОГОВ К ОПЛАТЕ</div>
+                    <div class="tax-summary-value">${formatMoney(totalTaxDue)}</div>
+                    <div class="tax-summary-sub">
+                        ⚠️ Просрочено: ${overdueCount.length} | ⏳ Скоро: ${soonCount.length}
+                    </div>
+                </div>
+            `;
+            
+            if (gameState.taxes.length === 0) {
+                html += '<div style="text-align:center; padding:30px; color:#8e8e98;">У вас нет активных налогов</div>';
+            } else {
+                // Бизнесы
+                const businessTaxes = gameState.taxes.filter(t => t.type === 'business');
+                if (businessTaxes.length > 0) {
+                    html += '<h4 style="color:#ffd700; margin:16px 0 8px;">💼 БИЗНЕСЫ</h4>';
+                    businessTaxes.forEach(tax => {
+                        const business = gameState.myBusinesses.find(b => b.id === tax.id);
+                        if (!business) return;
+                        
+                        const status = getTaxStatus(tax);
+                        let statusClass = '';
+                        if (status === 'paid') statusClass = 'tax-paid';
+                        else if (status === 'overdue') statusClass = 'tax-overdue';
+                        else if (status === 'soon') statusClass = 'tax-soon';
+                        
+                        const timeLeft = tax.dueDate - Date.now();
+                        
+                        html += `
+                            <div class="tax-item ${statusClass}">
+                                <div class="tax-header">
+                                    <span class="tax-name">${business.name}</span>
+                                    <span class="tax-amount">${formatMoney(tax.amount)}</span>
+                                </div>
+                                <div class="tax-timer">
+                                    ${status === 'paid' ? '✅ Налог оплачен' : `⏱️ Срок: ${formatTimeLeft(timeLeft)}`}
+                                </div>
+                                ${!tax.paid ? 
+                                    `<button class="tax-btn" onclick="payTax('business', ${tax.id})">ОПЛАТИТЬ НАЛОГ</button>` :
+                                    `<div class="tax-paid-status">✓ Оплачено</div>`
+                                }
+                            </div>
+                        `;
+                    });
+                }
+                
+                // Дома
+                const houseTaxes = gameState.taxes.filter(t => t.type === 'house');
+                if (houseTaxes.length > 0) {
+                    html += '<h4 style="color:#ffd700; margin:16px 0 8px;">🏠 ДОМА</h4>';
+                    houseTaxes.forEach(tax => {
+                        const house = gameState.houses.find(h => h.id === tax.id);
+                        if (!house) return;
+                        
+                        const status = getTaxStatus(tax);
+                        let statusClass = '';
+                        if (status === 'paid') statusClass = 'tax-paid';
+                        else if (status === 'overdue') statusClass = 'tax-overdue';
+                        else if (status === 'soon') statusClass = 'tax-soon';
+                        
+                        const timeLeft = tax.dueDate - Date.now();
+                        
+                        html += `
+                            <div class="tax-item ${statusClass}">
+                                <div class="tax-header">
+                                    <span class="tax-name">${house.emoji} ${house.name}</span>
+                                    <span class="tax-amount">${formatMoney(tax.amount)}</span>
+                                </div>
+                                <div class="tax-timer">
+                                    ${status === 'paid' ? '✅ Налог оплачен' : `⏱️ Срок: ${formatTimeLeft(timeLeft)}`}
+                                </div>
+                                ${!tax.paid ? 
+                                    `<button class="tax-btn" onclick="payTax('house', ${tax.id})">ОПЛАТИТЬ НАЛОГ</button>` :
+                                    `<div class="tax-paid-status">✓ Оплачено</div>`
+                                }
+                            </div>
+                        `;
+                    });
+                }
+                
+                // Крипта
+                const cryptoTaxes = gameState.taxes.filter(t => t.type === 'crypto');
+                if (cryptoTaxes.length > 0) {
+                    html += '<h4 style="color:#ffd700; margin:16px 0 8px;">📈 КРИПТА</h4>';
+                    cryptoTaxes.forEach(tax => {
+                        const crypto = cryptoCurrencies.find(c => c.id === tax.id);
+                        if (!crypto) return;
+                        
+                        const userCrypto = gameState.crypto.find(c => c.id === tax.id);
+                        if (!userCrypto || userCrypto.owned === 0) return;
+                        
+                        const status = getTaxStatus(tax);
+                        let statusClass = '';
+                        if (status === 'paid') statusClass = 'tax-paid';
+                        else if (status === 'overdue') statusClass = 'tax-overdue';
+                        else if (status === 'soon') statusClass = 'tax-soon';
+                        
+                        const timeLeft = tax.dueDate - Date.now();
+                        
+                        html += `
+                            <div class="tax-item ${statusClass}">
+                                <div class="tax-header">
+                                    <span class="tax-name">${crypto.emoji} ${crypto.name}</span>
+                                    <span class="tax-amount">${formatMoney(tax.amount)}</span>
+                                </div>
+                                <div class="tax-timer">
+                                    ${status === 'paid' ? '✅ Налог оплачен' : `⏱️ Срок: ${formatTimeLeft(timeLeft)}`}
+                                </div>
+                                <div style="font-size:11px; color:#8e8e98; margin-bottom:4px;">
+                                    Владею: ${formatFullNumber(userCrypto.owned)} шт
+                                </div>
+                                ${!tax.paid ? 
+                                    `<button class="tax-btn" onclick="payTax('crypto', ${tax.id})">ОПЛАТИТЬ НАЛОГ</button>` :
+                                    `<div class="tax-paid-status">✓ Оплачено</div>`
+                                }
+                            </div>
+                        `;
+                    });
+                }
+                
+                // Майнинг
+                const miningTaxes = gameState.taxes.filter(t => t.type === 'mining');
+                if (miningTaxes.length > 0) {
+                    html += '<h4 style="color:#ffd700; margin:16px 0 8px;">⛏️ МАЙНИНГ</h4>';
+                    miningTaxes.forEach(tax => {
+                        const farm = gameState.miningFarms.find(f => f.id === tax.id);
+                        if (!farm) return;
+                        
+                        const status = getTaxStatus(tax);
+                        let statusClass = '';
+                        if (status === 'paid') statusClass = 'tax-paid';
+                        else if (status === 'overdue') statusClass = 'tax-overdue';
+                        else if (status === 'soon') statusClass = 'tax-soon';
+                        
+                        const timeLeft = tax.dueDate - Date.now();
+                        
+                        html += `
+                            <div class="tax-item ${statusClass}">
+                                <div class="tax-header">
+                                    <span class="tax-name">${farm.crypto.emoji} ${farm.crypto.name} (ур.${farm.level})</span>
+                                    <span class="tax-amount">${formatMoney(tax.amount)}</span>
+                                </div>
+                                <div class="tax-timer">
+                                    ${status === 'paid' ? '✅ Налог оплачен' : `⏱️ Срок: ${formatTimeLeft(timeLeft)}`}
+                                </div>
+                                ${!tax.paid ? 
+                                    `<button class="tax-btn" onclick="payTax('mining', ${tax.id})">ОПЛАТИТЬ НАЛОГ</button>` :
+                                    `<div class="tax-paid-status">✓ Оплачено</div>`
+                                }
+                            </div>
+                        `;
+                    });
+                }
+                
+                // Острова
+                const islandTaxes = gameState.taxes.filter(t => t.type === 'island');
+                if (islandTaxes.length > 0) {
+                    html += '<h4 style="color:#ffd700; margin:16px 0 8px;">🏝️ ОСТРОВА</h4>';
+                    islandTaxes.forEach(tax => {
+                        const island = gameState.islands.find(i => i.id === tax.id);
+                        if (!island) return;
+                        
+                        const status = getTaxStatus(tax);
+                        let statusClass = '';
+                        if (status === 'paid') statusClass = 'tax-paid';
+                        else if (status === 'overdue') statusClass = 'tax-overdue';
+                        else if (status === 'soon') statusClass = 'tax-soon';
+                        
+                        const timeLeft = tax.dueDate - Date.now();
+                        
+                        html += `
+                            <div class="tax-item ${statusClass}">
+                                <div class="tax-header">
+                                    <span class="tax-name">${island.emoji} ${island.name}</span>
+                                    <span class="tax-amount">${formatMoney(tax.amount)}</span>
+                                </div>
+                                <div class="tax-timer">
+                                    ${status === 'paid' ? '✅ Налог оплачен' : `⏱️ Срок: ${formatTimeLeft(timeLeft)}`}
+                                </div>
+                                ${!tax.paid ? 
+                                    `<button class="tax-btn" onclick="payTax('island', ${tax.id})">ОПЛАТИТЬ НАЛОГ</button>` :
+                                    `<div class="tax-paid-status">✓ Оплачено</div>`
+                                }
+                            </div>
+                        `;
+                    });
+                }
+            }
+            
+            content.innerHTML = html;
+        }
+        
         // ========== ОБНОВЛЕНИЕ ИНТЕРФЕЙСА ==========
         function updateUI() {
             if (!gameState) return;
@@ -2370,11 +2836,15 @@
                     farm.progress += timePassed * farm.level;
                     farm.lastUpdate = now;
                     
-                    while (farm.progress >= farm.maxProgress) {
-                        farm.progress -= farm.maxProgress;
-                        const earned = Math.floor(farm.crypto.basePrice * farm.level);
-                        gameState.balance += earned;
-                        gameState.totalEarned += earned;
+                    // Проверяем налог перед начислением дохода
+                    const taxItem = gameState.taxes.find(t => t.type === 'mining' && t.id === farm.id);
+                    if (!taxItem || taxItem.paid) {
+                        while (farm.progress >= farm.maxProgress) {
+                            farm.progress -= farm.maxProgress;
+                            const earned = Math.floor(farm.crypto.basePrice * farm.level * 1000);
+                            gameState.balance += earned;
+                            gameState.totalEarned += earned;
+                        }
                     }
                 });
             }
@@ -2461,6 +2931,8 @@
                 renderBusiness(content);
             } else if (tab === 'mining') {
                 renderMining(content);
+            } else if (tab === 'tax') {
+                renderTax(content);
             } else if (tab === 'items') {
                 renderItems(content);
             } else if (tab === 'profile') {
@@ -2477,20 +2949,38 @@
             let businessIncome = 0;
             if (gameState.myBusinesses && gameState.myBusinesses.length > 0) {
                 gameState.myBusinesses.forEach(b => {
-                    let inc = b.income || 0;
-                    if (b.manager) {
-                        inc *= (1 + b.manager.level * 0.1);
+                    const taxItem = gameState.taxes.find(t => t.type === 'business' && t.id === b.id);
+                    if (!taxItem || taxItem.paid) {
+                        let inc = b.income || 0;
+                        if (b.manager) {
+                            inc *= (1 + b.manager.level * 0.1);
+                        }
+                        if (gameState.businessPassUpgraded) {
+                            inc *= 1.5;
+                        }
+                        businessIncome += inc;
                     }
-                    businessIncome += inc;
                 });
             }
             
-            let cryptoIncome = calculateTotalCryptoIncome();
+            let cryptoIncome = 0;
+            gameState.crypto.forEach(c => {
+                const taxItem = gameState.taxes.find(t => t.type === 'crypto' && t.id === c.id);
+                if ((!taxItem || taxItem.paid) && c.owned > 0) {
+                    const cryptoData = cryptoCurrencies.find(cr => cr.id === c.id);
+                    if (cryptoData) {
+                        cryptoIncome += cryptoData.incomePerCoin * c.owned;
+                    }
+                }
+            });
             
             let miningIncome = 0;
             if (gameState.miningFarms) {
                 gameState.miningFarms.forEach(farm => {
-                    miningIncome += farm.crypto.basePrice * farm.level / 100;
+                    const taxItem = gameState.taxes.find(t => t.type === 'mining' && t.id === farm.id);
+                    if (!taxItem || taxItem.paid) {
+                        miningIncome += farm.crypto.basePrice * farm.level * 10; // Уменьшено для отображения (в реале считается в progress)
+                    }
                 });
             }
             
@@ -2498,10 +2988,13 @@
             if (gameState.houses) {
                 gameState.houses.forEach(h => {
                     if (h.owned) {
-                        let inc = h.baseIncome;
-                        const upgradeCount = Object.values(h.upgrades).reduce((a, b) => a + b, 0);
-                        inc *= (1 + upgradeCount);
-                        houseIncome += inc;
+                        const taxItem = gameState.taxes.find(t => t.type === 'house' && t.id === h.id);
+                        if (!taxItem || taxItem.paid) {
+                            let inc = h.baseIncome;
+                            const upgradeCount = Object.values(h.upgrades).reduce((a, b) => a + b, 0);
+                            inc *= (1 + upgradeCount);
+                            houseIncome += inc;
+                        }
                     }
                 });
             }
@@ -2510,7 +3003,10 @@
             if (gameState.islands) {
                 gameState.islands.forEach(i => {
                     if (i.owned) {
-                        islandIncome += i.income;
+                        const taxItem = gameState.taxes.find(t => t.type === 'island' && t.id === i.id);
+                        if (!taxItem || taxItem.paid) {
+                            islandIncome += i.income;
+                        }
                     }
                 });
             }
@@ -2635,6 +3131,9 @@
                 const changeColor = priceChange >= 0 ? '#4caf50' : '#ff4444';
                 const income = crypto.incomePerCoin * userCrypto.owned;
                 
+                const taxItem = gameState.taxes.find(t => t.type === 'crypto' && t.id === crypto.id);
+                const taxStatus = taxItem && !taxItem.paid ? ' (налог не оплачен)' : '';
+                
                 content.innerHTML += `
                     <div class="crypto-item">
                         <div class="crypto-header">
@@ -2644,7 +3143,7 @@
                             </div>
                             <div class="crypto-owned">${formatFullNumber(userCrypto.owned)} шт</div>
                         </div>
-                        <div class="crypto-income">⏱️ Доход: +${formatMoney(income)}/сек</div>
+                        <div class="crypto-income">⏱️ Доход: +${formatMoney(income)}/сек ${taxStatus}</div>
                         <div class="crypto-actions">
                             <button class="crypto-btn" onclick="openTradeModal(${crypto.id}, 'buy')">Купить</button>
                             <button class="crypto-btn" onclick="openTradeModal(${crypto.id}, 'sell')">Продать</button>
@@ -2663,6 +3162,8 @@
             } else {
                 const now = Date.now();
                 gameState.miningFarms.forEach((farm, index) => {
+                    const taxItem = gameState.taxes.find(t => t.type === 'mining' && t.id === farm.id);
+                    const taxStatus = taxItem && !taxItem.paid ? ' (налог не оплачен)' : '';
                     const progressPercent = (farm.progress / farm.maxProgress) * 100;
                     
                     html += `
@@ -2674,9 +3175,9 @@
                             <div class="farm-progress">
                                 <div class="farm-progress-bar" style="width: ${Math.min(progressPercent, 100)}%"></div>
                             </div>
-                            <div class="farm-income">💰 ДОХОД: +${formatMoney(farm.crypto.basePrice * farm.level / 100)}/сек</div>
+                            <div class="farm-income">💰 ДОХОД: +${formatMoney(farm.crypto.basePrice * farm.level * 1000 / 100)}/сек ${taxStatus}</div>
                             <div class="farm-actions">
-                                <button class="farm-btn" onclick="upgradeMiningFarm(${index})">📈 Улучшить (${formatMoney(farm.level * 5000000000)})</button>
+                                <button class="farm-btn" onclick="upgradeMiningFarm(${index})">📈 Улучшить (${formatMoney(2000000000 * farm.level)})</button>
                                 <button class="farm-btn" style="background:#ff4444;" onclick="sellMiningFarm(${index})">💰 Продать</button>
                             </div>
                         </div>
@@ -2717,6 +3218,9 @@
             } else {
                 gameState.myBusinesses.forEach((b, i) => {
                     const t = businessTemplates[b.templateId];
+                    const taxItem = gameState.taxes.find(tax => tax.type === 'business' && tax.id === b.id);
+                    const taxStatus = taxItem && !taxItem.paid ? '⚠️' : '';
+                    
                     const managerBonus = b.manager ? b.manager.level * 10 : 0;
                     const passBonus = gameState.businessPassUpgraded ? 50 : 0;
                     const totalBonus = managerBonus + passBonus;
@@ -2732,7 +3236,7 @@
                     html += `
                         <div class="business-item" onclick="openBusinessModal(${i})">
                             <div class="business-header">
-                                <span class="business-name">${b.name}</span>
+                                <span class="business-name">${b.name} ${taxStatus}</span>
                                 <span class="business-level">Ур. ${b.level}/${t.maxLevel}</span>
                             </div>
                             <div class="business-stats">
@@ -2892,15 +3396,21 @@
                     cryptoTotal += cryptoData.basePrice * c.owned;
                 }
             });
-            let miningTotal = gameState.miningFarms?.reduce((sum, f) => sum + (f.level * f.crypto.basePrice), 0) || 0;
+            let miningTotal = gameState.miningFarms?.reduce((sum, f) => sum + (f.level * f.crypto.basePrice * 1000), 0) || 0;
             let housesTotal = gameState.houses.filter(h => h.owned).reduce((sum, h) => sum + h.price, 0) || 0;
             let islandsTotal = gameState.islands.filter(i => i.owned).reduce((sum, i) => sum + i.price, 0) || 0;
             
             const { rank } = getPlayerRank();
             
+            let taxSummary = '';
+            const overdueCount = gameState.taxes.filter(t => !t.paid && t.dueDate < Date.now()).length;
+            if (overdueCount > 0) {
+                taxSummary = `<span style="color:#ff4444; font-size:12px; margin-left:8px;">⚠️ Просрочено налогов: ${overdueCount}</span>`;
+            }
+            
             content.innerHTML = `
                 <div class="section-title">
-                    <h3>Профиль</h3>
+                    <h3>Профиль ${taxSummary}</h3>
                 </div>
                 
                 <div class="stat-box" style="margin-bottom:12px;">
@@ -3116,6 +3626,9 @@
                 html += '<div style="text-align:center; padding:20px; color:#8e8e98;">У вас пока нет домов</div>';
             } else {
                 ownedHouses.forEach(house => {
+                    const taxItem = gameState.taxes.find(t => t.type === 'house' && t.id === house.id);
+                    const taxStatus = taxItem && !taxItem.paid ? '⚠️' : '';
+                    
                     const totalUpgrades = Object.values(house.upgrades).reduce((a, b) => a + b, 0);
                     const houseIncome = house.baseIncome * (1 + totalUpgrades);
                     const sellPrice = Math.floor(house.price * 0.5);
@@ -3125,7 +3638,7 @@
                             <div style="display:flex; align-items:center; gap:12px;">
                                 <div style="font-size:32px;">${house.emoji}</div>
                                 <div style="flex:1;">
-                                    <div style="font-weight:600;">${house.name}</div>
+                                    <div style="font-weight:600;">${house.name} ${taxStatus}</div>
                                     <div style="color:#4caf50;">💰 +${formatMoney(houseIncome)}/сек</div>
                                     <div style="color:#8e8e98; font-size:12px;">Улучшений: ${totalUpgrades}/${MAX_HOUSE_UPGRADES}</div>
                                     <div style="display:flex; gap:8px; margin-top:8px;">
@@ -3275,13 +3788,9 @@
             if (!business) return;
             
             const t = businessTemplates[business.templateId];
+            const taxItem = gameState.taxes.find(tax => tax.type === 'business' && tax.id === business.id);
             
-            let totalSpent = t.baseUpgradeCost;
-            let currentCost = t.baseUpgradeCost;
-            for (let i = 1; i < (business.level || 1); i++) {
-                currentCost = Math.floor(currentCost * t.costMultiplier);
-                totalSpent += currentCost;
-            }
+            let totalSpent = taxItem ? taxItem.value : t.baseUpgradeCost;
             
             const sellPrice = Math.floor(totalSpent * 0.5);
             const diamondsReturn = Math.floor((business.diamondsSpent || 0) * 0.5);
@@ -3329,6 +3838,14 @@
                         <span>Потрачено алмазов</span>
                         <span style="color:#ffd700;">💎 ${business.diamondsSpent || 0}</span>
                     </div>
+                    ${taxItem ? `
+                        <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+                            <span>Налог к оплате</span>
+                            <span style="color:${taxItem.paid ? '#4caf50' : '#ff4444'};">
+                                ${taxItem.paid ? '✓ Оплачен' : formatMoney(taxItem.amount)}
+                            </span>
+                        </div>
+                    ` : ''}
             `;
             
             if ((business.level || 1) < t.maxLevel) {
@@ -3463,6 +3980,18 @@
             
             const userCrypto = gameState.crypto.find(c => c.id === crypto.id);
             userCrypto.owned += amount;
+            
+            // Добавляем налог
+            const totalPrice = crypto.basePrice * amount;
+            const taxItem = gameState.taxes.find(t => t.type === 'crypto' && t.id === crypto.id);
+            if (taxItem) {
+                taxItem.value += totalPrice;
+                taxItem.amount = Math.floor(taxItem.value * TAX_RATE);
+                taxItem.paid = false;
+            } else {
+                addTaxItem('crypto', crypto.id, totalPrice);
+            }
+            
             saveGame();
             updateUI();
             alert(`✅ Выдано ${amount} ${crypto.name}`);
@@ -3485,7 +4014,7 @@
                 return;
             }
             
-            gameState.myBusinesses.push({
+            const newBusiness = {
                 id: Date.now() + Math.random(),
                 templateId: t.id,
                 name: t.name,
@@ -3499,7 +4028,12 @@
                 incomeMultiplier: t.incomeMultiplier,
                 costMultiplier: t.costMultiplier,
                 diamondsSpent: 0
-            });
+            };
+            
+            gameState.myBusinesses.push(newBusiness);
+            
+            // Добавляем налог
+            addTaxItem('business', newBusiness.id, t.baseUpgradeCost);
             
             saveGame();
             updateUI();
@@ -3514,14 +4048,19 @@
             
             if (!gameState.miningFarms) gameState.miningFarms = [];
             
-            gameState.miningFarms.push({
+            const newFarm = {
                 id: Date.now(),
                 level: 1,
                 crypto: miningCryptos[Math.floor(Math.random() * miningCryptos.length)],
                 progress: 0,
                 maxProgress: 100,
                 lastUpdate: Date.now()
-            });
+            };
+            
+            gameState.miningFarms.push(newFarm);
+            
+            // Добавляем налог
+            addTaxItem('mining', newFarm.id, 1000000000);
             
             saveGame();
             updateUI();
@@ -3643,15 +4182,18 @@
             
             if (gameState.myBusinesses && gameState.myBusinesses.length > 0) {
                 gameState.myBusinesses.forEach(b => {
-                    let inc = b.income || 0;
-                    if (b.manager) {
-                        inc *= (1 + b.manager.level * 0.1);
+                    const taxItem = gameState.taxes.find(t => t.type === 'business' && t.id === b.id);
+                    if (!taxItem || taxItem.paid) {
+                        let inc = b.income || 0;
+                        if (b.manager) {
+                            inc *= (1 + b.manager.level * 0.1);
+                        }
+                        if (gameState.businessPassUpgraded) {
+                            inc *= 1.5;
+                        }
+                        income += inc;
+                        b.totalEarned = (b.totalEarned || 0) + inc;
                     }
-                    if (gameState.businessPassUpgraded) {
-                        inc *= 1.5;
-                    }
-                    income += inc;
-                    b.totalEarned = (b.totalEarned || 0) + inc;
                     
                     if (gameState.battlePass && gameState.battlePass.level < 200) {
                         gameState.battlePass.exp += 100;
@@ -3661,7 +4203,8 @@
             
             if (gameState.crypto && cryptoPrices) {
                 gameState.crypto.forEach(c => {
-                    if (c.owned > 0) {
+                    const taxItem = gameState.taxes.find(t => t.type === 'crypto' && t.id === c.id);
+                    if ((!taxItem || taxItem.paid) && c.owned > 0) {
                         const cryptoData = cryptoCurrencies.find(cr => cr.id === c.id);
                         if (cryptoData) {
                             income += cryptoData.incomePerCoin * c.owned;
@@ -3673,16 +4216,19 @@
             if (gameState.miningFarms) {
                 const now = Date.now();
                 gameState.miningFarms.forEach(farm => {
-                    const timePassed = (now - (farm.lastUpdate || now)) / 1000;
-                    farm.progress += timePassed * farm.level;
-                    farm.lastUpdate = now;
-                    
-                    while (farm.progress >= farm.maxProgress) {
-                        farm.progress -= farm.maxProgress;
-                        const earned = Math.floor(farm.crypto.basePrice * farm.level);
-                        gameState.balance += earned;
-                        gameState.totalEarned += earned;
-                        income += earned;
+                    const taxItem = gameState.taxes.find(t => t.type === 'mining' && t.id === farm.id);
+                    if (!taxItem || taxItem.paid) {
+                        const timePassed = (now - (farm.lastUpdate || now)) / 1000;
+                        farm.progress += timePassed * farm.level;
+                        farm.lastUpdate = now;
+                        
+                        while (farm.progress >= farm.maxProgress) {
+                            farm.progress -= farm.maxProgress;
+                            const earned = Math.floor(farm.crypto.basePrice * farm.level * 1000);
+                            gameState.balance += earned;
+                            gameState.totalEarned += earned;
+                            income += earned;
+                        }
                     }
                 });
             }
@@ -3690,10 +4236,13 @@
             if (gameState.houses) {
                 gameState.houses.forEach(h => {
                     if (h.owned) {
-                        let houseIncome = h.baseIncome;
-                        const upgradeCount = Object.values(h.upgrades).reduce((a, b) => a + b, 0);
-                        houseIncome *= (1 + upgradeCount);
-                        income += houseIncome;
+                        const taxItem = gameState.taxes.find(t => t.type === 'house' && t.id === h.id);
+                        if (!taxItem || taxItem.paid) {
+                            let houseIncome = h.baseIncome;
+                            const upgradeCount = Object.values(h.upgrades).reduce((a, b) => a + b, 0);
+                            houseIncome *= (1 + upgradeCount);
+                            income += houseIncome;
+                        }
                     }
                 });
             }
@@ -3701,7 +4250,10 @@
             if (gameState.islands) {
                 gameState.islands.forEach(i => {
                     if (i.owned) {
-                        income += i.income;
+                        const taxItem = gameState.taxes.find(t => t.type === 'island' && t.id === i.id);
+                        if (!taxItem || taxItem.paid) {
+                            income += i.income;
+                        }
                     }
                 });
             }
@@ -3788,7 +4340,8 @@
                     islands: islands.map(i => ({ ...i })),
                     garages: { cars: [], planes: [], ships: [] },
                     crypto: cryptoCurrencies.map(c => ({ id: c.id, owned: 0 })),
-                    cryptoPrices: cryptoCurrencies.map(c => c.basePrice)
+                    cryptoPrices: cryptoCurrencies.map(c => c.basePrice),
+                    taxes: []
                 };
                 
                 cryptoPrices = gameState.cryptoPrices;
@@ -3837,6 +4390,7 @@
             window.closeModal = closeModal;
             window.showTop100 = showTop100;
             window.closeTopModal = closeTopModal;
+            window.payTax = payTax;
             window.resetGame = resetGame;
             window.showNicknameModal = showNicknameModal;
             window.closeNicknameModal = closeNicknameModal;
