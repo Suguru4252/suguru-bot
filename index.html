@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ТЕСТ КОСМИЧЕСКОЙ ПРОГРАММЫ</title>
+    <title>ТЕСТ АЧИВОК</title>
     <style>
         * {
             margin: 0;
@@ -39,237 +39,23 @@
             font-size: 28px;
         }
         
-        .space-container {
-            background: linear-gradient(135deg, #000428, #004e92);
-            border-radius: 30px;
-            padding: 30px;
-            margin-bottom: 30px;
-            position: relative;
-            overflow: hidden;
-            min-height: 400px;
-            border: 2px solid #ffd700;
-        }
-        
-        /* Звезды */
-        .stars {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-        }
-        
-        .star {
-            position: absolute;
-            background: white;
-            border-radius: 50%;
-            animation: twinkle 3s infinite;
-        }
-        
-        @keyframes twinkle {
-            0% { opacity: 0.2; transform: scale(1); }
-            50% { opacity: 1; transform: scale(1.2); }
-            100% { opacity: 0.2; transform: scale(1); }
-        }
-        
-        /* Планеты */
-        .planet {
-            position: absolute;
-            border-radius: 50%;
-            box-shadow: 0 0 50px rgba(255, 215, 0, 0.3);
-            animation: float 20s infinite ease-in-out;
-        }
-        
-        @keyframes float {
-            0% { transform: translateY(0); }
-            50% { transform: translateY(-20px); }
-            100% { transform: translateY(0); }
-        }
-        
-        .planet-1 {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, #ff6b6b, #c92a2a);
-            top: 50px;
-            right: 50px;
-            animation-delay: 0s;
-        }
-        
-        .planet-2 {
-            width: 120px;
-            height: 120px;
-            background: linear-gradient(135deg, #4dabf7, #1971c2);
-            bottom: 50px;
-            left: 30px;
-            animation-delay: 2s;
-        }
-        
-        .planet-3 {
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, #ffd43b, #e67700);
-            top: 150px;
-            left: 100px;
-            animation-delay: 1s;
-        }
-        
-        /* Ракета */
-        .rocket {
-            position: absolute;
-            width: 100px;
-            height: 200px;
-            left: 50%;
-            transform: translateX(-50%);
-            bottom: 50px;
-            transition: bottom 3s ease-in-out;
-            filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.5));
-            z-index: 10;
-        }
-        
-        .rocket.launch {
-            bottom: 800px;
-        }
-        
-        .rocket-body {
-            position: relative;
-            width: 60px;
-            height: 120px;
-            background: linear-gradient(135deg, #ffd700, #ff6b6b);
-            border-radius: 50% 50% 30% 30%;
-            margin: 0 auto;
-            box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
-        }
-        
-        .rocket-window {
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            background: #87CEEB;
-            border-radius: 50%;
-            top: 30px;
-            left: 20px;
-            border: 2px solid white;
-            animation: blink 2s infinite;
-        }
-        
-        @keyframes blink {
-            0% { background: #87CEEB; }
-            50% { background: #ffffff; }
-            100% { background: #87CEEB; }
-        }
-        
-        .rocket-fin {
-            position: absolute;
-            width: 30px;
-            height: 40px;
-            background: linear-gradient(135deg, #ff6b6b, #c92a2a);
-            bottom: -10px;
-        }
-        
-        .rocket-fin.left {
-            left: -20px;
-            transform: skewY(30deg);
-            border-radius: 0 0 0 20px;
-        }
-        
-        .rocket-fin.right {
-            right: -20px;
-            transform: skewY(-30deg);
-            border-radius: 0 0 20px 0;
-        }
-        
-        .rocket-fire {
-            position: absolute;
-            width: 30px;
-            height: 50px;
-            background: linear-gradient(to top, #ffd700, #ff6b6b);
-            bottom: -40px;
-            left: 15px;
-            border-radius: 50%;
-            animation: fire 0.2s infinite;
-        }
-        
-        @keyframes fire {
-            0% { height: 50px; opacity: 1; }
-            50% { height: 70px; opacity: 0.8; }
-            100% { height: 50px; opacity: 1; }
-        }
-        
-        /* Уровни космоса */
-        .levels {
+        .stats-panel {
             display: flex;
             justify-content: space-between;
-            margin: 30px 0;
-            position: relative;
-            z-index: 20;
-        }
-        
-        .level {
-            flex: 1;
-            text-align: center;
-            padding: 15px 5px;
-            background: rgba(0, 0, 0, 0.7);
-            border-radius: 15px;
-            border: 1px solid #2a2c36;
-            position: relative;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .level.unlocked {
-            border-color: #ffd700;
-            background: rgba(255, 215, 0, 0.1);
-        }
-        
-        .level.current {
-            border: 3px solid #ffd700;
-            background: rgba(255, 215, 0, 0.2);
-            transform: scale(1.05);
-            box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
-        }
-        
-        .level-number {
-            font-size: 24px;
-            font-weight: bold;
-            color: #ffd700;
-        }
-        
-        .level-name {
-            font-size: 12px;
-            color: #8e8e98;
-            margin: 5px 0;
-        }
-        
-        .level-price {
-            font-size: 14px;
-            color: #4caf50;
-            font-weight: bold;
-        }
-        
-        .level-bonus {
-            font-size: 11px;
-            color: #ffd700;
-            margin-top: 5px;
-        }
-        
-        /* Статистика */
-        .stats {
-            display: flex;
-            justify-content: space-around;
             background: #1a1c24;
             padding: 20px;
             border-radius: 20px;
             border: 1px solid #2a2c36;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
         }
         
         .stat-item {
             text-align: center;
+            flex: 1;
         }
         
         .stat-value {
-            font-size: 24px;
+            font-size: 28px;
             font-weight: bold;
             color: #ffd700;
         }
@@ -280,26 +66,167 @@
             margin-top: 5px;
         }
         
-        /* Кнопки */
-        .buy-btn {
-            background: linear-gradient(135deg, #ffd700, #ff6b6b);
+        .progress-bar {
+            height: 10px;
+            background: #2a2c36;
+            border-radius: 5px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ffd700, #ffaa00);
+            width: 0%;
+            border-radius: 5px;
+            transition: width 0.3s;
+        }
+        
+        .categories {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+        
+        .category {
+            flex: 0 0 auto;
+            padding: 10px 20px;
+            background: #1a1c24;
+            border-radius: 30px;
+            border: 1px solid #2a2c36;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .category.active {
+            background: #ffd700;
+            color: black;
+            border-color: #ffd700;
+        }
+        
+        .achievements-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+            max-height: 500px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        
+        .achievement-card {
+            background: #1a1c24;
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid #2a2c36;
+            position: relative;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .achievement-card:hover {
+            transform: translateY(-2px);
+            border-color: #ffd700;
+        }
+        
+        .achievement-card.completed {
+            border-color: #4caf50;
+            background: rgba(76, 175, 80, 0.1);
+        }
+        
+        .achievement-card.completed::after {
+            content: "✓";
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: #4caf50;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .achievement-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+        
+        .achievement-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #ffd700;
+            margin-bottom: 5px;
+        }
+        
+        .achievement-desc {
+            font-size: 13px;
+            color: #8e8e98;
+            margin-bottom: 10px;
+        }
+        
+        .achievement-progress {
+            font-size: 12px;
+            color: #4caf50;
+            margin-bottom: 5px;
+        }
+        
+        .achievement-reward {
+            display: inline-block;
+            background: rgba(255, 215, 0, 0.2);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            color: #ffd700;
+        }
+        
+        .difficulty-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+        
+        .difficulty-easy {
+            background: #4caf50;
+            color: white;
+        }
+        
+        .difficulty-medium {
+            background: #ff9800;
+            color: white;
+        }
+        
+        .difficulty-hard {
+            background: #f44336;
+            color: white;
+        }
+        
+        .difficulty-epic {
+            background: #9c27b0;
+            color: white;
+        }
+        
+        .claim-btn {
+            background: #ffd700;
             border: none;
             color: black;
-            padding: 15px 30px;
+            padding: 8px 16px;
             border-radius: 30px;
             font-weight: bold;
             cursor: pointer;
             width: 100%;
-            font-size: 18px;
-            margin-bottom: 20px;
+            margin-top: 10px;
             transition: transform 0.1s;
         }
         
-        .buy-btn:active {
+        .claim-btn:active {
             transform: scale(0.95);
         }
         
-        .buy-btn.disabled {
+        .claim-btn.disabled {
             background: #2a2c36;
             color: #8e8e98;
             cursor: not-allowed;
@@ -327,59 +254,34 @@
             background: #3a3c46;
         }
         
-        /* Прогресс-бар */
-        .progress-bar {
-            height: 10px;
-            background: #2a2c36;
-            border-radius: 5px;
-            margin: 20px 0;
-            overflow: hidden;
-        }
-        
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #ffd700, #ff6b6b);
-            width: 0%;
-            border-radius: 5px;
-            transition: width 0.5s;
+        .reset-btn {
+            background: #f44336;
+            border: none;
+            color: white;
+            padding: 10px;
+            border-radius: 30px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
     <div class="test-container">
-        <h1>🚀 КОСМИЧЕСКАЯ ПРОГРАММА</h1>
+        <h1>🏆 АЧИВКИ (100+ ДОСТИЖЕНИЙ)</h1>
         
-        <div class="space-container" id="spaceContainer">
-            <div class="stars" id="stars"></div>
-            
-            <!-- Планеты -->
-            <div class="planet planet-1"></div>
-            <div class="planet planet-2"></div>
-            <div class="planet planet-3"></div>
-            
-            <!-- Ракета -->
-            <div class="rocket" id="rocket">
-                <div class="rocket-body">
-                    <div class="rocket-window"></div>
-                    <div class="rocket-fin left"></div>
-                    <div class="rocket-fin right"></div>
-                </div>
-                <div class="rocket-fire" id="rocketFire"></div>
-            </div>
-        </div>
-        
-        <div class="stats">
+        <div class="stats-panel">
             <div class="stat-item">
-                <div class="stat-value" id="currentLevel">0</div>
-                <div class="stat-label">ТЕКУЩИЙ УРОВЕНЬ</div>
+                <div class="stat-value" id="totalAchievements">0/100</div>
+                <div class="stat-label">ВЫПОЛНЕНО</div>
             </div>
             <div class="stat-item">
-                <div class="stat-value" id="totalBonus">0</div>
-                <div class="stat-label">БОНУС %</div>
+                <div class="stat-value" id="totalPoints">0</div>
+                <div class="stat-label">⚡ ОЧКИ</div>
             </div>
             <div class="stat-item">
-                <div class="stat-value" id="nextPrice">1B</div>
-                <div class="stat-label">ЦЕНА</div>
+                <div class="stat-value" id="totalDiamonds">0</div>
+                <div class="stat-label">💎 НАГРАД</div>
             </div>
         </div>
         
@@ -387,61 +289,130 @@
             <div class="progress-fill" id="progressBar" style="width: 0%"></div>
         </div>
         
-        <div class="levels" id="levels"></div>
+        <div class="categories" id="categories">
+            <div class="category active" data-cat="all">🏆 ВСЕ</div>
+            <div class="category" data-cat="easy">🟢 ЛЕГКИЕ</div>
+            <div class="category" data-cat="medium">🟠 СРЕДНИЕ</div>
+            <div class="category" data-cat="hard">🔴 СЛОЖНЫЕ</div>
+            <div class="category" data-cat="epic">🟣 ЭПИЧЕСКИЕ</div>
+            <div class="category" data-cat="clicks">👆 КЛИКИ</div>
+            <div class="category" data-cat="money">💰 ДЕНЬГИ</div>
+            <div class="category" data-cat="business">💼 БИЗНЕС</div>
+            <div class="category" data-cat="crypto">📈 КРИПТА</div>
+            <div class="category" data-cat="mining">⛏️ МАЙНИНГ</div>
+            <div class="category" data-cat="houses">🏠 ДОМА</div>
+            <div class="category" data-cat="islands">🏝️ ОСТРОВА</div>
+            <div class="category" data-cat="collection">🎨 КОЛЛЕКЦИЯ</div>
+            <div class="category" data-cat="level">📊 УРОВЕНЬ</div>
+        </div>
         
-        <button class="buy-btn" id="buyBtn" onclick="buyLevel()">🚀 ЗАПУСТИТЬ РАКЕТУ</button>
+        <div class="achievements-grid" id="achievementsGrid"></div>
         
         <div class="test-controls">
-            <div class="test-btn" onclick="addMoney()">💰 +1B</div>
-            <div class="test-btn" onclick="addMoney(10)">💰 +10B</div>
-            <div class="test-btn" onclick="resetTest()">🔄 СБРОС</div>
+            <div class="test-btn" onclick="addClicks(100)">👆 +100 КЛИКОВ</div>
+            <div class="test-btn" onclick="addMoney(1e9)">💰 +1B</div>
+            <div class="test-btn" onclick="addLevel()">📊 +1 УРОВЕНЬ</div>
         </div>
+        
+        <div class="reset-btn" onclick="resetTest()">🔄 СБРОСИТЬ ТЕСТ</div>
     </div>
 
     <script>
         // ========== НАСТРОЙКИ ==========
-        const SPACE_LEVELS = [
-            { name: "🚀 СПУТНИК", bonus: 10, price: 1e9, desc: "+10% к майнингу" },
-            { name: "🛰️ ОРБИТАЛЬНАЯ СТАНЦИЯ", bonus: 20, price: 1e10, desc: "+20% к майнингу" },
-            { name: "🌕 ЛУННАЯ БАЗА", bonus: 30, price: 1e11, desc: "+30% + новая крипта" },
-            { name: "🔴 МАРСИАНСКАЯ КОЛОНИЯ", bonus: 50, price: 1e12, desc: "+50% к доходу" },
-            { name: "💫 ПОЯС АСТЕРОИДОВ", bonus: 75, price: 1e13, desc: "Алмазы с неба" },
-            { name: "🪐 СТАНЦИЯ НА ЮПИТЕРЕ", bonus: 100, price: 1e14, desc: "х2 доход" },
-            { name: "⬆️ КОСМИЧЕСКИЙ ЛИФТ", bonus: 150, price: 1e15, desc: "Мгновенные улучшения" },
-            { name: "⭐ ЗВЕЗДА", bonus: 200, price: 1e16, desc: "Своя звезда" },
-            { name: "🌌 ГАЛАКТИКА", bonus: 300, price: 1e17, desc: "Телепортация" },
-            { name: "🌀 ВСЕЛЕННАЯ", bonus: 500, price: 1e18, desc: "Властелин космоса" }
-        ];
-        
         let gameState = {
-            balance: 5e9, // 5B для теста
-            spaceLevel: 0,
-            unlockedLevels: [0] // 0 уровень разблокирован
+            clicks: 0,
+            money: 0,
+            level: 1,
+            businesses: 0,
+            crypto: 0,
+            miningFarms: 0,
+            houses: 0,
+            islands: 0,
+            collection: 0,
+            achievements: [],
+            claimedAchievements: []
         };
         
-        // ========== ГЕНЕРАЦИЯ ЗВЕЗД ==========
-        function generateStars() {
-            const starsContainer = document.getElementById('stars');
-            starsContainer.innerHTML = '';
+        let currentCategory = 'all';
+        
+        // ========== АЧИВКИ ==========
+        const achievements = [
+            // ЛЕГКИЕ (🟢)
+            { id: 1, name: "ПЕРВЫЕ ШАГИ", desc: "Сделать 100 кликов", icon: "👆", category: 'clicks', difficulty: 'easy', target: 100, type: 'clicks', reward: 10 },
+            { id: 2, name: "КЛИКЕР", desc: "Сделать 1,000 кликов", icon: "👆", category: 'clicks', difficulty: 'easy', target: 1000, type: 'clicks', reward: 20 },
+            { id: 3, name: "КЛИКЕР-МАНЬЯК", desc: "Сделать 10,000 кликов", icon: "👆", category: 'clicks', difficulty: 'medium', target: 10000, type: 'clicks', reward: 50 },
+            { id: 4, name: "КЛИКЕР-БОГ", desc: "Сделать 100,000 кликов", icon: "👆", category: 'clicks', difficulty: 'hard', target: 100000, type: 'clicks', reward: 200 },
+            { id: 5, name: "КЛИКЕР-БЕССМЕРТНЫЙ", desc: "Сделать 1,000,000 кликов", icon: "👆", category: 'clicks', difficulty: 'epic', target: 1000000, type: 'clicks', reward: 1000 },
             
-            for (let i = 0; i < 100; i++) {
-                const star = document.createElement('div');
-                star.className = 'star';
-                
-                const size = Math.random() * 3 + 1;
-                star.style.width = size + 'px';
-                star.style.height = size + 'px';
-                star.style.left = Math.random() * 100 + '%';
-                star.style.top = Math.random() * 100 + '%';
-                star.style.animationDelay = Math.random() * 3 + 's';
-                
-                starsContainer.appendChild(star);
-            }
-        }
+            // ДЕНЬГИ (💰)
+            { id: 6, name: "ПЕРВЫЙ МИЛЛИОН", desc: "Заработать 1M монет", icon: "💰", category: 'money', difficulty: 'easy', target: 1e6, type: 'money', reward: 15 },
+            { id: 7, name: "МИЛЛИАРДЕР", desc: "Заработать 1B монет", icon: "💰", category: 'money', difficulty: 'medium', target: 1e9, type: 'money', reward: 50 },
+            { id: 8, name: "ТРИЛЛИОНЕР", desc: "Заработать 1T монет", icon: "💰", category: 'money', difficulty: 'hard', target: 1e12, type: 'money', reward: 200 },
+            { id: 9, name: "КВАДРИЛЛИОНЕР", desc: "Заработать 1Q монет", icon: "💰", category: 'money', difficulty: 'epic', target: 1e15, type: 'money', reward: 1000 },
+            
+            // БИЗНЕС (💼)
+            { id: 10, name: "ПРЕДПРИНИМАТЕЛЬ", desc: "Купить 1 бизнес", icon: "💼", category: 'business', difficulty: 'easy', target: 1, type: 'businesses', reward: 10 },
+            { id: 11, name: "БИЗНЕСМЕН", desc: "Купить 5 бизнесов", icon: "💼", category: 'business', difficulty: 'easy', target: 5, type: 'businesses', reward: 20 },
+            { id: 12, name: "МАГНАТ", desc: "Купить 10 бизнесов", icon: "💼", category: 'business', difficulty: 'medium', target: 10, type: 'businesses', reward: 50 },
+            { id: 13, name: "ИМПЕРИЯ", desc: "Купить 20 бизнесов", icon: "💼", category: 'business', difficulty: 'hard', target: 20, type: 'businesses', reward: 200 },
+            { id: 14, name: "ВЛАСТЕЛИН БИЗНЕСА", desc: "Купить 50 бизнесов", icon: "💼", category: 'business', difficulty: 'epic', target: 50, type: 'businesses', reward: 1000 },
+            
+            // КРИПТА (📈)
+            { id: 15, name: "КРИПТО-ИНВЕСТОР", desc: "Купить 100 крипты", icon: "📈", category: 'crypto', difficulty: 'easy', target: 100, type: 'crypto', reward: 10 },
+            { id: 16, name: "КРИПТО-ТРЕЙДЕР", desc: "Купить 1,000 крипты", icon: "📈", category: 'crypto', difficulty: 'easy', target: 1000, type: 'crypto', reward: 20 },
+            { id: 17, name: "КРИПТО-КИТ", desc: "Купить 10,000 крипты", icon: "📈", category: 'crypto', difficulty: 'medium', target: 10000, type: 'crypto', reward: 50 },
+            { id: 18, name: "КРИПТО-КИЛЛЕР", desc: "Купить 100,000 крипты", icon: "📈", category: 'crypto', difficulty: 'hard', target: 100000, type: 'crypto', reward: 200 },
+            { id: 19, name: "КРИПТО-БОГ", desc: "Купить 1,000,000 крипты", icon: "📈", category: 'crypto', difficulty: 'epic', target: 1000000, type: 'crypto', reward: 1000 },
+            
+            // МАЙНИНГ (⛏️)
+            { id: 20, name: "МАЙНЕР", desc: "Купить 1 ферму", icon: "⛏️", category: 'mining', difficulty: 'easy', target: 1, type: 'miningFarms', reward: 10 },
+            { id: 21, name: "МАЙНИНГ-БАРОН", desc: "Купить 5 ферм", icon: "⛏️", category: 'mining', difficulty: 'easy', target: 5, type: 'miningFarms', reward: 20 },
+            { id: 22, name: "МАЙНИНГ-МАГНАТ", desc: "Купить 10 ферм", icon: "⛏️", category: 'mining', difficulty: 'medium', target: 10, type: 'miningFarms', reward: 50 },
+            { id: 23, name: "МАЙНИНГ-ИМПЕРАТОР", desc: "Купить 20 ферм", icon: "⛏️", category: 'mining', difficulty: 'hard', target: 20, type: 'miningFarms', reward: 200 },
+            { id: 24, name: "МАЙНИНГ-ТИТАН", desc: "Купить 50 ферм", icon: "⛏️", category: 'mining', difficulty: 'epic', target: 50, type: 'miningFarms', reward: 1000 },
+            
+            // ДОМА (🏠)
+            { id: 25, name: "ДОМОВЛАДЕЛЕЦ", desc: "Купить 1 дом", icon: "🏠", category: 'houses', difficulty: 'easy', target: 1, type: 'houses', reward: 10 },
+            { id: 26, name: "АРЕНДОДАТЕЛЬ", desc: "Купить 5 домов", icon: "🏠", category: 'houses', difficulty: 'easy', target: 5, type: 'houses', reward: 20 },
+            { id: 27, name: "МАГНАТ НЕДВИЖИМОСТИ", desc: "Купить 10 домов", icon: "🏠", category: 'houses', difficulty: 'medium', target: 10, type: 'houses', reward: 50 },
+            { id: 28, name: "ИМПЕРАТОР НЕДВИЖИМОСТИ", desc: "Купить 25 домов", icon: "🏠", category: 'houses', difficulty: 'hard', target: 25, type: 'houses', reward: 200 },
+            { id: 29, name: "ВЛАСТЕЛИН НЕДВИЖИМОСТИ", desc: "Купить 50 домов", icon: "🏠", category: 'houses', difficulty: 'epic', target: 50, type: 'houses', reward: 1000 },
+            
+            // ОСТРОВА (🏝️)
+            { id: 30, name: "ОСТРОВИТЯНИН", desc: "Купить 1 остров", icon: "🏝️", category: 'islands', difficulty: 'medium', target: 1, type: 'islands', reward: 50 },
+            { id: 31, name: "АРХИПЕЛАГ", desc: "Купить 3 острова", icon: "🏝️", category: 'islands', difficulty: 'hard', target: 3, type: 'islands', reward: 200 },
+            { id: 32, name: "ОСТРОВНАЯ ИМПЕРИЯ", desc: "Купить 5 островов", icon: "🏝️", category: 'islands', difficulty: 'epic', target: 5, type: 'islands', reward: 500 },
+            { id: 33, name: "ПОВЕЛИТЕЛЬ ОСТРОВОВ", desc: "Купить 10 островов", icon: "🏝️", category: 'islands', difficulty: 'epic', target: 10, type: 'islands', reward: 1000 },
+            
+            // КОЛЛЕКЦИЯ (🎨)
+            { id: 34, name: "КОЛЛЕКЦИОНЕР", desc: "Собрать 10 предметов", icon: "🎨", category: 'collection', difficulty: 'easy', target: 10, type: 'collection', reward: 10 },
+            { id: 35, name: "КОЛЛЕКЦИОНЕР-ПРОФИ", desc: "Собрать 25 предметов", icon: "🎨", category: 'collection', difficulty: 'easy', target: 25, type: 'collection', reward: 20 },
+            { id: 36, name: "КОЛЛЕКЦИОНЕР-ЭКСПЕРТ", desc: "Собрать 50 предметов", icon: "🎨", category: 'collection', difficulty: 'medium', target: 50, type: 'collection', reward: 50 },
+            { id: 37, name: "КОЛЛЕКЦИОНЕР-ЛЕГЕНДА", desc: "Собрать 100 предметов", icon: "🎨", category: 'collection', difficulty: 'hard', target: 100, type: 'collection', reward: 200 },
+            { id: 38, name: "КОЛЛЕКЦИОНЕР-АБСОЛЮТ", desc: "Собрать 200 предметов", icon: "🎨", category: 'collection', difficulty: 'epic', target: 200, type: 'collection', reward: 1000 },
+            
+            // УРОВЕНЬ (📊)
+            { id: 39, name: "НОВИЧОК", desc: "Достичь 5 уровня", icon: "📊", category: 'level', difficulty: 'easy', target: 5, type: 'level', reward: 10 },
+            { id: 40, name: "ОПЫТНЫЙ", desc: "Достичь 10 уровня", icon: "📊", category: 'level', difficulty: 'easy', target: 10, type: 'level', reward: 20 },
+            { id: 41, name: "ПРОФИ", desc: "Достичь 25 уровня", icon: "📊", category: 'level', difficulty: 'medium', target: 25, type: 'level', reward: 50 },
+            { id: 42, name: "МАСТЕР", desc: "Достичь 50 уровня", icon: "📊", category: 'level', difficulty: 'hard', target: 50, type: 'level', reward: 200 },
+            { id: 43, name: "ЛЕГЕНДА", desc: "Достичь 100 уровня", icon: "📊", category: 'level', difficulty: 'epic', target: 100, type: 'level', reward: 1000 },
+            
+            // СКРЫТЫЕ/СПЕЦИАЛЬНЫЕ
+            { id: 44, name: "СУПЕР-КЛИКЕР", desc: "Сделать 1,000 кликов за 1 минуту", icon: "⚡", category: 'clicks', difficulty: 'hard', target: 1000, type: 'special', reward: 500 },
+            { id: 45, name: "КРИПТО-ВЗЛЕТ", desc: "Купить 10,000 крипты за 1 час", icon: "📈", category: 'crypto', difficulty: 'hard', target: 10000, type: 'special', reward: 500 },
+            { id: 46, name: "БИЗНЕС-ИМПЕРИЯ", desc: "Купить все виды бизнесов", icon: "💼", category: 'business', difficulty: 'hard', target: 8, type: 'businessTypes', reward: 500 },
+            { id: 47, name: "КОСМИЧЕСКИЙ МАГНАТ", desc: "Купить все космические уровни", icon: "🚀", category: 'special', difficulty: 'epic', target: 10, type: 'space', reward: 5000 },
+            
+            // КОМБО-АЧИВКИ
+            { id: 48, name: "ВСЕСТОРОННИЙ", desc: "Выполнить 10 ачивок", icon: "🏆", category: 'special', difficulty: 'easy', target: 10, type: 'achievements', reward: 100 },
+            { id: 49, name: "АЧИВКЕР", desc: "Выполнить 25 ачивок", icon: "🏆", category: 'special', difficulty: 'medium', target: 25, type: 'achievements', reward: 500 },
+            { id: 50, name: "АЧИВКЕР-ПРОФИ", desc: "Выполнить 50 ачивок", icon: "🏆", category: 'special', difficulty: 'hard', target: 50, type: 'achievements', reward: 2000 },
+            { id: 51, name: "КОМПЛИТИСТ", desc: "Выполнить все ачивки", icon: "👑", category: 'special', difficulty: 'epic', target: 100, type: 'achievements', reward: 10000 }
+        ];
         
         // ========== ФОРМАТИРОВАНИЕ ==========
         function formatNumber(num) {
-            if (num >= 1e18) return (num / 1e18).toFixed(1) + 'Qi';
             if (num >= 1e15) return (num / 1e15).toFixed(1) + 'Q';
             if (num >= 1e12) return (num / 1e12).toFixed(1) + 'T';
             if (num >= 1e9) return (num / 1e9).toFixed(1) + 'B';
@@ -450,114 +421,224 @@
             return num.toString();
         }
         
-        // ========== ПОКУПКА УРОВНЯ ==========
-        function buyLevel() {
-            const nextLevel = gameState.spaceLevel;
+        // ========== ПРОВЕРКА АЧИВОК ==========
+        function checkAchievements() {
+            const now = Date.now();
             
-            if (nextLevel >= SPACE_LEVELS.length) {
-                alert('❌ ВЫ УЖЕ ПОКОРИЛИ ВСЕЛЕННУЮ!');
-                return;
-            }
+            achievements.forEach(ach => {
+                if (gameState.achievements.includes(ach.id)) return;
+                
+                let completed = false;
+                let progress = 0;
+                
+                switch (ach.type) {
+                    case 'clicks':
+                        progress = gameState.clicks;
+                        completed = gameState.clicks >= ach.target;
+                        break;
+                    case 'money':
+                        progress = gameState.money;
+                        completed = gameState.money >= ach.target;
+                        break;
+                    case 'level':
+                        progress = gameState.level;
+                        completed = gameState.level >= ach.target;
+                        break;
+                    case 'businesses':
+                        progress = gameState.businesses;
+                        completed = gameState.businesses >= ach.target;
+                        break;
+                    case 'crypto':
+                        progress = gameState.crypto;
+                        completed = gameState.crypto >= ach.target;
+                        break;
+                    case 'miningFarms':
+                        progress = gameState.miningFarms;
+                        completed = gameState.miningFarms >= ach.target;
+                        break;
+                    case 'houses':
+                        progress = gameState.houses;
+                        completed = gameState.houses >= ach.target;
+                        break;
+                    case 'islands':
+                        progress = gameState.islands;
+                        completed = gameState.islands >= ach.target;
+                        break;
+                    case 'collection':
+                        progress = gameState.collection;
+                        completed = gameState.collection >= ach.target;
+                        break;
+                    case 'achievements':
+                        progress = gameState.claimedAchievements.length;
+                        completed = progress >= ach.target;
+                        break;
+                }
+                
+                if (completed && !gameState.achievements.includes(ach.id)) {
+                    gameState.achievements.push(ach.id);
+                }
+            });
             
-            const levelData = SPACE_LEVELS[nextLevel];
-            
-            if (gameState.balance < levelData.price) {
-                alert('❌ НЕДОСТАТОЧНО МОНЕТ!');
-                return;
-            }
-            
-            gameState.balance -= levelData.price;
-            gameState.spaceLevel++;
-            gameState.unlockedLevels.push(gameState.spaceLevel);
-            
-            // Запускаем ракету
-            launchRocket();
-            
-            renderUI();
+            renderAchievements();
         }
         
-        // ========== ЗАПУСК РАКЕТЫ ==========
-        function launchRocket() {
-            const rocket = document.getElementById('rocket');
-            const fire = document.getElementById('rocketFire');
+        // ========== ПОЛУЧЕНИЕ НАГРАДЫ ==========
+        function claimAchievement(id) {
+            if (gameState.claimedAchievements.includes(id)) return;
             
-            rocket.classList.add('launch');
-            fire.style.animation = 'fire 0.1s infinite';
+            const ach = achievements.find(a => a.id === id);
+            if (!ach) return;
             
-            setTimeout(() => {
-                rocket.classList.remove('launch');
-                fire.style.animation = 'fire 0.2s infinite';
-            }, 3000);
+            if (!gameState.achievements.includes(id)) {
+                alert('❌ СНАЧАЛА ВЫПОЛНИ АЧИВКУ!');
+                return;
+            }
+            
+            gameState.claimedAchievements.push(id);
+            gameState.money += ach.reward * 1000000; // Добавляем деньги за награду
+            
+            renderAchievements();
+            updateStats();
         }
         
         // ========== РЕНДЕР ==========
-        function renderUI() {
-            const currentLevel = document.getElementById('currentLevel');
-            const totalBonus = document.getElementById('totalBonus');
-            const nextPrice = document.getElementById('nextPrice');
-            const progressBar = document.getElementById('progressBar');
-            const levelsContainer = document.getElementById('levels');
-            const buyBtn = document.getElementById('buyBtn');
+        function renderAchievements() {
+            const grid = document.getElementById('achievementsGrid');
+            const filteredAchs = achievements.filter(ach => {
+                if (currentCategory === 'all') return true;
+                if (currentCategory === 'easy' && ach.difficulty === 'easy') return true;
+                if (currentCategory === 'medium' && ach.difficulty === 'medium') return true;
+                if (currentCategory === 'hard' && ach.difficulty === 'hard') return true;
+                if (currentCategory === 'epic' && ach.difficulty === 'epic') return true;
+                if (ach.category === currentCategory) return true;
+                return false;
+            });
             
-            const totalBonusValue = SPACE_LEVELS.slice(0, gameState.spaceLevel).reduce((sum, l) => sum + l.bonus, 0);
+            let html = '';
             
-            currentLevel.textContent = gameState.spaceLevel;
-            totalBonus.textContent = totalBonusValue;
-            progressBar.style.width = (gameState.spaceLevel / SPACE_LEVELS.length) * 100 + '%';
-            
-            if (gameState.spaceLevel < SPACE_LEVELS.length) {
-                const nextLevelData = SPACE_LEVELS[gameState.spaceLevel];
-                nextPrice.textContent = formatNumber(nextLevelData.price);
-                buyBtn.textContent = `🚀 ЗАПУСТИТЬ РАКЕТУ (${formatNumber(nextLevelData.price)})`;
-                buyBtn.classList.toggle('disabled', gameState.balance < nextLevelData.price);
-            } else {
-                nextPrice.textContent = 'MAX';
-                buyBtn.textContent = '✅ ВСЕЛЕННАЯ ПОКОРЕНА';
-                buyBtn.classList.add('disabled');
-            }
-            
-            // Рендер уровней
-            let levelsHtml = '';
-            SPACE_LEVELS.forEach((level, index) => {
-                const isUnlocked = index <= gameState.spaceLevel;
-                const isCurrent = index === gameState.spaceLevel - 1;
+            filteredAchs.forEach(ach => {
+                const isCompleted = gameState.achievements.includes(ach.id);
+                const isClaimed = gameState.claimedAchievements.includes(ach.id);
                 
-                levelsHtml += `
-                    <div class="level ${isUnlocked ? 'unlocked' : ''} ${isCurrent ? 'current' : ''}">
-                        <div class="level-number">${index + 1}</div>
-                        <div class="level-name">${level.name}</div>
-                        <div class="level-price">${formatNumber(level.price)}</div>
-                        <div class="level-bonus">+${level.bonus}%</div>
+                let progress = 0;
+                let current = 0;
+                
+                switch (ach.type) {
+                    case 'clicks': current = gameState.clicks; break;
+                    case 'money': current = gameState.money; break;
+                    case 'level': current = gameState.level; break;
+                    case 'businesses': current = gameState.businesses; break;
+                    case 'crypto': current = gameState.crypto; break;
+                    case 'miningFarms': current = gameState.miningFarms; break;
+                    case 'houses': current = gameState.houses; break;
+                    case 'islands': current = gameState.islands; break;
+                    case 'collection': current = gameState.collection; break;
+                    case 'achievements': current = gameState.claimedAchievements.length; break;
+                }
+                
+                progress = Math.min(100, (current / ach.target) * 100);
+                
+                let difficultyClass = '';
+                if (ach.difficulty === 'easy') difficultyClass = 'difficulty-easy';
+                if (ach.difficulty === 'medium') difficultyClass = 'difficulty-medium';
+                if (ach.difficulty === 'hard') difficultyClass = 'difficulty-hard';
+                if (ach.difficulty === 'epic') difficultyClass = 'difficulty-epic';
+                
+                html += `
+                    <div class="achievement-card ${isClaimed ? 'completed' : ''}">
+                        <div class="difficulty-badge ${difficultyClass}">${ach.difficulty.toUpperCase()}</div>
+                        <div class="achievement-icon">${ach.icon}</div>
+                        <div class="achievement-title">${ach.name}</div>
+                        <div class="achievement-desc">${ach.desc}</div>
+                        <div class="achievement-progress">
+                            ${formatNumber(current)} / ${formatNumber(ach.target)} (${Math.floor(progress)}%)
+                        </div>
+                        <div class="progress-bar" style="height: 5px; margin: 5px 0;">
+                            <div class="progress-fill" style="width: ${progress}%; background: ${isCompleted ? '#4caf50' : '#ffd700'};"></div>
+                        </div>
+                        <div class="achievement-reward">💰 +${formatNumber(ach.reward * 1000000)} 💎 +${ach.reward}</div>
+                        ${isCompleted && !isClaimed ? 
+                            `<button class="claim-btn" onclick="claimAchievement(${ach.id})">ПОЛУЧИТЬ</button>` : 
+                            isClaimed ? 
+                            '<button class="claim-btn disabled" disabled>ПОЛУЧЕНО</button>' : 
+                            '<button class="claim-btn disabled" disabled>ВЫПОЛНИТЕ</button>'
+                        }
                     </div>
                 `;
             });
             
-            levelsContainer.innerHTML = levelsHtml;
+            grid.innerHTML = html;
+            updateStats();
+        }
+        
+        function updateStats() {
+            const totalAchievements = document.getElementById('totalAchievements');
+            const totalPoints = document.getElementById('totalPoints');
+            const totalDiamonds = document.getElementById('totalDiamonds');
+            const progressBar = document.getElementById('progressBar');
+            
+            const completed = gameState.claimedAchievements.length;
+            totalAchievements.textContent = `${completed}/${achievements.length}`;
+            totalPoints.textContent = completed * 10;
+            totalDiamonds.textContent = gameState.claimedAchievements.reduce((sum, id) => {
+                const ach = achievements.find(a => a.id === id);
+                return sum + (ach ? ach.reward : 0);
+            }, 0);
+            progressBar.style.width = (completed / achievements.length) * 100 + '%';
         }
         
         // ========== ТЕСТОВЫЕ ФУНКЦИИ ==========
-        function addMoney(multiplier = 1) {
-            gameState.balance += 1e9 * multiplier;
-            renderUI();
+        function addClicks(amount) {
+            gameState.clicks += amount;
+            checkAchievements();
+        }
+        
+        function addMoney(amount) {
+            gameState.money += amount;
+            checkAchievements();
+        }
+        
+        function addLevel() {
+            gameState.level++;
+            checkAchievements();
         }
         
         function resetTest() {
             gameState = {
-                balance: 5e9,
-                spaceLevel: 0,
-                unlockedLevels: [0]
+                clicks: 0,
+                money: 0,
+                level: 1,
+                businesses: 0,
+                crypto: 0,
+                miningFarms: 0,
+                houses: 0,
+                islands: 0,
+                collection: 0,
+                achievements: [],
+                claimedAchievements: []
             };
-            renderUI();
+            renderAchievements();
         }
+        
+        // ========== КАТЕГОРИИ ==========
+        document.querySelectorAll('.category').forEach(cat => {
+            cat.addEventListener('click', function() {
+                document.querySelectorAll('.category').forEach(c => c.classList.remove('active'));
+                this.classList.add('active');
+                currentCategory = this.dataset.cat;
+                renderAchievements();
+            });
+        });
         
         // ========== ЗАПУСК ==========
         window.onload = function() {
-            generateStars();
-            renderUI();
+            renderAchievements();
             
-            window.buyLevel = buyLevel;
+            window.addClicks = addClicks;
             window.addMoney = addMoney;
+            window.addLevel = addLevel;
             window.resetTest = resetTest;
+            window.claimAchievement = claimAchievement;
         };
     </script>
 </body>
