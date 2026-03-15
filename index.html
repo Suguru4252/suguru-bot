@@ -296,8 +296,15 @@
             padding: 12px 8px;
             gap: 4px;
             border-top: 1px solid #2a2c36;
-            justify-content: space-around;
+            overflow-x: auto;
+            white-space: nowrap;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
             flex-shrink: 0;
+        }
+        
+        .bottom-nav::-webkit-scrollbar {
+            display: none;
         }
         
         .bottom-nav.admin-nav {
@@ -305,15 +312,16 @@
         }
         
         .nav-item {
-            flex: 1;
+            flex: 0 0 auto;
             text-align: center;
-            padding: 8px 4px;
+            padding: 8px 12px;
             color: #8e8e98;
             border-radius: 12px;
             cursor: pointer;
             font-size: 12px;
             transition: all 0.2s;
             pointer-events: auto;
+            min-width: 70px;
         }
         
         .nav-item span {
@@ -980,6 +988,12 @@
             font-weight: 600;
         }
         
+        .tax-accrued {
+            color: #ff9800;
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+        
         .tax-timer {
             font-size: 12px;
             color: #8e8e98;
@@ -1115,7 +1129,7 @@
     
     <script>
         // ========== НАСТРОЙКИ ==========
-        const APP_VERSION = '10.0.0';
+        const APP_VERSION = '11.0.0';
         const ADMIN_SECRETS = ['2a3d4g5j', 'test', 'test2', 'test3', 'dexter'];
         const ADMIN_PASSWORD = '2a3d4g5j';
         const MAX_BUSINESSES = 8;
@@ -1127,6 +1141,7 @@
         const MAX_HOUSE_UPGRADES = 42;
         const TAX_RATE = 0.2; // 20% налог
         const TAX_PERIOD = 72 * 60 * 60 * 1000; // 72 часа в миллисекундах
+        const TAX_HOUR_AMOUNT = TAX_PERIOD / 72 / 1000; // Сумма налога в час
         
         const forbesTop100 = [
             "Bernard Arnault", "Elon Musk", "Jeff Bezos", "Larry Ellison", "Warren Buffett",
@@ -1317,9 +1332,9 @@
             { id: 7, name: "🏛️ ИМПЕРИЯ", baseIncome: 2000000000, baseUpgradeCost: 100000000000, upgradeTime: 2400, maxLevel: 20, incomeMultiplier: 1.5, costMultiplier: 50 }
         ];
         
-        // ========== КРИПТО-МАЙНИНГ (ДОХОД УВЕЛИЧЕН В 1000 РАЗ) ==========
+        // ========== КРИПТО-МАЙНИНГ ==========
         const miningCryptos = [
-            { id: 0, name: "BITCOIN", emoji: "₿", basePrice: 1000000, incomePerLevel: 100000 }, // 1000x больше
+            { id: 0, name: "BITCOIN", emoji: "₿", basePrice: 1000000, incomePerLevel: 100000 },
             { id: 1, name: "ETHEREUM", emoji: "Ξ", basePrice: 500000, incomePerLevel: 50000 },
             { id: 2, name: "DOGECOIN", emoji: "🐶", basePrice: 1000, incomePerLevel: 10000 }
         ];
@@ -1429,6 +1444,7 @@
                     
                     if (secondsPassed > 10) {
                         calculateOfflineEarnings(secondsPassed);
+                        updateTaxesOffline(secondsPassed);
                     }
                     
                     gameState.lastOnlineTime = now;
@@ -1455,6 +1471,27 @@
             }
         }
         
+        function updateTaxesOffline(seconds) {
+            if (!gameState.taxes) return;
+            
+            const hoursPassed = seconds / 3600;
+            
+            gameState.taxes.forEach(tax => {
+                if (!tax.paid) {
+                    tax.accrued += tax.hourlyRate * hoursPassed;
+                    if (tax.accrued > tax.totalAmount) {
+                        tax.accrued = tax.totalAmount;
+                    }
+                    
+                    // Проверка на просрочку
+                    const now = Date.now();
+                    if (now > tax.dueDate && tax.accrued < tax.totalAmount) {
+                        tax.overdue = true;
+                    }
+                }
+            });
+        }
+        
         function calculateOfflineEarnings(seconds) {
             let income = 0;
             
@@ -1465,8 +1502,8 @@
             if (gameState.myBusinesses && gameState.myBusinesses.length > 0) {
                 gameState.myBusinesses.forEach(b => {
                     // Проверяем, оплачен ли налог
-                    const taxItem = gameState.taxes.find(t => t.id === b.id && t.type === 'business');
-                    if (!taxItem || taxItem.paid) {
+                    const taxItem = gameState.taxes.find(t => t.type === 'business' && t.id === b.id);
+                    if (!taxItem || (taxItem.paid && taxItem.accrued < taxItem.totalAmount) || (!taxItem.paid && taxItem.accrued < taxItem.totalAmount && Date.now() <= taxItem.dueDate)) {
                         let inc = (b.income || 0) * seconds;
                         if (b.manager) {
                             inc *= (1 + b.manager.level * 0.1);
@@ -1482,8 +1519,8 @@
             
             if (gameState.crypto && cryptoPrices) {
                 gameState.crypto.forEach(c => {
-                    const taxItem = gameState.taxes.find(t => t.id === c.id && t.type === 'crypto');
-                    if ((!taxItem || taxItem.paid) && c.owned > 0) {
+                    const taxItem = gameState.taxes.find(t => t.type === 'crypto' && t.id === c.id);
+                    if ((!taxItem || (taxItem.paid && taxItem.accrued < taxItem.totalAmount) || (!taxItem.paid && taxItem.accrued < taxItem.totalAmount && Date.now() <= taxItem.dueDate)) && c.owned > 0) {
                         const cryptoData = cryptoCurrencies.find(cr => cr.id === c.id);
                         if (cryptoData) {
                             income += cryptoData.incomePerCoin * c.owned * seconds;
@@ -1495,15 +1532,15 @@
             if (gameState.miningFarms) {
                 const now = Date.now();
                 gameState.miningFarms.forEach(farm => {
-                    const taxItem = gameState.taxes.find(t => t.id === farm.id && t.type === 'mining');
-                    if (!taxItem || taxItem.paid) {
+                    const taxItem = gameState.taxes.find(t => t.type === 'mining' && t.id === farm.id);
+                    if (!taxItem || (taxItem.paid && taxItem.accrued < taxItem.totalAmount) || (!taxItem.paid && taxItem.accrued < taxItem.totalAmount && Date.now() <= taxItem.dueDate)) {
                         const timePassed = (now - (farm.lastUpdate || now)) / 1000;
                         farm.progress += timePassed * farm.level;
                         farm.lastUpdate = now;
                         
                         while (farm.progress >= farm.maxProgress) {
                             farm.progress -= farm.maxProgress;
-                            const earned = Math.floor(farm.crypto.basePrice * farm.level * 1000); // Увеличен доход в 1000 раз
+                            const earned = Math.floor(farm.crypto.basePrice * farm.level * 1000);
                             gameState.balance += earned;
                             gameState.totalEarned += earned;
                             income += earned;
@@ -1515,8 +1552,8 @@
             if (gameState.houses) {
                 gameState.houses.forEach(h => {
                     if (h.owned) {
-                        const taxItem = gameState.taxes.find(t => t.id === h.id && t.type === 'house');
-                        if (!taxItem || taxItem.paid) {
+                        const taxItem = gameState.taxes.find(t => t.type === 'house' && t.id === h.id);
+                        if (!taxItem || (taxItem.paid && taxItem.accrued < taxItem.totalAmount) || (!taxItem.paid && taxItem.accrued < taxItem.totalAmount && Date.now() <= taxItem.dueDate)) {
                             let houseIncome = h.baseIncome;
                             const upgradeCount = Object.values(h.upgrades).reduce((a, b) => a + b, 0);
                             houseIncome *= (1 + upgradeCount);
@@ -1529,8 +1566,8 @@
             if (gameState.islands) {
                 gameState.islands.forEach(i => {
                     if (i.owned) {
-                        const taxItem = gameState.taxes.find(t => t.id === i.id && t.type === 'island');
-                        if (!taxItem || taxItem.paid) {
+                        const taxItem = gameState.taxes.find(t => t.type === 'island' && t.id === i.id);
+                        if (!taxItem || (taxItem.paid && taxItem.accrued < taxItem.totalAmount) || (!taxItem.paid && taxItem.accrued < taxItem.totalAmount && Date.now() <= taxItem.dueDate)) {
                             income += i.income * seconds;
                         }
                     }
@@ -1601,16 +1638,48 @@
             
             // Проверяем, есть ли уже такой налог
             const existing = gameState.taxes.find(t => t.type === type && t.id === id);
-            if (existing) return;
+            if (existing) {
+                existing.value += value;
+                existing.totalAmount = Math.floor(existing.value * TAX_RATE);
+                existing.hourlyRate = existing.totalAmount / 72;
+                existing.paid = false;
+                existing.accrued = 0;
+                existing.dueDate = Date.now() + TAX_PERIOD;
+                return;
+            }
             
-            const taxAmount = Math.floor(value * TAX_RATE);
+            const totalAmount = Math.floor(value * TAX_RATE);
             gameState.taxes.push({
                 type: type,
                 id: id,
-                amount: taxAmount,
+                value: value,
+                totalAmount: totalAmount,
+                hourlyRate: totalAmount / 72,
+                accrued: 0,
                 dueDate: Date.now() + TAX_PERIOD,
                 paid: false,
-                value: value
+                overdue: false
+            });
+        }
+        
+        function updateTaxes() {
+            if (!gameState.taxes) return;
+            
+            const now = Date.now();
+            
+            gameState.taxes.forEach(tax => {
+                if (!tax.paid) {
+                    // Добавляем налог за прошедший час
+                    tax.accrued += tax.hourlyRate;
+                    if (tax.accrued > tax.totalAmount) {
+                        tax.accrued = tax.totalAmount;
+                    }
+                    
+                    // Проверка на просрочку
+                    if (now > tax.dueDate && tax.accrued < tax.totalAmount) {
+                        tax.overdue = true;
+                    }
+                }
             });
         }
         
@@ -1618,28 +1687,36 @@
             const taxItem = gameState.taxes.find(t => t.type === type && t.id === id);
             if (!taxItem || taxItem.paid) return false;
             
-            if (gameState.balance < taxItem.amount) {
+            const amountToPay = Math.floor(taxItem.accrued);
+            
+            if (amountToPay <= 0) {
+                alert('❌ НЕТ НАЧИСЛЕННЫХ НАЛОГОВ!');
+                return false;
+            }
+            
+            if (gameState.balance < amountToPay) {
                 alert('❌ НЕДОСТАТОЧНО МОНЕТ ДЛЯ УПЛАТЫ НАЛОГА!');
                 return false;
             }
             
-            gameState.balance -= taxItem.amount;
+            gameState.balance -= amountToPay;
             taxItem.paid = true;
-            taxItem.dueDate = Date.now() + TAX_PERIOD;
+            taxItem.accrued = 0;
+            taxItem.overdue = false;
             
             saveGame();
             updateUI();
             renderCurrentTab();
-            alert(`✅ Налог оплачен: ${formatMoney(taxItem.amount)}`);
+            alert(`✅ Налог оплачен: ${formatMoney(amountToPay)}`);
             return true;
         }
         
         function getTaxStatus(taxItem) {
             if (!taxItem) return 'none';
             if (taxItem.paid) return 'paid';
+            if (taxItem.overdue) return 'overdue';
             const timeLeft = taxItem.dueDate - Date.now();
-            if (timeLeft < 0) return 'overdue';
-            if (timeLeft < 12 * 60 * 60 * 1000) return 'soon'; // Меньше 12 часов
+            if (timeLeft < 12 * 60 * 60 * 1000) return 'soon';
             return 'normal';
         }
         
@@ -1695,7 +1772,7 @@
                 return;
             }
             
-            const cost = 2000000000 * farm.level; // Каждое улучшение +2 млрд
+            const cost = 2000000000 * farm.level;
             if (gameState.balance < cost) {
                 alert('❌ НЕДОСТАТОЧНО МОНЕТ!');
                 return;
@@ -1704,12 +1781,15 @@
             gameState.balance -= cost;
             farm.level++;
             
-            // Обновляем налог (добавляем стоимость улучшения к базе)
+            // Обновляем налог
             const taxItem = gameState.taxes.find(t => t.type === 'mining' && t.id === farm.id);
             if (taxItem) {
                 taxItem.value += cost;
-                taxItem.amount = Math.floor(taxItem.value * TAX_RATE);
-                taxItem.paid = false; // Нужно оплатить налог заново
+                taxItem.totalAmount = Math.floor(taxItem.value * TAX_RATE);
+                taxItem.hourlyRate = taxItem.totalAmount / 72;
+                taxItem.paid = false;
+                taxItem.accrued = 0;
+                taxItem.dueDate = Date.now() + TAX_PERIOD;
             }
             
             saveGame();
@@ -1765,8 +1845,6 @@
             
             gameState.garages[category].push(newItem);
             
-            // Машины, самолеты и корабли не облагаются налогом (они не приносят доход)
-            
             saveGame();
             updateUI();
             renderCurrentTab();
@@ -1819,6 +1897,7 @@
             const house = gameState.houses.find(h => h.id === houseId);
             if (!house || !house.owned) return;
             
+            const taxItem = gameState.taxes.find(t => t.type === 'house' && t.id === house.id);
             const sellPrice = Math.floor(house.price * 0.5);
             
             if (confirm(`Продать дом ${house.name} за ${formatMoney(sellPrice)}?`)) {
@@ -1827,8 +1906,10 @@
                 gameState.balance += sellPrice;
                 
                 // Удаляем налог
-                const taxIndex = gameState.taxes.findIndex(t => t.type === 'house' && t.id === house.id);
-                if (taxIndex !== -1) gameState.taxes.splice(taxIndex, 1);
+                if (taxItem) {
+                    const taxIndex = gameState.taxes.findIndex(t => t.type === 'house' && t.id === house.id);
+                    if (taxIndex !== -1) gameState.taxes.splice(taxIndex, 1);
+                }
                 
                 saveGame();
                 updateUI();
@@ -1864,12 +1945,15 @@
             gameState.balance -= cost;
             house.upgrades[upgradeType]++;
             
-            // Обновляем налог на дом (добавляем стоимость улучшения)
+            // Обновляем налог
             const taxItem = gameState.taxes.find(t => t.type === 'house' && t.id === house.id);
             if (taxItem) {
                 taxItem.value += cost;
-                taxItem.amount = Math.floor(taxItem.value * TAX_RATE);
-                taxItem.paid = false; // Нужно оплатить налог заново
+                taxItem.totalAmount = Math.floor(taxItem.value * TAX_RATE);
+                taxItem.hourlyRate = taxItem.totalAmount / 72;
+                taxItem.paid = false;
+                taxItem.accrued = 0;
+                taxItem.dueDate = Date.now() + TAX_PERIOD;
             }
             
             saveGame();
@@ -1997,12 +2081,15 @@
             business.upgradeTime = Math.floor((business.upgradeTime || t.upgradeTime) * 1.3);
             business.upgradeEnd = 0;
             
-            // Обновляем налог на бизнес (добавляем стоимость улучшения)
+            // Обновляем налог
             const taxItem = gameState.taxes.find(tax => tax.type === 'business' && tax.id === business.id);
             if (taxItem) {
-                taxItem.value += (business.upgradeCost || 0) / (t.costMultiplier); // Приблизительная стоимость улучшения
-                taxItem.amount = Math.floor(taxItem.value * TAX_RATE);
+                taxItem.value += (business.upgradeCost || 0) / (t.costMultiplier);
+                taxItem.totalAmount = Math.floor(taxItem.value * TAX_RATE);
+                taxItem.hourlyRate = taxItem.totalAmount / 72;
                 taxItem.paid = false;
+                taxItem.accrued = 0;
+                taxItem.dueDate = Date.now() + TAX_PERIOD;
             }
             
             saveGame();
@@ -2251,12 +2338,15 @@
                 gameState.balance -= totalPrice;
                 userCrypto.owned += amount;
                 
-                // Добавляем налог на крипту (только при первой покупке, не при каждой)
+                // Добавляем налог на крипту
                 const taxItem = gameState.taxes.find(t => t.type === 'crypto' && t.id === cryptoId);
                 if (taxItem) {
                     taxItem.value += totalPrice;
-                    taxItem.amount = Math.floor(taxItem.value * TAX_RATE);
+                    taxItem.totalAmount = Math.floor(taxItem.value * TAX_RATE);
+                    taxItem.hourlyRate = taxItem.totalAmount / 72;
                     taxItem.paid = false;
+                    taxItem.accrued = 0;
+                    taxItem.dueDate = Date.now() + TAX_PERIOD;
                 } else {
                     addTaxItem('crypto', cryptoId, totalPrice);
                 }
@@ -2612,13 +2702,13 @@
                 const status = getTaxStatus(tax);
                 if (status === 'overdue') overdueCount.push(tax);
                 else if (status === 'soon') soonCount.push(tax);
-                if (!tax.paid) totalTaxDue += tax.amount;
+                if (!tax.paid && tax.accrued > 0) totalTaxDue += tax.accrued;
             });
             
             let html = `
                 <div class="tax-summary">
-                    <div class="tax-summary-title">💰 ВСЕГО НАЛОГОВ К ОПЛАТЕ</div>
-                    <div class="tax-summary-value">${formatMoney(totalTaxDue)}</div>
+                    <div class="tax-summary-title">💰 НАЛОГОВ К ОПЛАТЕ СЕЙЧАС</div>
+                    <div class="tax-summary-value">${formatMoney(Math.floor(totalTaxDue))}</div>
                     <div class="tax-summary-sub">
                         ⚠️ Просрочено: ${overdueCount.length} | ⏳ Скоро: ${soonCount.length}
                     </div>
@@ -2643,19 +2733,21 @@
                         else if (status === 'soon') statusClass = 'tax-soon';
                         
                         const timeLeft = tax.dueDate - Date.now();
+                        const percentComplete = (tax.accrued / tax.totalAmount * 100).toFixed(1);
                         
                         html += `
                             <div class="tax-item ${statusClass}">
                                 <div class="tax-header">
                                     <span class="tax-name">${business.name}</span>
-                                    <span class="tax-amount">${formatMoney(tax.amount)}</span>
+                                    <span class="tax-amount">${formatMoney(Math.floor(tax.accrued))} / ${formatMoney(tax.totalAmount)}</span>
                                 </div>
+                                <div class="tax-accrued">📊 Начислено: ${percentComplete}%</div>
                                 <div class="tax-timer">
                                     ${status === 'paid' ? '✅ Налог оплачен' : `⏱️ Срок: ${formatTimeLeft(timeLeft)}`}
                                 </div>
-                                ${!tax.paid ? 
-                                    `<button class="tax-btn" onclick="payTax('business', ${tax.id})">ОПЛАТИТЬ НАЛОГ</button>` :
-                                    `<div class="tax-paid-status">✓ Оплачено</div>`
+                                ${!tax.paid && tax.accrued > 0 ? 
+                                    `<button class="tax-btn" onclick="payTax('business', ${tax.id})">ОПЛАТИТЬ ${formatMoney(Math.floor(tax.accrued))}</button>` :
+                                    tax.paid ? `<div class="tax-paid-status">✓ Оплачено</div>` : ''
                                 }
                             </div>
                         `;
@@ -2677,19 +2769,21 @@
                         else if (status === 'soon') statusClass = 'tax-soon';
                         
                         const timeLeft = tax.dueDate - Date.now();
+                        const percentComplete = (tax.accrued / tax.totalAmount * 100).toFixed(1);
                         
                         html += `
                             <div class="tax-item ${statusClass}">
                                 <div class="tax-header">
                                     <span class="tax-name">${house.emoji} ${house.name}</span>
-                                    <span class="tax-amount">${formatMoney(tax.amount)}</span>
+                                    <span class="tax-amount">${formatMoney(Math.floor(tax.accrued))} / ${formatMoney(tax.totalAmount)}</span>
                                 </div>
+                                <div class="tax-accrued">📊 Начислено: ${percentComplete}%</div>
                                 <div class="tax-timer">
                                     ${status === 'paid' ? '✅ Налог оплачен' : `⏱️ Срок: ${formatTimeLeft(timeLeft)}`}
                                 </div>
-                                ${!tax.paid ? 
-                                    `<button class="tax-btn" onclick="payTax('house', ${tax.id})">ОПЛАТИТЬ НАЛОГ</button>` :
-                                    `<div class="tax-paid-status">✓ Оплачено</div>`
+                                ${!tax.paid && tax.accrued > 0 ? 
+                                    `<button class="tax-btn" onclick="payTax('house', ${tax.id})">ОПЛАТИТЬ ${formatMoney(Math.floor(tax.accrued))}</button>` :
+                                    tax.paid ? `<div class="tax-paid-status">✓ Оплачено</div>` : ''
                                 }
                             </div>
                         `;
@@ -2714,22 +2808,24 @@
                         else if (status === 'soon') statusClass = 'tax-soon';
                         
                         const timeLeft = tax.dueDate - Date.now();
+                        const percentComplete = (tax.accrued / tax.totalAmount * 100).toFixed(1);
                         
                         html += `
                             <div class="tax-item ${statusClass}">
                                 <div class="tax-header">
                                     <span class="tax-name">${crypto.emoji} ${crypto.name}</span>
-                                    <span class="tax-amount">${formatMoney(tax.amount)}</span>
+                                    <span class="tax-amount">${formatMoney(Math.floor(tax.accrued))} / ${formatMoney(tax.totalAmount)}</span>
                                 </div>
+                                <div class="tax-accrued">📊 Начислено: ${percentComplete}%</div>
                                 <div class="tax-timer">
                                     ${status === 'paid' ? '✅ Налог оплачен' : `⏱️ Срок: ${formatTimeLeft(timeLeft)}`}
                                 </div>
                                 <div style="font-size:11px; color:#8e8e98; margin-bottom:4px;">
                                     Владею: ${formatFullNumber(userCrypto.owned)} шт
                                 </div>
-                                ${!tax.paid ? 
-                                    `<button class="tax-btn" onclick="payTax('crypto', ${tax.id})">ОПЛАТИТЬ НАЛОГ</button>` :
-                                    `<div class="tax-paid-status">✓ Оплачено</div>`
+                                ${!tax.paid && tax.accrued > 0 ? 
+                                    `<button class="tax-btn" onclick="payTax('crypto', ${tax.id})">ОПЛАТИТЬ ${formatMoney(Math.floor(tax.accrued))}</button>` :
+                                    tax.paid ? `<div class="tax-paid-status">✓ Оплачено</div>` : ''
                                 }
                             </div>
                         `;
@@ -2751,19 +2847,21 @@
                         else if (status === 'soon') statusClass = 'tax-soon';
                         
                         const timeLeft = tax.dueDate - Date.now();
+                        const percentComplete = (tax.accrued / tax.totalAmount * 100).toFixed(1);
                         
                         html += `
                             <div class="tax-item ${statusClass}">
                                 <div class="tax-header">
                                     <span class="tax-name">${farm.crypto.emoji} ${farm.crypto.name} (ур.${farm.level})</span>
-                                    <span class="tax-amount">${formatMoney(tax.amount)}</span>
+                                    <span class="tax-amount">${formatMoney(Math.floor(tax.accrued))} / ${formatMoney(tax.totalAmount)}</span>
                                 </div>
+                                <div class="tax-accrued">📊 Начислено: ${percentComplete}%</div>
                                 <div class="tax-timer">
                                     ${status === 'paid' ? '✅ Налог оплачен' : `⏱️ Срок: ${formatTimeLeft(timeLeft)}`}
                                 </div>
-                                ${!tax.paid ? 
-                                    `<button class="tax-btn" onclick="payTax('mining', ${tax.id})">ОПЛАТИТЬ НАЛОГ</button>` :
-                                    `<div class="tax-paid-status">✓ Оплачено</div>`
+                                ${!tax.paid && tax.accrued > 0 ? 
+                                    `<button class="tax-btn" onclick="payTax('mining', ${tax.id})">ОПЛАТИТЬ ${formatMoney(Math.floor(tax.accrued))}</button>` :
+                                    tax.paid ? `<div class="tax-paid-status">✓ Оплачено</div>` : ''
                                 }
                             </div>
                         `;
@@ -2785,19 +2883,21 @@
                         else if (status === 'soon') statusClass = 'tax-soon';
                         
                         const timeLeft = tax.dueDate - Date.now();
+                        const percentComplete = (tax.accrued / tax.totalAmount * 100).toFixed(1);
                         
                         html += `
                             <div class="tax-item ${statusClass}">
                                 <div class="tax-header">
                                     <span class="tax-name">${island.emoji} ${island.name}</span>
-                                    <span class="tax-amount">${formatMoney(tax.amount)}</span>
+                                    <span class="tax-amount">${formatMoney(Math.floor(tax.accrued))} / ${formatMoney(tax.totalAmount)}</span>
                                 </div>
+                                <div class="tax-accrued">📊 Начислено: ${percentComplete}%</div>
                                 <div class="tax-timer">
                                     ${status === 'paid' ? '✅ Налог оплачен' : `⏱️ Срок: ${formatTimeLeft(timeLeft)}`}
                                 </div>
-                                ${!tax.paid ? 
-                                    `<button class="tax-btn" onclick="payTax('island', ${tax.id})">ОПЛАТИТЬ НАЛОГ</button>` :
-                                    `<div class="tax-paid-status">✓ Оплачено</div>`
+                                ${!tax.paid && tax.accrued > 0 ? 
+                                    `<button class="tax-btn" onclick="payTax('island', ${tax.id})">ОПЛАТИТЬ ${formatMoney(Math.floor(tax.accrued))}</button>` :
+                                    tax.paid ? `<div class="tax-paid-status">✓ Оплачено</div>` : ''
                                 }
                             </div>
                         `;
@@ -2838,7 +2938,7 @@
                     
                     // Проверяем налог перед начислением дохода
                     const taxItem = gameState.taxes.find(t => t.type === 'mining' && t.id === farm.id);
-                    if (!taxItem || taxItem.paid) {
+                    if (!taxItem || (taxItem.paid && taxItem.accrued < taxItem.totalAmount) || (!taxItem.paid && taxItem.accrued < taxItem.totalAmount && now <= taxItem.dueDate)) {
                         while (farm.progress >= farm.maxProgress) {
                             farm.progress -= farm.maxProgress;
                             const earned = Math.floor(farm.crypto.basePrice * farm.level * 1000);
@@ -2848,6 +2948,9 @@
                     }
                 });
             }
+            
+            // Обновляем налоги
+            updateTaxes();
             
             renderCurrentTab();
         }
@@ -2950,7 +3053,7 @@
             if (gameState.myBusinesses && gameState.myBusinesses.length > 0) {
                 gameState.myBusinesses.forEach(b => {
                     const taxItem = gameState.taxes.find(t => t.type === 'business' && t.id === b.id);
-                    if (!taxItem || taxItem.paid) {
+                    if (!taxItem || (taxItem.paid && taxItem.accrued < taxItem.totalAmount) || (!taxItem.paid && taxItem.accrued < taxItem.totalAmount && Date.now() <= taxItem.dueDate)) {
                         let inc = b.income || 0;
                         if (b.manager) {
                             inc *= (1 + b.manager.level * 0.1);
@@ -2966,7 +3069,7 @@
             let cryptoIncome = 0;
             gameState.crypto.forEach(c => {
                 const taxItem = gameState.taxes.find(t => t.type === 'crypto' && t.id === c.id);
-                if ((!taxItem || taxItem.paid) && c.owned > 0) {
+                if ((!taxItem || (taxItem.paid && taxItem.accrued < taxItem.totalAmount) || (!taxItem.paid && taxItem.accrued < taxItem.totalAmount && Date.now() <= taxItem.dueDate)) && c.owned > 0) {
                     const cryptoData = cryptoCurrencies.find(cr => cr.id === c.id);
                     if (cryptoData) {
                         cryptoIncome += cryptoData.incomePerCoin * c.owned;
@@ -2978,8 +3081,8 @@
             if (gameState.miningFarms) {
                 gameState.miningFarms.forEach(farm => {
                     const taxItem = gameState.taxes.find(t => t.type === 'mining' && t.id === farm.id);
-                    if (!taxItem || taxItem.paid) {
-                        miningIncome += farm.crypto.basePrice * farm.level * 10; // Уменьшено для отображения (в реале считается в progress)
+                    if (!taxItem || (taxItem.paid && taxItem.accrued < taxItem.totalAmount) || (!taxItem.paid && taxItem.accrued < taxItem.totalAmount && Date.now() <= taxItem.dueDate)) {
+                        miningIncome += farm.crypto.basePrice * farm.level * 10;
                     }
                 });
             }
@@ -2989,7 +3092,7 @@
                 gameState.houses.forEach(h => {
                     if (h.owned) {
                         const taxItem = gameState.taxes.find(t => t.type === 'house' && t.id === h.id);
-                        if (!taxItem || taxItem.paid) {
+                        if (!taxItem || (taxItem.paid && taxItem.accrued < taxItem.totalAmount) || (!taxItem.paid && taxItem.accrued < taxItem.totalAmount && Date.now() <= taxItem.dueDate)) {
                             let inc = h.baseIncome;
                             const upgradeCount = Object.values(h.upgrades).reduce((a, b) => a + b, 0);
                             inc *= (1 + upgradeCount);
@@ -3004,7 +3107,7 @@
                 gameState.islands.forEach(i => {
                     if (i.owned) {
                         const taxItem = gameState.taxes.find(t => t.type === 'island' && t.id === i.id);
-                        if (!taxItem || taxItem.paid) {
+                        if (!taxItem || (taxItem.paid && taxItem.accrued < taxItem.totalAmount) || (!taxItem.paid && taxItem.accrued < taxItem.totalAmount && Date.now() <= taxItem.dueDate)) {
                             islandIncome += i.income;
                         }
                     }
@@ -3132,18 +3235,18 @@
                 const income = crypto.incomePerCoin * userCrypto.owned;
                 
                 const taxItem = gameState.taxes.find(t => t.type === 'crypto' && t.id === crypto.id);
-                const taxStatus = taxItem && !taxItem.paid ? ' (налог не оплачен)' : '';
+                const taxStatus = taxItem && !taxItem.paid && taxItem.accrued > 0 ? '⚠️' : '';
                 
                 content.innerHTML += `
                     <div class="crypto-item">
                         <div class="crypto-header">
                             <div>
-                                <span class="crypto-name">${crypto.emoji} ${crypto.name}</span>
+                                <span class="crypto-name">${crypto.emoji} ${crypto.name} ${taxStatus}</span>
                                 <div class="crypto-price">${formatMoney(currentPrice)} <span style="color:${changeColor};">(${priceChange}%)</span></div>
                             </div>
                             <div class="crypto-owned">${formatFullNumber(userCrypto.owned)} шт</div>
                         </div>
-                        <div class="crypto-income">⏱️ Доход: +${formatMoney(income)}/сек ${taxStatus}</div>
+                        <div class="crypto-income">⏱️ Доход: +${formatMoney(income)}/сек</div>
                         <div class="crypto-actions">
                             <button class="crypto-btn" onclick="openTradeModal(${crypto.id}, 'buy')">Купить</button>
                             <button class="crypto-btn" onclick="openTradeModal(${crypto.id}, 'sell')">Продать</button>
@@ -3163,19 +3266,19 @@
                 const now = Date.now();
                 gameState.miningFarms.forEach((farm, index) => {
                     const taxItem = gameState.taxes.find(t => t.type === 'mining' && t.id === farm.id);
-                    const taxStatus = taxItem && !taxItem.paid ? ' (налог не оплачен)' : '';
+                    const taxStatus = taxItem && !taxItem.paid && taxItem.accrued > 0 ? '⚠️' : '';
                     const progressPercent = (farm.progress / farm.maxProgress) * 100;
                     
                     html += `
                         <div class="mining-farm">
                             <div class="farm-header">
-                                <span class="farm-name">${farm.crypto.emoji} ${farm.crypto.name}</span>
+                                <span class="farm-name">${farm.crypto.emoji} ${farm.crypto.name} ${taxStatus}</span>
                                 <span class="farm-level">УРОВЕНЬ ${farm.level}/${MAX_FARM_LEVEL}</span>
                             </div>
                             <div class="farm-progress">
                                 <div class="farm-progress-bar" style="width: ${Math.min(progressPercent, 100)}%"></div>
                             </div>
-                            <div class="farm-income">💰 ДОХОД: +${formatMoney(farm.crypto.basePrice * farm.level * 1000 / 100)}/сек ${taxStatus}</div>
+                            <div class="farm-income">💰 ДОХОД: +${formatMoney(farm.crypto.basePrice * farm.level * 1000 / 100)}/сек</div>
                             <div class="farm-actions">
                                 <button class="farm-btn" onclick="upgradeMiningFarm(${index})">📈 Улучшить (${formatMoney(2000000000 * farm.level)})</button>
                                 <button class="farm-btn" style="background:#ff4444;" onclick="sellMiningFarm(${index})">💰 Продать</button>
@@ -3219,7 +3322,7 @@
                 gameState.myBusinesses.forEach((b, i) => {
                     const t = businessTemplates[b.templateId];
                     const taxItem = gameState.taxes.find(tax => tax.type === 'business' && tax.id === b.id);
-                    const taxStatus = taxItem && !taxItem.paid ? '⚠️' : '';
+                    const taxStatus = taxItem && !taxItem.paid && taxItem.accrued > 0 ? '⚠️' : '';
                     
                     const managerBonus = b.manager ? b.manager.level * 10 : 0;
                     const passBonus = gameState.businessPassUpgraded ? 50 : 0;
@@ -3403,9 +3506,12 @@
             const { rank } = getPlayerRank();
             
             let taxSummary = '';
-            const overdueCount = gameState.taxes.filter(t => !t.paid && t.dueDate < Date.now()).length;
+            const overdueCount = gameState.taxes.filter(t => !t.paid && t.overdue).length;
+            const dueCount = gameState.taxes.filter(t => !t.paid && t.accrued > 0).length;
             if (overdueCount > 0) {
-                taxSummary = `<span style="color:#ff4444; font-size:12px; margin-left:8px;">⚠️ Просрочено налогов: ${overdueCount}</span>`;
+                taxSummary = `<span style="color:#ff4444; font-size:12px; margin-left:8px;">⚠️ Просрочено: ${overdueCount}</span>`;
+            } else if (dueCount > 0) {
+                taxSummary = `<span style="color:#ff9800; font-size:12px; margin-left:8px;">⏳ Налогов: ${dueCount}</span>`;
             }
             
             content.innerHTML = `
@@ -3627,7 +3733,7 @@
             } else {
                 ownedHouses.forEach(house => {
                     const taxItem = gameState.taxes.find(t => t.type === 'house' && t.id === house.id);
-                    const taxStatus = taxItem && !taxItem.paid ? '⚠️' : '';
+                    const taxStatus = taxItem && !taxItem.paid && taxItem.accrued > 0 ? '⚠️' : '';
                     
                     const totalUpgrades = Object.values(house.upgrades).reduce((a, b) => a + b, 0);
                     const houseIncome = house.baseIncome * (1 + totalUpgrades);
@@ -3840,9 +3946,9 @@
                     </div>
                     ${taxItem ? `
                         <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
-                            <span>Налог к оплате</span>
+                            <span>Налог накоплен</span>
                             <span style="color:${taxItem.paid ? '#4caf50' : '#ff4444'};">
-                                ${taxItem.paid ? '✓ Оплачен' : formatMoney(taxItem.amount)}
+                                ${formatMoney(Math.floor(taxItem.accrued))} / ${formatMoney(taxItem.totalAmount)}
                             </span>
                         </div>
                     ` : ''}
@@ -3986,8 +4092,11 @@
             const taxItem = gameState.taxes.find(t => t.type === 'crypto' && t.id === crypto.id);
             if (taxItem) {
                 taxItem.value += totalPrice;
-                taxItem.amount = Math.floor(taxItem.value * TAX_RATE);
+                taxItem.totalAmount = Math.floor(taxItem.value * TAX_RATE);
+                taxItem.hourlyRate = taxItem.totalAmount / 72;
                 taxItem.paid = false;
+                taxItem.accrued = 0;
+                taxItem.dueDate = Date.now() + TAX_PERIOD;
             } else {
                 addTaxItem('crypto', crypto.id, totalPrice);
             }
@@ -4183,7 +4292,7 @@
             if (gameState.myBusinesses && gameState.myBusinesses.length > 0) {
                 gameState.myBusinesses.forEach(b => {
                     const taxItem = gameState.taxes.find(t => t.type === 'business' && t.id === b.id);
-                    if (!taxItem || taxItem.paid) {
+                    if (!taxItem || (taxItem.paid && taxItem.accrued < taxItem.totalAmount) || (!taxItem.paid && taxItem.accrued < taxItem.totalAmount && Date.now() <= taxItem.dueDate)) {
                         let inc = b.income || 0;
                         if (b.manager) {
                             inc *= (1 + b.manager.level * 0.1);
@@ -4204,7 +4313,7 @@
             if (gameState.crypto && cryptoPrices) {
                 gameState.crypto.forEach(c => {
                     const taxItem = gameState.taxes.find(t => t.type === 'crypto' && t.id === c.id);
-                    if ((!taxItem || taxItem.paid) && c.owned > 0) {
+                    if ((!taxItem || (taxItem.paid && taxItem.accrued < taxItem.totalAmount) || (!taxItem.paid && taxItem.accrued < taxItem.totalAmount && Date.now() <= taxItem.dueDate)) && c.owned > 0) {
                         const cryptoData = cryptoCurrencies.find(cr => cr.id === c.id);
                         if (cryptoData) {
                             income += cryptoData.incomePerCoin * c.owned;
@@ -4217,7 +4326,7 @@
                 const now = Date.now();
                 gameState.miningFarms.forEach(farm => {
                     const taxItem = gameState.taxes.find(t => t.type === 'mining' && t.id === farm.id);
-                    if (!taxItem || taxItem.paid) {
+                    if (!taxItem || (taxItem.paid && taxItem.accrued < taxItem.totalAmount) || (!taxItem.paid && taxItem.accrued < taxItem.totalAmount && now <= taxItem.dueDate)) {
                         const timePassed = (now - (farm.lastUpdate || now)) / 1000;
                         farm.progress += timePassed * farm.level;
                         farm.lastUpdate = now;
@@ -4237,7 +4346,7 @@
                 gameState.houses.forEach(h => {
                     if (h.owned) {
                         const taxItem = gameState.taxes.find(t => t.type === 'house' && t.id === h.id);
-                        if (!taxItem || taxItem.paid) {
+                        if (!taxItem || (taxItem.paid && taxItem.accrued < taxItem.totalAmount) || (!taxItem.paid && taxItem.accrued < taxItem.totalAmount && Date.now() <= taxItem.dueDate)) {
                             let houseIncome = h.baseIncome;
                             const upgradeCount = Object.values(h.upgrades).reduce((a, b) => a + b, 0);
                             houseIncome *= (1 + upgradeCount);
@@ -4251,7 +4360,7 @@
                 gameState.islands.forEach(i => {
                     if (i.owned) {
                         const taxItem = gameState.taxes.find(t => t.type === 'island' && t.id === i.id);
-                        if (!taxItem || taxItem.paid) {
+                        if (!taxItem || (taxItem.paid && taxItem.accrued < taxItem.totalAmount) || (!taxItem.paid && taxItem.accrued < taxItem.totalAmount && Date.now() <= taxItem.dueDate)) {
                             income += i.income;
                         }
                     }
@@ -4267,6 +4376,7 @@
                 gameState.totalEarned = (gameState.totalEarned || 0) + Math.floor(income);
             }
             
+            updateTaxes();
             checkBattlePassLevel();
             
             updateUI();
