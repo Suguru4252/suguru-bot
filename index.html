@@ -921,6 +921,26 @@
             background: rgba(255, 215, 0, 0.2);
             border: 1px solid gold;
         }
+
+        .upgrade-pass-btn {
+            background: linear-gradient(135deg, #7b1fa2, #4a0072);
+            border: 2px solid #ffd700;
+            color: white;
+            padding: 16px;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+            margin: 16px 0;
+            font-size: 16px;
+            animation: glow 2s infinite;
+        }
+
+        @keyframes glow {
+            0% { box-shadow: 0 0 10px #ffd700; }
+            50% { box-shadow: 0 0 30px #ffd700; }
+            100% { box-shadow: 0 0 10px #ffd700; }
+        }
     </style>
 </head>
 <body>
@@ -992,9 +1012,13 @@
         <div class="modal-content" id="topModalContent"></div>
     </div>
     
+    <div class="modal" id="islandsModal">
+        <div class="modal-content" id="islandsModalContent"></div>
+    </div>
+    
     <script>
         // ========== НАСТРОЙКИ ==========
-        const APP_VERSION = '8.1.0';
+        const APP_VERSION = '9.0.0';
         const ADMIN_SECRETS = ['2a3d4g5j', 'test', 'test2', 'test3', 'dexter'];
         const ADMIN_PASSWORD = '2a3d4g5j';
         const MAX_BUSINESSES = 8;
@@ -1002,6 +1026,8 @@
         const MAX_FARM_LEVEL = 500;
         const BASE_CLICK_POWER = 3000;
         const HOUSE_INCOME_MULTIPLIER = 4.44;
+        const MAX_PLAYER_LEVEL = 100;
+        const MAX_HOUSE_UPGRADES = 42;
         
         const forbesTop100 = [
             "Bernard Arnault", "Elon Musk", "Jeff Bezos", "Larry Ellison", "Warren Buffett",
@@ -1051,65 +1077,40 @@
         
         currentUserId = getDeviceId();
         
-        // ========== 50+ КРИПТОВАЛЮТ ==========
+        // ========== 50+ КРИПТОВАЛЮТ (ДОХОД УВЕЛИЧЕН НА 500%) ==========
         const cryptoCurrencies = [
-            { id: 0, name: "BITCOIN", emoji: "₿", basePrice: 1000000, maxBuy: 5000000000, volatility: 0.2, incomePerCoin: 0.5 },
-            { id: 1, name: "ETHEREUM", emoji: "Ξ", basePrice: 500000, maxBuy: 5000000000, volatility: 0.25, incomePerCoin: 0.3 },
-            { id: 2, name: "BINANCE COIN", emoji: "BNB", basePrice: 250000, maxBuy: 5000000000, volatility: 0.3, incomePerCoin: 0.2 },
-            { id: 3, name: "SOLANA", emoji: "SOL", basePrice: 100000, maxBuy: 5000000000, volatility: 0.35, incomePerCoin: 0.15 },
-            { id: 4, name: "CARDANO", emoji: "ADA", basePrice: 50000, maxBuy: 5000000000, volatility: 0.4, incomePerCoin: 0.1 },
-            { id: 5, name: "DOT", emoji: "DOT", basePrice: 25000, maxBuy: 5000000000, volatility: 0.4, incomePerCoin: 0.08 },
-            { id: 6, name: "AVALANCHE", emoji: "AVAX", basePrice: 20000, maxBuy: 5000000000, volatility: 0.4, incomePerCoin: 0.07 },
-            { id: 7, name: "CHAINLINK", emoji: "LINK", basePrice: 15000, maxBuy: 5000000000, volatility: 0.45, incomePerCoin: 0.06 },
-            { id: 8, name: "POLYGON", emoji: "MATIC", basePrice: 10000, maxBuy: 5000000000, volatility: 0.45, incomePerCoin: 0.05 },
-            { id: 9, name: "LITECOIN", emoji: "Ł", basePrice: 8000, maxBuy: 5000000000, volatility: 0.45, incomePerCoin: 0.04 },
-            { id: 10, name: "RIPPLE", emoji: "XRP", basePrice: 5000, maxBuy: 5000000000, volatility: 0.5, incomePerCoin: 0.03 },
-            { id: 11, name: "DOGECOIN", emoji: "🐶", basePrice: 1000, maxBuy: 5000000000, volatility: 0.6, incomePerCoin: 0.02 },
-            { id: 12, name: "SHIBA INU", emoji: "🐕", basePrice: 500, maxBuy: 5000000000, volatility: 0.7, incomePerCoin: 0.015 },
-            { id: 13, name: "PEPE", emoji: "🐸", basePrice: 100, maxBuy: 5000000000, volatility: 0.8, incomePerCoin: 0.01 },
-            { id: 14, name: "WOJAK", emoji: "😩", basePrice: 50, maxBuy: 5000000000, volatility: 0.9, incomePerCoin: 0.008 },
-            { id: 15, name: "BONK", emoji: "🦴", basePrice: 25, maxBuy: 5000000000, volatility: 1.0, incomePerCoin: 0.005 },
-            { id: 16, name: "FLOKI", emoji: "🐕", basePrice: 10, maxBuy: 5000000000, volatility: 1.0, incomePerCoin: 0.003 },
-            { id: 17, name: "SAMO", emoji: "🐶", basePrice: 5, maxBuy: 5000000000, volatility: 1.0, incomePerCoin: 0.002 },
-            { id: 18, name: "MYRO", emoji: "🐕", basePrice: 2, maxBuy: 5000000000, volatility: 1.0, incomePerCoin: 0.001 },
-            { id: 19, name: "SUGURU COIN", emoji: "🍬", basePrice: 1, maxBuy: 5000000000, volatility: 1.0, incomePerCoin: 0.0005 },
-            { id: 20, name: "BITCOIN CASH", emoji: "BCH", basePrice: 20000, maxBuy: 5000000000, volatility: 0.4, incomePerCoin: 0.04 },
-            { id: 21, name: "LINK", emoji: "🔗", basePrice: 15000, maxBuy: 5000000000, volatility: 0.4, incomePerCoin: 0.03 },
-            { id: 22, name: "UNISWAP", emoji: "UNI", basePrice: 12000, maxBuy: 5000000000, volatility: 0.4, incomePerCoin: 0.025 },
-            { id: 23, name: "AAVE", emoji: "AAVE", basePrice: 10000, maxBuy: 5000000000, volatility: 0.4, incomePerCoin: 0.02 },
-            { id: 24, name: "MAKER", emoji: "MKR", basePrice: 8000, maxBuy: 5000000000, volatility: 0.4, incomePerCoin: 0.018 },
-            { id: 25, name: "COMPOUND", emoji: "COMP", basePrice: 6000, maxBuy: 5000000000, volatility: 0.4, incomePerCoin: 0.015 },
-            { id: 26, name: "YFI", emoji: "YFI", basePrice: 5000, maxBuy: 5000000000, volatility: 0.4, incomePerCoin: 0.012 },
-            { id: 27, name: "SUSHI", emoji: "🍣", basePrice: 4000, maxBuy: 5000000000, volatility: 0.4, incomePerCoin: 0.01 },
-            { id: 28, name: "CAKE", emoji: "🥞", basePrice: 3000, maxBuy: 5000000000, volatility: 0.4, incomePerCoin: 0.008 },
-            { id: 29, name: "BAKE", emoji: "🥖", basePrice: 2000, maxBuy: 5000000000, volatility: 0.4, incomePerCoin: 0.006 },
-            { id: 30, name: "XLM", emoji: "XLM", basePrice: 1500, maxBuy: 5000000000, volatility: 0.4, incomePerCoin: 0.005 },
-            { id: 31, name: "ALGO", emoji: "ALGO", basePrice: 1200, maxBuy: 5000000000, volatility: 0.4, incomePerCoin: 0.004 },
-            { id: 32, name: "VET", emoji: "VET", basePrice: 1000, maxBuy: 5000000000, volatility: 0.4, incomePerCoin: 0.003 },
-            { id: 33, name: "THETA", emoji: "THETA", basePrice: 800, maxBuy: 5000000000, volatility: 0.4, incomePerCoin: 0.0025 },
-            { id: 34, name: "FILECOIN", emoji: "FIL", basePrice: 600, maxBuy: 5000000000, volatility: 0.4, incomePerCoin: 0.002 },
-            { id: 35, name: "ICP", emoji: "ICP", basePrice: 500, maxBuy: 5000000000, volatility: 0.4, incomePerCoin: 0.0015 },
-            { id: 36, name: "NEAR", emoji: "NEAR", basePrice: 400, maxBuy: 5000000000, volatility: 0.4, incomePerCoin: 0.001 },
-            { id: 37, name: "APTOS", emoji: "APT", basePrice: 300, maxBuy: 5000000000, volatility: 0.4, incomePerCoin: 0.0008 },
-            { id: 38, name: "SUI", emoji: "SUI", basePrice: 200, maxBuy: 5000000000, volatility: 0.4, incomePerCoin: 0.0005 },
-            { id: 39, name: "SEI", emoji: "SEI", basePrice: 150, maxBuy: 5000000000, volatility: 0.4, incomePerCoin: 0.0004 },
-            { id: 40, name: "TIA", emoji: "TIA", basePrice: 100, maxBuy: 5000000000, volatility: 0.4, incomePerCoin: 0.0003 },
-            { id: 41, name: "INJ", emoji: "INJ", basePrice: 80, maxBuy: 5000000000, volatility: 0.4, incomePerCoin: 0.00025 },
-            { id: 42, name: "ARB", emoji: "ARB", basePrice: 60, maxBuy: 5000000000, volatility: 0.4, incomePerCoin: 0.0002 },
-            { id: 43, name: "OP", emoji: "OP", basePrice: 50, maxBuy: 5000000000, volatility: 0.4, incomePerCoin: 0.00015 },
-            { id: 44, name: "STRK", emoji: "STRK", basePrice: 40, maxBuy: 5000000000, volatility: 0.4, incomePerCoin: 0.0001 }
+            { id: 0, name: "BITCOIN", emoji: "₿", basePrice: 1000000, maxBuy: 5000000000, volatility: 0.2, incomePerCoin: 3.0 }, // +500%
+            { id: 1, name: "ETHEREUM", emoji: "Ξ", basePrice: 500000, maxBuy: 5000000000, volatility: 0.25, incomePerCoin: 1.8 },
+            { id: 2, name: "BINANCE COIN", emoji: "BNB", basePrice: 250000, maxBuy: 5000000000, volatility: 0.3, incomePerCoin: 1.2 },
+            { id: 3, name: "SOLANA", emoji: "SOL", basePrice: 100000, maxBuy: 5000000000, volatility: 0.35, incomePerCoin: 0.9 },
+            { id: 4, name: "CARDANO", emoji: "ADA", basePrice: 50000, maxBuy: 5000000000, volatility: 0.4, incomePerCoin: 0.6 },
+            { id: 5, name: "DOT", emoji: "DOT", basePrice: 25000, maxBuy: 5000000000, volatility: 0.4, incomePerCoin: 0.48 },
+            { id: 6, name: "AVALANCHE", emoji: "AVAX", basePrice: 20000, maxBuy: 5000000000, volatility: 0.4, incomePerCoin: 0.42 },
+            { id: 7, name: "CHAINLINK", emoji: "LINK", basePrice: 15000, maxBuy: 5000000000, volatility: 0.45, incomePerCoin: 0.36 },
+            { id: 8, name: "POLYGON", emoji: "MATIC", basePrice: 10000, maxBuy: 5000000000, volatility: 0.45, incomePerCoin: 0.3 },
+            { id: 9, name: "LITECOIN", emoji: "Ł", basePrice: 8000, maxBuy: 5000000000, volatility: 0.45, incomePerCoin: 0.24 },
+            { id: 10, name: "RIPPLE", emoji: "XRP", basePrice: 5000, maxBuy: 5000000000, volatility: 0.5, incomePerCoin: 0.18 },
+            { id: 11, name: "DOGECOIN", emoji: "🐶", basePrice: 1000, maxBuy: 5000000000, volatility: 0.6, incomePerCoin: 0.12 },
+            { id: 12, name: "SHIBA INU", emoji: "🐕", basePrice: 500, maxBuy: 5000000000, volatility: 0.7, incomePerCoin: 0.09 },
+            { id: 13, name: "PEPE", emoji: "🐸", basePrice: 100, maxBuy: 5000000000, volatility: 0.8, incomePerCoin: 0.06 },
+            { id: 14, name: "WOJAK", emoji: "😩", basePrice: 50, maxBuy: 5000000000, volatility: 0.9, incomePerCoin: 0.048 },
+            { id: 15, name: "BONK", emoji: "🦴", basePrice: 25, maxBuy: 5000000000, volatility: 1.0, incomePerCoin: 0.03 },
+            { id: 16, name: "FLOKI", emoji: "🐕", basePrice: 10, maxBuy: 5000000000, volatility: 1.0, incomePerCoin: 0.018 },
+            { id: 17, name: "SAMO", emoji: "🐶", basePrice: 5, maxBuy: 5000000000, volatility: 1.0, incomePerCoin: 0.012 },
+            { id: 18, name: "MYRO", emoji: "🐕", basePrice: 2, maxBuy: 5000000000, volatility: 1.0, incomePerCoin: 0.006 },
+            { id: 19, name: "SUGURU COIN", emoji: "🍬", basePrice: 1, maxBuy: 5000000000, volatility: 1.0, incomePerCoin: 0.003 }
         ];
         
         let cryptoPrices = [];
         
-        // ========== 50+ ДОМОВ ==========
+        // ========== 50+ ДОМОВ (ЦЕНА УВЕЛИЧЕНА НА 200%) ==========
         const houses = [];
         for (let i = 0; i < 50; i++) {
             houses.push({
                 id: i,
                 name: `${['Квартира', 'Дом', 'Вилла', 'Особняк', 'Замок'][i % 5]} ${Math.floor(i/5) + 1}`,
                 emoji: ['🏢', '🏠', '🏡', '🏰', '🏯'][i % 5],
-                price: 50000000 + (i * 20000000),
+                price: (50000000 + (i * 20000000)) * 3, // +200%
                 baseIncome: 1000 * (i + 1) * HOUSE_INCOME_MULTIPLIER,
                 owned: false,
                 upgrades: {
@@ -1205,16 +1206,16 @@
             ]
         };
         
-        // ========== БИЗНЕСЫ ==========
+        // ========== БИЗНЕСЫ (ДОХОД УМЕНЬШЕН НА 250%) ==========
         const businessTemplates = [
-            { id: 0, name: "🚕 ТАКСОПАРК", baseIncome: 5000, baseUpgradeCost: 50000, upgradeTime: 30, maxLevel: 20, incomeMultiplier: 1.5, costMultiplier: 50 },
-            { id: 1, name: "🍔 РЕСТОРАН", baseIncome: 50000, baseUpgradeCost: 500000, upgradeTime: 60, maxLevel: 20, incomeMultiplier: 1.5, costMultiplier: 50 },
-            { id: 2, name: "⛽ ЗАПРАВКА", baseIncome: 500000, baseUpgradeCost: 50000000, upgradeTime: 120, maxLevel: 20, incomeMultiplier: 1.5, costMultiplier: 50 },
-            { id: 3, name: "🏭 ЗАВОД", baseIncome: 5000000, baseUpgradeCost: 100000000, upgradeTime: 180, maxLevel: 20, incomeMultiplier: 1.5, costMultiplier: 50 },
-            { id: 4, name: "🏨 ОТЕЛЬ", baseIncome: 50000000, baseUpgradeCost: 1000000000, upgradeTime: 300, maxLevel: 20, incomeMultiplier: 1.5, costMultiplier: 50 },
-            { id: 5, name: "🎰 КАЗИНО", baseIncome: 100000000, baseUpgradeCost: 10000000000, upgradeTime: 600, maxLevel: 20, incomeMultiplier: 1.5, costMultiplier: 50 },
-            { id: 6, name: "🏦 БАНК", baseIncome: 1500000000, baseUpgradeCost: 40000000000, upgradeTime: 1200, maxLevel: 20, incomeMultiplier: 1.5, costMultiplier: 50 },
-            { id: 7, name: "🏛️ ИМПЕРИЯ", baseIncome: 5000000000, baseUpgradeCost: 100000000000, upgradeTime: 2400, maxLevel: 20, incomeMultiplier: 1.5, costMultiplier: 50 }
+            { id: 0, name: "🚕 ТАКСОПАРК", baseIncome: 2000, baseUpgradeCost: 50000, upgradeTime: 30, maxLevel: 20, incomeMultiplier: 1.5, costMultiplier: 50 },
+            { id: 1, name: "🍔 РЕСТОРАН", baseIncome: 20000, baseUpgradeCost: 500000, upgradeTime: 60, maxLevel: 20, incomeMultiplier: 1.5, costMultiplier: 50 },
+            { id: 2, name: "⛽ ЗАПРАВКА", baseIncome: 200000, baseUpgradeCost: 50000000, upgradeTime: 120, maxLevel: 20, incomeMultiplier: 1.5, costMultiplier: 50 },
+            { id: 3, name: "🏭 ЗАВОД", baseIncome: 2000000, baseUpgradeCost: 100000000, upgradeTime: 180, maxLevel: 20, incomeMultiplier: 1.5, costMultiplier: 50 },
+            { id: 4, name: "🏨 ОТЕЛЬ", baseIncome: 20000000, baseUpgradeCost: 1000000000, upgradeTime: 300, maxLevel: 20, incomeMultiplier: 1.5, costMultiplier: 50 },
+            { id: 5, name: "🎰 КАЗИНО", baseIncome: 40000000, baseUpgradeCost: 10000000000, upgradeTime: 600, maxLevel: 20, incomeMultiplier: 1.5, costMultiplier: 50 },
+            { id: 6, name: "🏦 БАНК", baseIncome: 600000000, baseUpgradeCost: 40000000000, upgradeTime: 1200, maxLevel: 20, incomeMultiplier: 1.5, costMultiplier: 50 },
+            { id: 7, name: "🏛️ ИМПЕРИЯ", baseIncome: 2000000000, baseUpgradeCost: 100000000000, upgradeTime: 2400, maxLevel: 20, incomeMultiplier: 1.5, costMultiplier: 50 }
         ];
         
         // ========== КРИПТО-МАЙНИНГ ==========
@@ -1230,14 +1231,15 @@
             hiddenName: "SUGURU COIN",
             emoji: "❓",
             hiddenEmoji: "💎",
-            price: 777777777777777,
-            income: 777777,
+            price: 777777777777777777,
+            income: 7777777,
             owned: false,
             revealed: false
         };
         
         function formatNumber(num) {
             if (num === undefined || num === null || isNaN(num)) return "0";
+            if (num >= 1e18) return (num / 1e18).toFixed(2) + 'Qi';
             if (num >= 1e15) return (num / 1e15).toFixed(2) + 'Q';
             if (num >= 1e12) return (num / 1e12).toFixed(2) + 'T';
             if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
@@ -1299,6 +1301,10 @@
                     
                     if (!gameState.battlePass) {
                         gameState.battlePass = { level: 1, exp: 0, claimed: [], lastReset: Date.now() };
+                    }
+                    
+                    if (!gameState.businessPassUpgraded) {
+                        gameState.businessPassUpgraded = false;
                     }
                     
                     if (gameState.specialItem === undefined) {
@@ -1463,7 +1469,7 @@
                 return;
             }
             
-            const cost = 1000000000; // 1 миллиард
+            const cost = 1000000000;
             if (gameState.balance < cost) {
                 alert('❌ НЕДОСТАТОЧНО МОНЕТ!');
                 return;
@@ -1496,7 +1502,7 @@
                 return;
             }
             
-            const cost = farm.level * 5000000000; // +500% стоимости
+            const cost = farm.level * 5000000000;
             if (gameState.balance < cost) {
                 alert('❌ НЕДОСТАТОЧНО МОНЕТ!');
                 return;
@@ -1514,7 +1520,7 @@
             const farm = gameState.miningFarms[index];
             if (!farm) return;
             
-            const sellPrice = farm.level * 500000000; // Цена продажи
+            const sellPrice = farm.level * 500000000;
             
             if (confirm(`Продать ферму за ${formatMoney(sellPrice)}💰?`)) {
                 gameState.miningFarms.splice(index, 1);
@@ -1616,6 +1622,12 @@
             const house = gameState.houses.find(h => h.id === houseId);
             if (!house || !house.owned) return;
             
+            const totalUpgrades = Object.values(house.upgrades).reduce((a, b) => a + b, 0);
+            if (totalUpgrades >= MAX_HOUSE_UPGRADES) {
+                alert(`❌ МАКСИМУМ ${MAX_HOUSE_UPGRADES} УЛУЧШЕНИЙ ДЛЯ ДОМА!`);
+                return;
+            }
+            
             const costs = {
                 interior: 50000000 * Math.pow(2, house.upgrades.interior),
                 kitchen: 100000000 * Math.pow(2, house.upgrades.kitchen),
@@ -1636,7 +1648,7 @@
             saveGame();
             updateUI();
             renderCurrentTab();
-            alert(`✅ Улучшение ${upgradeType} дома выполнено! Дом теперь приносит +100% дохода`);
+            alert(`✅ Улучшение ${upgradeType} дома выполнено! Осталось улучшений: ${MAX_HOUSE_UPGRADES - (totalUpgrades + 1)}`);
         }
         
         function buyIsland(islandId) {
@@ -1694,7 +1706,8 @@
                 manager: null,
                 totalEarned: 0,
                 incomeMultiplier: t.incomeMultiplier,
-                costMultiplier: t.costMultiplier
+                costMultiplier: t.costMultiplier,
+                diamondsSpent: 0
             });
             
             saveGame();
@@ -1771,6 +1784,7 @@
             }
             
             gameState.diamonds -= cost;
+            business.diamondsSpent = (business.diamondsSpent || 0) + cost;
             
             if (!business.manager) {
                 business.manager = { level: 1 };
@@ -1799,16 +1813,38 @@
             }
             
             const sellPrice = Math.floor(totalSpent * 0.5);
+            const diamondsReturn = Math.floor((business.diamondsSpent || 0) * 0.5);
             
-            if (confirm(`Продать ${business.name} за ${formatMoney(sellPrice)}?`)) {
+            if (confirm(`Продать ${business.name} за ${formatMoney(sellPrice)} и вернуть ${diamondsReturn}💎?`)) {
                 gameState.myBusinesses.splice(index, 1);
                 gameState.balance += sellPrice;
+                gameState.diamonds += diamondsReturn;
                 
                 saveGame();
                 updateUI();
                 renderCurrentTab();
-                alert(`✅ Продано! +${formatMoney(sellPrice)}`);
+                alert(`✅ Продано! +${formatMoney(sellPrice)} и +${diamondsReturn}💎`);
             }
+        }
+        
+        function upgradeBusinessPass() {
+            if (gameState.businessPassUpgraded) {
+                alert('❌ ПРОПУСК УЖЕ УЛУЧШЕН!');
+                return;
+            }
+            
+            if (gameState.diamonds < 500) {
+                alert('❌ НУЖНО 500 АЛМАЗОВ!');
+                return;
+            }
+            
+            gameState.diamonds -= 500;
+            gameState.businessPassUpgraded = true;
+            
+            saveGame();
+            updateUI();
+            renderTab('business');
+            alert('✅ БИЗНЕС ПРОПУСК УЛУЧШЕН! Все улучшения бизнесов теперь дают +50% к прибыли');
         }
         
         // ========== КРИПТА ==========
@@ -2210,19 +2246,16 @@
         
         // ========== ТОП-100 ==========
         function getPlayerRank() {
-            // Создаем массив всех состояний (Forbes + игрок)
             const allWealth = [];
             
-            // Добавляем Forbes людей
             for (let i = 0; i < forbesTop100.length; i++) {
                 allWealth.push({
                     name: forbesTop100[i],
-                    money: (100 - i) * 1000000000000, // Условное состояние
+                    money: (100 - i) * 1000000000000,
                     isPlayer: false
                 });
             }
             
-            // Добавляем игрока
             const playerMoney = gameState.totalEarned || 0;
             allWealth.push({
                 name: currentUser,
@@ -2230,15 +2263,13 @@
                 isPlayer: true
             });
             
-            // Сортируем по убыванию денег
             allWealth.sort((a, b) => b.money - a.money);
             
-            // Находим место игрока
             const playerIndex = allWealth.findIndex(item => item.isPlayer);
             
             return {
                 rank: playerIndex + 1,
-                list: allWealth.slice(0, 100) // Берем топ-100
+                list: allWealth.slice(0, 100)
             };
         }
         
@@ -2277,6 +2308,38 @@
         
         function closeTopModal() {
             document.getElementById('topModal').classList.remove('active');
+        }
+        
+        // ========== ОСТРОВА ==========
+        function showMyIslands() {
+            const modal = document.getElementById('islandsModal');
+            const modalContent = document.getElementById('islandsModalContent');
+            
+            let html = '<div class="modal-title">🏝️ МОИ ОСТРОВА</div>';
+            
+            const ownedIslands = gameState.islands.filter(i => i.owned);
+            
+            if (ownedIslands.length === 0) {
+                html += '<div style="text-align:center; padding:30px; color:#8e8e98;">У вас нет островов</div>';
+            } else {
+                ownedIslands.forEach(island => {
+                    html += `
+                        <div class="island-item">
+                            <div class="island-name">${island.emoji} ${island.name}</div>
+                            <div class="island-income">💰 Доход: +${formatMoney(island.income)}/сек</div>
+                        </div>
+                    `;
+                });
+            }
+            
+            html += '<div class="close-btn" onclick="closeIslandsModal()">ЗАКРЫТЬ</div>';
+            
+            modalContent.innerHTML = html;
+            modal.classList.add('active');
+        }
+        
+        function closeIslandsModal() {
+            document.getElementById('islandsModal').classList.remove('active');
         }
         
         // ========== ОБНОВЛЕНИЕ ИНТЕРФЕЙСА ==========
@@ -2365,10 +2428,14 @@
             }
             
             const expNeeded = gameState.level * 1500;
-            while (gameState.exp >= expNeeded) {
+            while (gameState.exp >= expNeeded && gameState.level < MAX_PLAYER_LEVEL) {
                 gameState.exp -= expNeeded;
                 gameState.level = (gameState.level || 1) + 1;
                 gameState.diamonds = (gameState.diamonds || 0) + 5;
+            }
+            
+            if (gameState.level >= MAX_PLAYER_LEVEL) {
+                gameState.exp = 0;
             }
             
             playClickSound();
@@ -2627,60 +2694,107 @@
         function renderBusiness(content) {
             const businessLimit = gameState.businessSlots || MAX_BUSINESSES;
             
-            content.innerHTML = `
+            let html = '';
+            
+            if (!gameState.businessPassUpgraded) {
+                html += `
+                    <div class="upgrade-pass-btn" onclick="upgradeBusinessPass()">
+                        ⚡ УЛУЧШИТЬ БИЗНЕС ПРОПУСК (500💎)<br>
+                        <span style="font-size:12px;">+50% к прибыли от улучшений</span>
+                    </div>
+                `;
+            }
+            
+            html += `
                 <div class="section-title">
                     <h3>Мои бизнесы</h3>
                     <span style="color:#8e8e98;">${gameState.myBusinesses?.length || 0} / ${businessLimit}</span>
                 </div>
-                
-                ${!gameState.myBusinesses || gameState.myBusinesses.length === 0 ? 
-                    '<div style="color:#8e8e98; text-align:center; padding:30px;">У вас нет бизнесов</div>' : 
-                    gameState.myBusinesses.map((b, i) => {
-                        const t = businessTemplates[b.templateId];
-                        const managerBonus = b.manager ? b.manager.level * 10 : 0;
-                        const upgrading = b.upgradeEnd && b.upgradeEnd > Date.now();
-                        const timeLeft = upgrading ? Math.ceil((b.upgradeEnd - Date.now()) / 1000) : 0;
-                        const progressPercent = upgrading ? ((Date.now() - (b.upgradeEnd - (b.upgradeTime * 1000))) / (b.upgradeTime * 1000)) * 100 : 0;
-                        
-                        let totalIncome = b.income;
-                        if (b.manager) {
-                            totalIncome = Math.floor(b.income * (1 + b.manager.level * 0.1));
-                        }
-                        
-                        return `
-                            <div class="business-item" onclick="openBusinessModal(${i})">
-                                <div class="business-header">
-                                    <span class="business-name">${b.name}</span>
-                                    <span class="business-level">Ур. ${b.level}/${t.maxLevel}</span>
-                                </div>
-                                <div class="business-stats">
-                                    <span>💰 +${formatMoney(totalIncome)}/сек</span>
-                                    <span>📈 улучшить: ${formatMoney(b.upgradeCost)}</span>
-                                </div>
-                                ${upgrading ? `
-                                    <div class="business-progress">
-                                        <div class="business-progress-bar" style="width: ${progressPercent}%"></div>
-                                    </div>
-                                    <div class="upgrade-time">⏱️ Улучшение... ${timeLeft}с</div>
-                                ` : ''}
-                                ${b.manager ? `
-                                    <div class="manager-info">
-                                        <span class="manager-level">👔 Менеджер ур.${b.manager.level}</span>
-                                        <span class="manager-bonus">+${managerBonus}%</span>
-                                    </div>
-                                ` : ''}
-                            </div>
-                        `;
-                    }).join('')
-                }
-                
-                <button class="card-btn" style="margin-top:16px;" onclick="showBuyBusinessModal()">+ КУПИТЬ БИЗНЕС</button>
             `;
+            
+            if (!gameState.myBusinesses || gameState.myBusinesses.length === 0) {
+                html += '<div style="color:#8e8e98; text-align:center; padding:30px;">У вас нет бизнесов</div>';
+            } else {
+                gameState.myBusinesses.forEach((b, i) => {
+                    const t = businessTemplates[b.templateId];
+                    const managerBonus = b.manager ? b.manager.level * 10 : 0;
+                    const passBonus = gameState.businessPassUpgraded ? 50 : 0;
+                    const totalBonus = managerBonus + passBonus;
+                    const upgrading = b.upgradeEnd && b.upgradeEnd > Date.now();
+                    const timeLeft = upgrading ? Math.ceil((b.upgradeEnd - Date.now()) / 1000) : 0;
+                    const progressPercent = upgrading ? ((Date.now() - (b.upgradeEnd - (b.upgradeTime * 1000))) / (b.upgradeTime * 1000)) * 100 : 0;
+                    
+                    let totalIncome = b.income;
+                    if (totalBonus > 0) {
+                        totalIncome = Math.floor(b.income * (1 + totalBonus / 100));
+                    }
+                    
+                    html += `
+                        <div class="business-item" onclick="openBusinessModal(${i})">
+                            <div class="business-header">
+                                <span class="business-name">${b.name}</span>
+                                <span class="business-level">Ур. ${b.level}/${t.maxLevel}</span>
+                            </div>
+                            <div class="business-stats">
+                                <span>💰 +${formatMoney(totalIncome)}/сек</span>
+                                <span>📈 улучшить: ${formatMoney(b.upgradeCost)}</span>
+                            </div>
+                            ${upgrading ? `
+                                <div class="business-progress">
+                                    <div class="business-progress-bar" style="width: ${progressPercent}%"></div>
+                                </div>
+                                <div class="upgrade-time">⏱️ Улучшение... ${timeLeft}с</div>
+                            ` : ''}
+                            ${b.manager ? `
+                                <div class="manager-info">
+                                    <span class="manager-level">👔 Менеджер ур.${b.manager.level}</span>
+                                    <span class="manager-bonus">+${managerBonus}%</span>
+                                </div>
+                            ` : ''}
+                            ${passBonus > 0 && !b.manager ? `
+                                <div class="manager-info" style="border-color:#ffd700;">
+                                    <span class="manager-level">⚡ Пропуск</span>
+                                    <span class="manager-bonus">+${passBonus}%</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                });
+            }
+            
+            html += '<button class="card-btn" style="margin-top:16px;" onclick="showBuyBusinessModal()">+ КУПИТЬ БИЗНЕС</button>';
+            
+            content.innerHTML = html;
         }
         
         function renderItems(content) {
+            const ownedIslands = gameState.islands.filter(i => i.owned).length;
+            
             content.innerHTML = `
                 <div class="section-title">
+                    <h3>🏝️ ОСТРОВА</h3>
+                    <span style="color:#8e8e98;">${ownedIslands} / 10</span>
+                </div>
+                
+                <div style="margin-bottom:20px;">
+                    <a href="#" class="garage-link" onclick="showMyIslands()">🏝️ МОИ ОСТРОВА →</a>
+                </div>
+                
+                ${gameState.islands.map(island => {
+                    if (!island.owned) {
+                        return `
+                            <div class="island-item">
+                                <div class="island-name">${island.emoji} ${island.name}</div>
+                                <div class="island-income">💰 +${formatMoney(island.income)}/сек</div>
+                                <div class="island-price">${formatMoney(island.price)}</div>
+                                <button class="card-btn" onclick="buyIsland(${island.id})">Купить остров</button>
+                            </div>
+                        `;
+                    }
+                    return '';
+                }).join('')}
+                
+                <div class="section-title" style="margin-top:20px;">
                     <h3>🏢 АВТОСАЛОН</h3>
                     <span style="color:#8e8e98;">${getGarageCount('cars')} шт в гараже</span>
                 </div>
@@ -2736,24 +2850,6 @@
                 <div style="margin:16px 0;">
                     <a href="#" class="garage-link" onclick="showSalon('ships')">Перейти в кораблесалон (20 кораблей) →</a>
                 </div>
-                
-                <div class="section-title" style="margin-top:20px;">
-                    <h3>🏝️ ОСТРОВА</h3>
-                </div>
-                
-                ${gameState.islands.map(island => {
-                    if (!island.owned) {
-                        return `
-                            <div class="island-item">
-                                <div class="island-name">${island.emoji} ${island.name}</div>
-                                <div class="island-income">💰 +${formatMoney(island.income)}/сек</div>
-                                <div class="island-price">${formatMoney(island.price)}</div>
-                                <button class="card-btn" onclick="buyIsland(${island.id})">Купить остров</button>
-                            </div>
-                        `;
-                    }
-                    return '';
-                }).join('')}
                 
                 <div class="section-title" style="margin-top:20px;">
                     <h3>🚗 ГАРАЖ</h3>
@@ -2814,7 +2910,7 @@
                 
                 <div class="stat-box" style="margin-bottom:12px;">
                     <div class="stat-label">Уровень</div>
-                    <div class="stat-value">${gameState.level}</div>
+                    <div class="stat-value">${gameState.level}/${MAX_PLAYER_LEVEL}</div>
                 </div>
                 
                 <div class="level-progress">
@@ -3020,7 +3116,8 @@
                 html += '<div style="text-align:center; padding:20px; color:#8e8e98;">У вас пока нет домов</div>';
             } else {
                 ownedHouses.forEach(house => {
-                    const houseIncome = house.baseIncome * (1 + Object.values(house.upgrades).reduce((a, b) => a + b, 0));
+                    const totalUpgrades = Object.values(house.upgrades).reduce((a, b) => a + b, 0);
+                    const houseIncome = house.baseIncome * (1 + totalUpgrades);
                     const sellPrice = Math.floor(house.price * 0.5);
                     
                     html += `
@@ -3030,6 +3127,7 @@
                                 <div style="flex:1;">
                                     <div style="font-weight:600;">${house.name}</div>
                                     <div style="color:#4caf50;">💰 +${formatMoney(houseIncome)}/сек</div>
+                                    <div style="color:#8e8e98; font-size:12px;">Улучшений: ${totalUpgrades}/${MAX_HOUSE_UPGRADES}</div>
                                     <div style="display:flex; gap:8px; margin-top:8px;">
                                         <button class="card-btn" style="width:auto; background:#7b1fa2;" onclick="openHouseModal(${house.id}); closeHousesModal();">Улучшить</button>
                                         <button class="sell-btn" onclick="sellHouse(${house.id}); closeHousesModal();">Продать за ${formatMoney(sellPrice)}</button>
@@ -3058,7 +3156,8 @@
             const modal = document.getElementById('modal');
             const modalContent = document.getElementById('modalContent');
             
-            const houseIncome = house.baseIncome * (1 + Object.values(house.upgrades).reduce((a, b) => a + b, 0));
+            const totalUpgrades = Object.values(house.upgrades).reduce((a, b) => a + b, 0);
+            const houseIncome = house.baseIncome * (1 + totalUpgrades);
             
             let html = `
                 <div class="modal-title">${house.emoji} ${house.name}</div>
@@ -3067,6 +3166,10 @@
                         <span>Текущий доход</span>
                         <span style="color:#4caf50;">+${formatMoney(houseIncome)}/сек</span>
                     </div>
+                    <div style="display:flex; justify-content:space-between;">
+                        <span>Доступно улучшений</span>
+                        <span style="color:#ffd700;">${MAX_HOUSE_UPGRADES - totalUpgrades}</span>
+                    </div>
                 </div>
                 <div style="background:#0f1117; border-radius:16px; padding:16px;">
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
@@ -3074,35 +3177,50 @@
                             <div style="color:#8e8e98;">Интерьер</div>
                             <div style="display:flex; justify-content:space-between;">
                                 <span>Ур. ${house.upgrades.interior}</span>
-                                <button class="manager-btn" onclick="upgradeHouse(${house.id}, 'interior'); closeModal();">+ (${formatMoney(50000000 * Math.pow(2, house.upgrades.interior))})</button>
+                                ${totalUpgrades < MAX_HOUSE_UPGRADES ? 
+                                    `<button class="manager-btn" onclick="upgradeHouse(${house.id}, 'interior'); closeModal();">+ (${formatMoney(50000000 * Math.pow(2, house.upgrades.interior))})</button>` :
+                                    '<span style="color:#ff4444;">Макс</span>'
+                                }
                             </div>
                         </div>
                         <div>
                             <div style="color:#8e8e98;">Кухня</div>
                             <div style="display:flex; justify-content:space-between;">
                                 <span>Ур. ${house.upgrades.kitchen}</span>
-                                <button class="manager-btn" onclick="upgradeHouse(${house.id}, 'kitchen'); closeModal();">+ (${formatMoney(100000000 * Math.pow(2, house.upgrades.kitchen))})</button>
+                                ${totalUpgrades < MAX_HOUSE_UPGRADES ? 
+                                    `<button class="manager-btn" onclick="upgradeHouse(${house.id}, 'kitchen'); closeModal();">+ (${formatMoney(100000000 * Math.pow(2, house.upgrades.kitchen))})</button>` :
+                                    '<span style="color:#ff4444;">Макс</span>'
+                                }
                             </div>
                         </div>
                         <div>
                             <div style="color:#8e8e98;">Кровать</div>
                             <div style="display:flex; justify-content:space-between;">
                                 <span>Ур. ${house.upgrades.bed}</span>
-                                <button class="manager-btn" onclick="upgradeHouse(${house.id}, 'bed'); closeModal();">+ (${formatMoney(150000000 * Math.pow(2, house.upgrades.bed))})</button>
+                                ${totalUpgrades < MAX_HOUSE_UPGRADES ? 
+                                    `<button class="manager-btn" onclick="upgradeHouse(${house.id}, 'bed'); closeModal();">+ (${formatMoney(150000000 * Math.pow(2, house.upgrades.bed))})</button>` :
+                                    '<span style="color:#ff4444;">Макс</span>'
+                                }
                             </div>
                         </div>
                         <div>
                             <div style="color:#8e8e98;">Антенна</div>
                             <div style="display:flex; justify-content:space-between;">
                                 <span>Ур. ${house.upgrades.antenna}</span>
-                                <button class="manager-btn" onclick="upgradeHouse(${house.id}, 'antenna'); closeModal();">+ (${formatMoney(200000000 * Math.pow(2, house.upgrades.antenna))})</button>
+                                ${totalUpgrades < MAX_HOUSE_UPGRADES ? 
+                                    `<button class="manager-btn" onclick="upgradeHouse(${house.id}, 'antenna'); closeModal();">+ (${formatMoney(200000000 * Math.pow(2, house.upgrades.antenna))})</button>` :
+                                    '<span style="color:#ff4444;">Макс</span>'
+                                }
                             </div>
                         </div>
                         <div>
                             <div style="color:#8e8e98;">Телевизор</div>
                             <div style="display:flex; justify-content:space-between;">
                                 <span>Ур. ${house.upgrades.tv}</span>
-                                <button class="manager-btn" onclick="upgradeHouse(${house.id}, 'tv'); closeModal();">+ (${formatMoney(300000000 * Math.pow(2, house.upgrades.tv))})</button>
+                                ${totalUpgrades < MAX_HOUSE_UPGRADES ? 
+                                    `<button class="manager-btn" onclick="upgradeHouse(${house.id}, 'tv'); closeModal();">+ (${formatMoney(300000000 * Math.pow(2, house.upgrades.tv))})</button>` :
+                                    '<span style="color:#ff4444;">Макс</span>'
+                                }
                             </div>
                         </div>
                     </div>
@@ -3166,7 +3284,10 @@
             }
             
             const sellPrice = Math.floor(totalSpent * 0.5);
+            const diamondsReturn = Math.floor((business.diamondsSpent || 0) * 0.5);
             const managerBonus = business.manager ? business.manager.level * 10 : 0;
+            const passBonus = gameState.businessPassUpgraded ? 50 : 0;
+            const totalBonus = managerBonus + passBonus;
             
             const modal = document.getElementById('modal');
             const modalContent = document.getElementById('modalContent');
@@ -3187,14 +3308,26 @@
                             <span>Менеджер (ур.${business.manager.level})</span>
                             <span style="color:#b39ddb;">+${managerBonus}%</span>
                         </div>
+                    ` : ''}
+                    ${passBonus > 0 ? `
+                        <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+                            <span>Бонус пропуска</span>
+                            <span style="color:#ffd700;">+${passBonus}%</span>
+                        </div>
+                    ` : ''}
+                    ${totalBonus > 0 ? `
                         <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
                             <span>Итого прибыль</span>
-                            <span style="color:#4caf50;">+${formatMoney(Math.floor(business.income * (1 + managerBonus/100)))}/сек</span>
+                            <span style="color:#4caf50;">+${formatMoney(Math.floor(business.income * (1 + totalBonus/100)))}/сек</span>
                         </div>
                     ` : ''}
                     <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
                         <span>Заработано</span>
                         <span style="color:#ffd700;">${formatMoney(business.totalEarned || 0)}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+                        <span>Потрачено алмазов</span>
+                        <span style="color:#ffd700;">💎 ${business.diamondsSpent || 0}</span>
                     </div>
             `;
             
@@ -3220,7 +3353,7 @@
                     👔 Улучшить менеджера (50💎) ${business.manager ? `ур.${business.manager.level}/10` : ''}
                 </button>
                 <button class="card-btn" style="margin-top:8px; background:#ff9800;" onclick="sellBusiness(${index}); closeModal();">
-                    Продать (${formatMoney(sellPrice)})
+                    Продать (${formatMoney(sellPrice)} + ${diamondsReturn}💎)
                 </button>
                 </div>
                 <div class="close-btn" onclick="closeModal()">ЗАКРЫТЬ</div>
@@ -3364,7 +3497,8 @@
                 manager: null,
                 totalEarned: 0,
                 incomeMultiplier: t.incomeMultiplier,
-                costMultiplier: t.costMultiplier
+                costMultiplier: t.costMultiplier,
+                diamondsSpent: 0
             });
             
             saveGame();
@@ -3513,6 +3647,9 @@
                     if (b.manager) {
                         inc *= (1 + b.manager.level * 0.1);
                     }
+                    if (gameState.businessPassUpgraded) {
+                        inc *= 1.5;
+                    }
                     income += inc;
                     b.totalEarned = (b.totalEarned || 0) + inc;
                     
@@ -3646,6 +3783,7 @@
                     miningFarms: [],
                     battlePass: { level: 1, exp: 0, claimed: [], lastReset: Date.now() },
                     businessSlots: MAX_BUSINESSES,
+                    businessPassUpgraded: false,
                     houses: houses.map(h => ({ ...h })),
                     islands: islands.map(i => ({ ...i })),
                     garages: { cars: [], planes: [], ships: [] },
@@ -3673,10 +3811,13 @@
             window.showHousesModal = showHousesModal;
             window.closeHousesModal = closeHousesModal;
             window.openHouseModal = openHouseModal;
+            window.showMyIslands = showMyIslands;
+            window.closeIslandsModal = closeIslandsModal;
             window.buyBusiness = buyBusiness;
             window.startUpgrade = startUpgrade;
             window.hireManager = hireManager;
             window.sellBusiness = sellBusiness;
+            window.upgradeBusinessPass = upgradeBusinessPass;
             window.showBuyBusinessModal = showBuyBusinessModal;
             window.openBusinessModal = openBusinessModal;
             window.buyMiningFarm = buyMiningFarm;
