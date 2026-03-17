@@ -1,34 +1,100 @@
 // ========== НАВИГАЦИЯ ==========
+
+// Переключение вкладок
 function switchTab(tab) {
-    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    console.log('Switching to tab:', tab); // Для отладки
+    
+    // Убираем активный класс у всех кнопок
+    document.querySelectorAll('.nav-item').forEach(el => {
+        el.classList.remove('active');
+    });
+    
+    // Добавляем активный класс нажатой кнопке
     event.target.classList.add('active');
     
-    if (tab === 'earn') renderEarn();
-    else if (tab === 'calendar') renderCalendar();
-    else if (tab === 'space') renderSpace();
-    else if (tab === 'achievements') renderAchievements();
-    else if (tab === 'investments') renderInvestments();
-    else if (tab === 'business') renderBusiness();
-    else if (tab === 'mining') renderMining();
-    else if (tab === 'tax') renderTax();
-    else if (tab === 'items') renderItems();
-    else if (tab === 'profile') renderProfile();
+    // Вызываем соответствующий рендер
+    if (tab === 'earn') {
+        if (typeof renderEarn === 'function') renderEarn();
+        else console.error('renderEarn not found');
+    }
+    else if (tab === 'calendar') {
+        if (typeof renderCalendar === 'function') renderCalendar();
+        else console.error('renderCalendar not found');
+    }
+    else if (tab === 'space') {
+        if (typeof renderSpace === 'function') renderSpace();
+        else console.error('renderSpace not found');
+    }
+    else if (tab === 'achievements') {
+        if (typeof renderAchievements === 'function') renderAchievements();
+        else console.error('renderAchievements not found');
+    }
+    else if (tab === 'investments') {
+        if (typeof renderInvestments === 'function') renderInvestments();
+        else console.error('renderInvestments not found');
+    }
+    else if (tab === 'business') {
+        if (typeof renderBusiness === 'function') renderBusiness();
+        else console.error('renderBusiness not found');
+    }
+    else if (tab === 'mining') {
+        if (typeof renderMining === 'function') renderMining();
+        else console.error('renderMining not found');
+    }
+    else if (tab === 'tax') {
+        if (typeof renderTax === 'function') renderTax();
+        else console.error('renderTax not found');
+    }
+    else if (tab === 'items') {
+        if (typeof renderItems === 'function') renderItems();
+        else console.error('renderItems not found');
+    }
+    else if (tab === 'profile') {
+        if (typeof renderProfile === 'function') renderProfile();
+        else console.error('renderProfile not found');
+    }
 }
 
+// Обновление UI (баланс, сила клика)
 function updateUI() {
-    document.getElementById('balance').textContent = formatMoney(gameState.balance || 0);
-    document.getElementById('balanceChange').innerHTML = '+ ' + formatMoney(gameState.totalEarned || 0) + ' за все время';
-    document.getElementById('clickPower').textContent = formatMoney(BASE_CLICK_POWER * (gameState.level || 1));
+    if (!gameState) return;
+    
+    const balanceEl = document.getElementById('balance');
+    const balanceChangeEl = document.getElementById('balanceChange');
+    const clickPowerEl = document.getElementById('clickPower');
+    
+    if (balanceEl) balanceEl.textContent = formatMoney(gameState.balance || 0);
+    if (balanceChangeEl) balanceChangeEl.innerHTML = '+ ' + formatMoney(gameState.totalEarned || 0) + ' за все время';
+    if (clickPowerEl) clickPowerEl.textContent = formatMoney(BASE_CLICK_POWER * (gameState.level || 1));
 }
 
+// Закрыть модалку по ID
 function closeModal(id) {
-    document.getElementById(id).classList.remove('active');
+    const modal = document.getElementById(id);
+    if (modal) modal.classList.remove('active');
 }
 
+// Закрыть модалку ника
 function closeNicknameModal() {
-    document.getElementById('nicknameModal').classList.remove('active');
+    closeModal('nicknameModal');
 }
 
+// Закрыть модалку админ пароля
 function closeAdminPasswordModal() {
-    document.getElementById('adminPasswordModal').classList.remove('active');
+    closeModal('adminPasswordModal');
+}
+
+// Закрыть модалку домов
+function closeHousesModal() {
+    closeModal('housesModal');
+}
+
+// Закрыть модалку топ
+function closeTopModal() {
+    closeModal('topModal');
+}
+
+// Закрыть модалку островов
+function closeIslandsModal() {
+    closeModal('islandsModal');
 }
