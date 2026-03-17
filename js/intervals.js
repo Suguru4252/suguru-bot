@@ -102,7 +102,7 @@ setInterval(() => {
     const activeTab = document.querySelector('.nav-item.active')?.innerText || '';
     if (activeTab.includes('Заработок')) renderEarn();
     if (activeTab.includes('Налоги')) renderTax();
-}, 60000); // 1 минута
+}, 60000);
 
 
 // ----- 2. Обновление цен криптовалют (каждые 5 минут) -----
@@ -114,11 +114,10 @@ setInterval(() => {
             renderInvestments();
         }
     }
-}, 300000); // 5 минут
+}, 300000);
 
 
-// ----- 3. БЫСТРОЕ ОБНОВЛЕНИЕ UI (КАЖДЫЕ 0.25 СЕКУНДЫ) -----
-// Это то, что ты просил - обновление всего кликера и меню
+// ----- 3. БЫСТРОЕ ОБНОВЛЕНИЕ UI (КАЖДЫЕ 0.1 СЕКУНДЫ) -----
 setInterval(() => {
     if (!gameState) return;
     
@@ -142,13 +141,17 @@ setInterval(() => {
     // Обновляем прогресс-бары в текущей вкладке
     const activeTab = document.querySelector('.nav-item.active')?.innerText || '';
     if (activeTab.includes('Бизнес')) {
-        renderBusiness(); // Обновляем прогресс улучшений
+        renderBusiness();
     } else if (activeTab.includes('Налоги')) {
-        renderTax(); // Обновляем прогресс налогов
+        renderTax();
     } else if (activeTab.includes('Календарь')) {
-        renderCalendar(); // Обновляем календарь если нужно
+        // Не обновляем календарь каждый раз, только если нужно
+        // renderCalendar();
     } else if (activeTab.includes('Космос')) {
-        renderSpace(); // Обновляем таймер ракеты
+        // Только если есть активный полет
+        if (rocketLaunchEnd && rocketLaunchEnd > Date.now()) {
+            renderSpace();
+        }
     }
     
-}, 250); // 0.25 секунды (250 миллисекунд)
+}, 100); // 0.1 секунды (100 миллисекунд)
