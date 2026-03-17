@@ -1,3 +1,4 @@
+
 // ========== КОСМОС ==========
 function renderSpace() {
     const totalBonus = SPACE_LEVELS.slice(0, gameState.space?.level || 0).reduce((sum, l) => sum + l.bonus, 0);
@@ -200,9 +201,10 @@ function checkRocketLaunch() {
             rocketInterval = null;
         }
     }
-    if (document.querySelector('.nav-item.active')?.innerText.includes('Космос')) {
-        renderSpace();
-    }
+    // УБИРАЕМ ЭТУ СТРОКУ - она вызывала рендер космоса когда не надо
+    // if (document.querySelector('.nav-item.active')?.innerText.includes('Космос')) {
+    //     renderSpace();
+    // }
 }
 
 function completeRocketLaunch() {
