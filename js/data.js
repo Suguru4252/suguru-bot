@@ -1,4 +1,18 @@
-// ========== КРИПТОВАЛЮТЫ ==========
+// ========== КОСМИЧЕСКАЯ ПРОГРАММА ==========
+const SPACE_LEVELS = [
+    { name: "🚀 СПУТНИК", bonus: 10, price: 1e9, desc: "+10% к майнингу" },
+    { name: "🛰️ ОРБИТАЛЬНАЯ СТАНЦИЯ", bonus: 20, price: 1e10, desc: "+20% к майнингу" },
+    { name: "🌕 ЛУННАЯ БАЗА", bonus: 30, price: 1e11, desc: "+30%" },
+    { name: "🔴 МАРСИАНСКАЯ КОЛОНИЯ", bonus: 50, price: 1e12, desc: "+50% к доходу" },
+    { name: "💫 ПОЯС АСТЕРОИДОВ", bonus: 75, price: 1e13, desc: "Алмазы с неба" },
+    { name: "🪐 СТАНЦИЯ НА ЮПИТЕРЕ", bonus: 100, price: 1e14, desc: "х2 доход" },
+    { name: "⬆️ КОСМИЧЕСКИЙ ЛИФТ", bonus: 150, price: 1e15, desc: "Мгновенные улучшения" },
+    { name: "⭐ ЗВЕЗДА", bonus: 200, price: 1e16, desc: "Своя звезда" },
+    { name: "🌌 ГАЛАКТИКА", bonus: 300, price: 1e17, desc: "Телепортация" },
+    { name: "🌀 ВСЕЛЕННАЯ", bonus: 500, price: 1e18, desc: "Властелин космоса" }
+];
+
+// ========== КРИПТОВАЛЮТЫ (50+) ==========
 const cryptoCurrencies = [
     { id: 0, name: "BITCOIN", emoji: "₿", basePrice: 1000000, maxBuy: 5000000000, volatility: 0.2, incomePerCoin: 0.05 },
     { id: 1, name: "ETHEREUM", emoji: "Ξ", basePrice: 500000, maxBuy: 5000000000, volatility: 0.25, incomePerCoin: 0.03 },
@@ -19,5 +33,180 @@ const cryptoCurrencies = [
     { id: 16, name: "FLOKI", emoji: "🐕", basePrice: 10, maxBuy: 5000000000, volatility: 1.0, incomePerCoin: 0.0003 },
     { id: 17, name: "SAMO", emoji: "🐶", basePrice: 5, maxBuy: 5000000000, volatility: 1.0, incomePerCoin: 0.0002 },
     { id: 18, name: "MYRO", emoji: "🐕", basePrice: 2, maxBuy: 5000000000, volatility: 1.0, incomePerCoin: 0.0001 },
-    { id: 19, name: "SUGURU COIN", emoji: "🍬", basePrice: 1, maxBuy: 5000000000, volatility: 1.0, incomePerCoin: 0.00005 }
+    { id: 19, name: "SUGURU COIN", emoji: "🍬", basePrice: 1, maxBuy: 5000000000, volatility: 1.0, incomePerCoin: 0.00005 },
+    { id: 20, name: "TERRA LUNA", emoji: "🌕", basePrice: 500, maxBuy: 5000000000, volatility: 0.8, incomePerCoin: 0.0005 },
+    { id: 21, name: "AVALANCHE", emoji: "🔺", basePrice: 15000, maxBuy: 5000000000, volatility: 0.4, incomePerCoin: 0.005 },
+    { id: 22, name: "POLKADOT", emoji: "◉", basePrice: 7000, maxBuy: 5000000000, volatility: 0.45, incomePerCoin: 0.0035 },
+    { id: 23, name: "NEAR", emoji: "⬇️", basePrice: 3000, maxBuy: 5000000000, volatility: 0.5, incomePerCoin: 0.002 },
+    { id: 24, name: "APTOS", emoji: "⚛️", basePrice: 5000, maxBuy: 5000000000, volatility: 0.55, incomePerCoin: 0.0025 },
+    { id: 25, name: "SUI", emoji: "🌊", basePrice: 2000, maxBuy: 5000000000, volatility: 0.6, incomePerCoin: 0.0015 },
+    { id: 26, name: "SEI", emoji: "⚡", basePrice: 1000, maxBuy: 5000000000, volatility: 0.65, incomePerCoin: 0.001 },
+    { id: 27, name: "INJECTIVE", emoji: "💉", basePrice: 8000, maxBuy: 5000000000, volatility: 0.5, incomePerCoin: 0.004 },
+    { id: 28, name: "ARBITRUM", emoji: "🔵", basePrice: 1200, maxBuy: 5000000000, volatility: 0.55, incomePerCoin: 0.0012 },
+    { id: 29, name: "OPTIMISM", emoji: "✨", basePrice: 1500, maxBuy: 5000000000, volatility: 0.55, incomePerCoin: 0.0013 },
+    { id: 30, name: "BASE", emoji: "🔷", basePrice: 800, maxBuy: 5000000000, volatility: 0.6, incomePerCoin: 0.0009 },
+    { id: 31, name: "WORLDCOIN", emoji: "🌐", basePrice: 2000, maxBuy: 5000000000, volatility: 0.7, incomePerCoin: 0.0014 },
+    { id: 32, name: "STARKNET", emoji: "⚫", basePrice: 1800, maxBuy: 5000000000, volatility: 0.65, incomePerCoin: 0.0013 },
+    { id: 33, name: "ZKSYNC", emoji: "⏫", basePrice: 900, maxBuy: 5000000000, volatility: 0.6, incomePerCoin: 0.001 },
+    { id: 34, name: "LINEA", emoji: "📏", basePrice: 700, maxBuy: 5000000000, volatility: 0.65, incomePerCoin: 0.0008 },
+    { id: 35, name: "SCROLL", emoji: "📜", basePrice: 600, maxBuy: 5000000000, volatility: 0.7, incomePerCoin: 0.0007 },
+    { id: 36, name: "CELESTIA", emoji: "🌌", basePrice: 5000, maxBuy: 5000000000, volatility: 0.5, incomePerCoin: 0.003 },
+    { id: 37, name: "DYMENSION", emoji: "🌀", basePrice: 3000, maxBuy: 5000000000, volatility: 0.55, incomePerCoin: 0.0022 },
+    { id: 38, name: "SAGA", emoji: "📖", basePrice: 2500, maxBuy: 5000000000, volatility: 0.6, incomePerCoin: 0.0018 },
+    { id: 39, name: "PIXEL", emoji: "🖼️", basePrice: 400, maxBuy: 5000000000, volatility: 0.8, incomePerCoin: 0.0004 },
+    { id: 40, name: "PORTAL", emoji: "🚪", basePrice: 600, maxBuy: 5000000000, volatility: 0.75, incomePerCoin: 0.0006 },
+    { id: 41, name: "MANTA", emoji: "🐟", basePrice: 800, maxBuy: 5000000000, volatility: 0.7, incomePerCoin: 0.0008 },
+    { id: 42, name: "ALTLAYER", emoji: "🔶", basePrice: 300, maxBuy: 5000000000, volatility: 0.85, incomePerCoin: 0.0003 },
+    { id: 43, name: "XAI", emoji: "🤖", basePrice: 500, maxBuy: 5000000000, volatility: 0.8, incomePerCoin: 0.0005 },
+    { id: 44, name: "AEVO", emoji: "📊", basePrice: 700, maxBuy: 5000000000, volatility: 0.75, incomePerCoin: 0.0007 },
+    { id: 45, name: "ENA", emoji: "👑", basePrice: 400, maxBuy: 5000000000, volatility: 0.8, incomePerCoin: 0.0004 },
+    { id: 46, name: "ETHFI", emoji: "💰", basePrice: 600, maxBuy: 5000000000, volatility: 0.75, incomePerCoin: 0.0006 },
+    { id: 47, name: "REZ", emoji: "🏠", basePrice: 200, maxBuy: 5000000000, volatility: 0.9, incomePerCoin: 0.0002 },
+    { id: 48, name: "OMNI", emoji: "🌍", basePrice: 1500, maxBuy: 5000000000, volatility: 0.65, incomePerCoin: 0.0012 },
+    { id: 49, name: "SATS", emoji: "🔴", basePrice: 0.001, maxBuy: 5000000000, volatility: 1.0, incomePerCoin: 0.000001 }
+];
+
+const miningCryptos = [
+    { id: 0, name: "BITCOIN", emoji: "₿", basePrice: 1000000, incomePerLevel: 100000 / 60 },
+    { id: 1, name: "ETHEREUM", emoji: "Ξ", basePrice: 500000, incomePerLevel: 50000 / 60 },
+    { id: 2, name: "DOGECOIN", emoji: "🐶", basePrice: 1000, incomePerLevel: 10000 / 60 }
+];
+
+// ========== БИЗНЕСЫ ==========
+const businessTemplates = [
+    { id: 0, name: "🚕 ТАКСОПАРК", baseIncome: 2000 / 60, baseUpgradeCost: 50000, upgradeTime: 30, maxLevel: 20, incomeMultiplier: 1.5, costMultiplier: 50 },
+    { id: 1, name: "🍔 РЕСТОРАН", baseIncome: 20000 / 60, baseUpgradeCost: 500000, upgradeTime: 60, maxLevel: 20, incomeMultiplier: 1.5, costMultiplier: 50 },
+    { id: 2, name: "⛽ ЗАПРАВКА", baseIncome: 200000 / 60, baseUpgradeCost: 50000000, upgradeTime: 120, maxLevel: 20, incomeMultiplier: 1.5, costMultiplier: 50 },
+    { id: 3, name: "🏭 ЗАВОД", baseIncome: 2000000 / 60, baseUpgradeCost: 100000000, upgradeTime: 180, maxLevel: 20, incomeMultiplier: 1.5, costMultiplier: 50 },
+    { id: 4, name: "🏨 ОТЕЛЬ", baseIncome: 20000000 / 60, baseUpgradeCost: 1000000000, upgradeTime: 300, maxLevel: 20, incomeMultiplier: 1.5, costMultiplier: 50 },
+    { id: 5, name: "🎰 КАЗИНО", baseIncome: 40000000 / 60, baseUpgradeCost: 10000000000, upgradeTime: 600, maxLevel: 20, incomeMultiplier: 1.5, costMultiplier: 50 },
+    { id: 6, name: "🏦 БАНК", baseIncome: 600000000 / 60, baseUpgradeCost: 40000000000, upgradeTime: 1200, maxLevel: 20, incomeMultiplier: 1.5, costMultiplier: 50 },
+    { id: 7, name: "🏛️ ИМПЕРИЯ", baseIncome: 2000000000 / 60, baseUpgradeCost: 100000000000, upgradeTime: 2400, maxLevel: 20, incomeMultiplier: 1.5, costMultiplier: 50 }
+];
+
+// ========== ПРЕДМЕТЫ ==========
+const salonItems = {
+    cars: [
+        { id: 0, name: "ЛАДА ГРАНТА", emoji: "🚗", price: 20000 },
+        { id: 1, name: "LADA VESTA", emoji: "🚙", price: 50000 },
+        { id: 2, name: "RENAULT LOGAN", emoji: "🚌", price: 80000 },
+        { id: 3, name: "KIA RIO", emoji: "🚎", price: 150000 },
+        { id: 4, name: "HYUNDAI SOLARIS", emoji: "🏎️", price: 200000 },
+        { id: 5, name: "TOYOTA CAMRY", emoji: "🚓", price: 300000 },
+        { id: 6, name: "MERCEDES E-CLASS", emoji: "🚘", price: 500000 },
+        { id: 7, name: "BMW X5", emoji: "🚙", price: 800000 },
+        { id: 8, name: "AUDI R8", emoji: "🚗", price: 1500000 },
+        { id: 9, name: "PORSCHE 911", emoji: "🏎️", price: 3000000 },
+        { id: 10, name: "LAMBORGHINI AVENTADOR", emoji: "🚀", price: 10000000 },
+        { id: 11, name: "FERRARI LA FERRARI", emoji: "🔥", price: 30000000 },
+        { id: 12, name: "BUGATTI VEYRON", emoji: "💨", price: 100000000 },
+        { id: 13, name: "KOENIGSEGG AGERA", emoji: "⚡", price: 300000000 },
+        { id: 14, name: "PAGANI ZONDA", emoji: "🌀", price: 500000000 },
+        { id: 15, name: "LYKAN HYPERSPORT", emoji: "👽", price: 1000000000 },
+        { id: 16, name: "DEVEL SIXTEEN", emoji: "💥", price: 3000000000 },
+        { id: 17, name: "THRUST SSC", emoji: "📏", price: 10000000000 },
+        { id: 18, name: "BLOODHOUND SSC", emoji: "🎯", price: 30000000000 },
+        { id: 19, name: "СВЕТОВОЙ МОТОЦИКЛ", emoji: "✨", price: 100000000000 }
+    ],
+    planes: [
+        { id: 0, name: "КУКУРУЗНИК", emoji: "✈️", price: 50000 },
+        { id: 1, name: "CESSNA 172", emoji: "🛩️", price: 150000 },
+        { id: 2, name: "BOEING 737", emoji: "🛫", price: 500000 },
+        { id: 3, name: "AIRBUS A320", emoji: "🛬", price: 800000 },
+        { id: 4, name: "BOEING 747", emoji: "🛰️", price: 2000000 },
+        { id: 5, name: "AIRBUS A380", emoji: "🌍", price: 5000000 },
+        { id: 6, name: "CONCORDE", emoji: "⚡", price: 10000000 },
+        { id: 7, name: "F-22 RAPTOR", emoji: "🎯", price: 30000000 },
+        { id: 8, name: "SR-71 BLACKBIRD", emoji: "🕶️", price: 50000000 },
+        { id: 9, name: "B-2 SPIRIT", emoji: "👻", price: 100000000 },
+        { id: 10, name: "АН-225 МРИЯ", emoji: "🏆", price: 300000000 },
+        { id: 11, name: "КОСМИЧЕСКИЙ ШАТТЛ", emoji: "🚀", price: 1000000000 },
+        { id: 12, name: "STARSHIP", emoji: "⭐", price: 3000000000 },
+        { id: 13, name: "ЛУННЫЙ МОДУЛЬ", emoji: "🌕", price: 10000000000 },
+        { id: 14, name: "МАРСОХОД", emoji: "🔴", price: 30000000000 },
+        { id: 15, name: "ЗВЕЗДА СМЕРТИ", emoji: "💀", price: 100000000000 },
+        { id: 16, name: "ТЫСЯЧЕЛЕТНИЙ СОКОЛ", emoji: "🛸", price: 300000000000 },
+        { id: 17, name: "ЭНТЕРПРАЙЗ", emoji: "🖖", price: 1000000000000 },
+        { id: 18, name: "ТАРДИС", emoji: "📞", price: 3000000000000 },
+        { id: 19, name: "СВЕТОВОЙ КОРАБЛЬ", emoji: "✨", price: 10000000000000 }
+    ],
+    ships: [
+        { id: 0, name: "ЛОДКА", emoji: "🛶", price: 10000 },
+        { id: 1, name: "КАТЕР", emoji: "⛵", price: 50000 },
+        { id: 2, name: "ЯХТА", emoji: "🛥️", price: 200000 },
+        { id: 3, name: "ПАРУСНИК", emoji: "⛵", price: 500000 },
+        { id: 4, name: "ТЕПЛОХОД", emoji: "🚢", price: 1000000 },
+        { id: 5, name: "ЛАЙНЕР", emoji: "🛳️", price: 5000000 },
+        { id: 6, name: "ТАНКЕР", emoji: "⛽", price: 10000000 },
+        { id: 7, name: "КОНТЕЙНЕРОВОЗ", emoji: "📦", price: 20000000 },
+        { id: 8, name: "ЛЕДОКОЛ", emoji: "❄️", price: 50000000 },
+        { id: 9, name: "АВИАНОСЕЦ", emoji: "🛩️", price: 100000000 },
+        { id: 10, name: "ПОДВОДНАЯ ЛОДКА", emoji: "🐟", price: 200000000 },
+        { id: 11, name: "ТИТАНИК", emoji: "🧊", price: 500000000 },
+        { id: 12, name: "БИСМАРК", emoji: "⚔️", price: 1000000000 },
+        { id: 13, name: "ЯМАТО", emoji: "🗾", price: 2000000000 },
+        { id: 14, name: "МИССУРИ", emoji: "🇺🇸", price: 5000000000 },
+        { id: 15, name: "АДМИРАЛ КУЗНЕЦОВ", emoji: "🇷🇺", price: 10000000000 },
+        { id: 16, name: "ПИРАТСКИЙ КОРАБЛЬ", emoji: "🏴‍☠️", price: 20000000000 },
+        { id: 17, name: "ЛЕТУЧИЙ ГОЛЛАНДЕЦ", emoji: "👻", price: 50000000000 },
+        { id: 18, name: "КОВЧЕГ", emoji: "🌈", price: 100000000000 },
+        { id: 19, name: "ПОСЕЙДОН", emoji: "🌊", price: 200000000000 }
+    ]
+};
+
+// ========== АЧИВКИ ==========
+const ACHIEVEMENTS = [
+    { id: 1, name: "ПЕРВЫЕ ШАГИ", desc: "100 кликов", icon: "👆", category: 'clicks', difficulty: 'easy', target: 100, type: 'clicks', reward: 10 },
+    { id: 2, name: "КЛИКЕР", desc: "1,000 кликов", icon: "👆", category: 'clicks', difficulty: 'easy', target: 1000, type: 'clicks', reward: 20 },
+    { id: 3, name: "КЛИКЕР-МАНЬЯК", desc: "10,000 кликов", icon: "👆", category: 'clicks', difficulty: 'medium', target: 10000, type: 'clicks', reward: 50 },
+    { id: 4, name: "КЛИКЕР-БОГ", desc: "100,000 кликов", icon: "👆", category: 'clicks', difficulty: 'hard', target: 100000, type: 'clicks', reward: 200 },
+    { id: 5, name: "КЛИКЕР-БЕССМЕРТНЫЙ", desc: "1,000,000 кликов", icon: "👑", category: 'clicks', difficulty: 'epic', target: 1000000, type: 'clicks', reward: 1000 },
+    { id: 6, name: "ПЕРВЫЙ МИЛЛИОН", desc: "Заработать 1M", icon: "💰", category: 'money', difficulty: 'easy', target: 1e6, type: 'money', reward: 15 },
+    { id: 7, name: "МИЛЛИАРДЕР", desc: "Заработать 1B", icon: "💰", category: 'money', difficulty: 'medium', target: 1e9, type: 'money', reward: 50 },
+    { id: 8, name: "ТРИЛЛИОНЕР", desc: "Заработать 1T", icon: "💰", category: 'money', difficulty: 'hard', target: 1e12, type: 'money', reward: 200 },
+    { id: 9, name: "КВАДРИЛЛИОНЕР", desc: "Заработать 1Q", icon: "💰", category: 'money', difficulty: 'epic', target: 1e15, type: 'money', reward: 1000 },
+    { id: 10, name: "ПРЕДПРИНИМАТЕЛЬ", desc: "Купить 1 бизнес", icon: "💼", category: 'business', difficulty: 'easy', target: 1, type: 'businessCount', reward: 10 },
+    { id: 11, name: "МАГНАТ", desc: "Купить 5 бизнесов", icon: "💼", category: 'business', difficulty: 'medium', target: 5, type: 'businessCount', reward: 50 },
+    { id: 12, name: "ИМПЕРИЯ", desc: "Купить 8 бизнесов", icon: "💼", category: 'business', difficulty: 'hard', target: 8, type: 'businessCount', reward: 200 },
+    { id: 13, name: "КРИПТО-ИНВЕСТОР", desc: "Купить 1000 крипты", icon: "📈", category: 'crypto', difficulty: 'easy', target: 1000, type: 'cryptoAmount', reward: 10 },
+    { id: 14, name: "КРИПТО-КИТ", desc: "Купить 100k крипты", icon: "📈", category: 'crypto', difficulty: 'hard', target: 100000, type: 'cryptoAmount', reward: 200 },
+    { id: 15, name: "МАЙНЕР", desc: "Купить 1 ферму", icon: "⛏️", category: 'mining', difficulty: 'easy', target: 1, type: 'farmCount', reward: 10 },
+    { id: 16, name: "МАЙНИНГ-МАГНАТ", desc: "Купить 10 ферм", icon: "⛏️", category: 'mining', difficulty: 'hard', target: 10, type: 'farmCount', reward: 200 },
+    { id: 17, name: "ДОМОВЛАДЕЛЕЦ", desc: "Купить 1 дом", icon: "🏠", category: 'houses', difficulty: 'easy', target: 1, type: 'houseCount', reward: 10 },
+    { id: 18, name: "МАГНАТ НЕДВИЖИМОСТИ", desc: "Купить 10 домов", icon: "🏠", category: 'houses', difficulty: 'medium', target: 10, type: 'houseCount', reward: 50 },
+    { id: 19, name: "ВЛАСТЕЛИН НЕДВИЖИМОСТИ", desc: "Купить 25 домов", icon: "🏠", category: 'houses', difficulty: 'hard', target: 25, type: 'houseCount', reward: 200 },
+    { id: 20, name: "ОСТРОВИТЯНИН", desc: "Купить 1 остров", icon: "🏝️", category: 'islands', difficulty: 'medium', target: 1, type: 'islandCount', reward: 50 },
+    { id: 21, name: "АРХИПЕЛАГ", desc: "Купить 5 островов", icon: "🏝️", category: 'islands', difficulty: 'hard', target: 5, type: 'islandCount', reward: 500 },
+    { id: 22, name: "КАЛЕНДАРНЫЙ МАРАФОН", desc: "Забрать 30 дней календаря", icon: "📅", category: 'calendar', difficulty: 'medium', target: 30, type: 'calendarClaims', reward: 100 },
+    { id: 23, name: "ВЕРНЫЙ ИГРОК", desc: "Забрать 100 дней календаря", icon: "📅", category: 'calendar', difficulty: 'hard', target: 100, type: 'calendarClaims', reward: 500 },
+    { id: 24, name: "ЛЕГЕНДА КАЛЕНДАРЯ", desc: "Забрать 365 дней", icon: "👑", category: 'calendar', difficulty: 'epic', target: 365, type: 'calendarClaims', reward: 5000 },
+    { id: 25, name: "КОСМИЧЕСКИЙ ПУТНИК", desc: "Купить 1 уровень космоса", icon: "🚀", category: 'space', difficulty: 'easy', target: 1, type: 'spaceLevel', reward: 50 },
+    { id: 26, name: "АСТРОНАВТ", desc: "Купить 5 уровней космоса", icon: "🚀", category: 'space', difficulty: 'medium', target: 5, type: 'spaceLevel', reward: 200 },
+    { id: 27, name: "ПОВЕЛИТЕЛЬ КОСМОСА", desc: "Купить 10 уровней космоса", icon: "🌌", category: 'space', difficulty: 'epic', target: 10, type: 'spaceLevel', reward: 5000 },
+    { id: 28, name: "АЧИВКЕР", desc: "Выполнить 10 ачивок", icon: "🏆", category: 'achievements', difficulty: 'easy', target: 10, type: 'achievementCount', reward: 100 },
+    { id: 29, name: "АЧИВКЕР-ПРОФИ", desc: "Выполнить 20 ачивок", icon: "🏆", category: 'achievements', difficulty: 'medium', target: 20, type: 'achievementCount', reward: 500 },
+    { id: 30, name: "КОМПЛИТИСТ", desc: "Выполнить 30 ачивок", icon: "👑", category: 'achievements', difficulty: 'hard', target: 30, type: 'achievementCount', reward: 2000 }
+];
+
+const forbesTop100 = [
+    "Bernard Arnault", "Elon Musk", "Jeff Bezos", "Larry Ellison", "Warren Buffett",
+    "Bill Gates", "Michael Bloomberg", "Carlos Slim Helu", "Mukesh Ambani", "Steve Ballmer",
+    "Francoise Bettencourt Meyers", "Larry Page", "Sergey Brin", "Mark Zuckerberg", "Amancio Ortega",
+    "Rob Walton", "Jim Walton", "Alice Walton", "Julia Koch", "Miriam Adelson",
+    "Michael Dell", "MacKenzie Scott", "Jacqueline Mars", "John Mars", "Charles Koch",
+    "David Thomson", "Klaus-Michael Kuehne", "Reinhold Wuerth", "Leonardo Del Vecchio", "Dieter Schwarz",
+    "Phil Knight", "Travis Kalanick", "Jack Ma", "Ma Huateng", "Li Ka-shing",
+    "He Xiangjian", "Lee Shau Kee", "Hui Ka Yan", "Wang Jianlin", "Yang Huiyan",
+    "Liu Qiangdong", "Ding Lei", "Zhang Yiming", "Colin Huang", "Lei Jun",
+    "Robin Zeng", "Li Shufu", "Wang Chuanfu", "Xu Jiayin", "Sun Piaoyang",
+    "Zhong Shanshan", "Qin Yinglin", "Chen Bang", "Fan Hongwei", "Li Xiting",
+    "Gong Hongjia", "Wang Laichun", "Lu Xiangyang", "Wu Yajun", "Zhou Qunfei",
+    "Liu Yongxing", "Liu Yonghao", "Zhang Jindong", "Sun Guangxin", "Yan Zhi",
+    "Xu Shihui", "Gao Jifan", "Li Zhenguo", "Cao Renxian", "Wang Yusuo",
+    "Zhao Yan", "Li Ping", "Zhang Bo", "Wang Wei", "Yu Minhong",
+    "Zhang Bangxin", "Li Ge", "Wang Xing", "Cheng Wei", "Chen Xiaohua",
+    "Wu Guangming", "Li Dong", "Liu Chuanzhi", "Guo Taiming", "Terry Gou",
+    "Masayoshi Son", "Tadashi Yanai", "Lee Kun-hee", "Jay Y. Lee", "Kwon Hyuk-bin",
+    "Kim Beom-su", "Brian Kim", "Tan Yu", "Robert Ng", "Philip Ng",
+    "Kwek Leng Beng", "Quek Leng Chan", "Ananda Krishnan", "Robert Kuok", "Lee Shin Cheng"
 ];
