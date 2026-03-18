@@ -1,5 +1,10 @@
+// ========== КОСМИЧЕСКАЯ ПРОГРАММА ==========
 
-// ========== КОСМОС ==========
+// Глобальные переменные для ракеты
+let rocketLaunchEnd = null;
+let rocketInterval = null;
+
+// Рендер космоса
 function renderSpace() {
     const totalBonus = SPACE_LEVELS.slice(0, gameState.space?.level || 0).reduce((sum, l) => sum + l.bonus, 0);
     
@@ -30,7 +35,7 @@ function renderSpace() {
                 <div class="stat-value">${gameState.space?.level || 0}/10</div>
             </div>
             <div class="stat-box">
-                <div class="stat-label">Бонус</div>
+                <div class="stat-label">Бонус к доходу</div>
                 <div class="stat-value">+${totalBonus}%</div>
             </div>
         </div>
@@ -78,6 +83,7 @@ function renderSpace() {
     generateSpaceStars();
 }
 
+// Генерация звезд
 function generateSpaceStars() {
     const starsContainer = document.getElementById('spaceStars');
     if (!starsContainer) return;
@@ -99,6 +105,7 @@ function generateSpaceStars() {
     }
 }
 
+// Покупка уровня космоса
 function buySpaceLevel(levelIndex) {
     if (!gameState.space) {
         gameState.space = { level: 0, unlockedLevels: [0] };
@@ -122,6 +129,9 @@ function buySpaceLevel(levelIndex) {
     gameState.space.level++;
     gameState.space.unlockedLevels.push(gameState.space.level);
     
+    // Добавляем в налоги (космос тоже облагается налогом)
+    addTaxItem('space', 'space_level', levelData.price);
+    
     launchSpaceRocket();
     checkAchievements();
     saveGame();
@@ -130,6 +140,7 @@ function buySpaceLevel(levelIndex) {
     alert(`✅ КУПЛЕН УРОВЕНЬ: ${levelData.name}\nТеперь ваш бонус: +${levelData.bonus}%`);
 }
 
+// Анимация запуска ракеты
 function launchSpaceRocket() {
     const rocket = document.getElementById('spaceRocket');
     if (!rocket) return;
@@ -141,10 +152,11 @@ function launchSpaceRocket() {
     }, 3000);
 }
 
+// Запуск ракеты (игровая механика)
 function launchRocket() {
     if (!gameState.space) return;
     
-    const launchCost = 10000000000000;
+    const launchCost = 10000000000000; // 10 триллионов
     
     if (gameState.balance < launchCost) {
         alert(`❌ НЕДОСТАТОЧНО МОНЕТ! Нужно ${formatMoney(launchCost)}`);
@@ -158,13 +170,15 @@ function launchRocket() {
     
     gameState.balance -= launchCost;
     
-    const minTime = 60 * 60 * 1000;
-    const maxTime = 3 * 24 * 60 * 60 * 1000;
+    // Рандомное время от 1 часа до 3 дней
+    const minTime = 60 * 60 * 1000; // 1 час
+    const maxTime = 3 * 24 * 60 * 60 * 1000; // 3 дня
     const launchTime = minTime + Math.random() * (maxTime - minTime);
     
     rocketLaunchEnd = Date.now() + launchTime;
     
-    const successChance = 0.3 + (launchTime / maxTime) * 0.4;
+    // Шанс успеха (чем дольше полет, тем выше шанс)
+    const successChance = 0.3 + (launchTime / maxTime) * 0.4; // от 30% до 70%
     
     gameState.space.lastLaunch = {
         startTime: Date.now(),
@@ -191,22 +205,30 @@ function launchRocket() {
     alert(`🚀 РАКЕТА ЗАПУЩЕНА!\n\nВремя полета: ${formatTime(launchTime)}\nШанс успеха: ${Math.floor(successChance * 100)}%`);
 }
 
+// Проверка статуса ракеты
 function checkRocketLaunch() {
-    if (!rocketLaunchEnd || rocketLaunchEnd <= Date.now()) {
-        if (rocketLaunchEnd) {
-            completeRocketLaunch();
-        }
+    if (!rocketLaunchEnd) return;
+    
+    if (rocketLaunchEnd <= Date.now()) {
+        completeRocketLaunch();
         if (rocketInterval) {
             clearInterval(rocketInterval);
             rocketInterval = null;
         }
+    } else {
+        // Обновляем таймер если мы на вкладке космоса
+        const activeTab = document.querySelector('.nav-item.active')?.innerText || '';
+        if (activeTab.includes('Космос')) {
+            const timeLeft = rocketLaunchEnd - Date.now();
+            const timerEl = document.querySelector('.rocket-timer');
+            if (timerEl) {
+                timerEl.innerHTML = `🚀 РАКЕТА В ПОЛЕТЕ: ${formatTime(timeLeft)}`;
+            }
+        }
     }
-    // УБИРАЕМ ЭТУ СТРОКУ - она вызывала рендер космоса когда не надо
-    // if (document.querySelector('.nav-item.active')?.innerText.includes('Космос')) {
-    //     renderSpace();
-    // }
 }
 
+// Завершение полета ракеты
 function completeRocketLaunch() {
     if (!gameState.space?.lastLaunch) return;
     
@@ -220,34 +242,41 @@ function completeRocketLaunch() {
     if (success) {
         const rarity = 1 - launch.successChance;
         
+        // Денежная награда
         const moneyReward = Math.floor(launch.cost * (0.5 + rarity * 2));
         gameState.balance += moneyReward;
         rewards.push(`💰 ${formatMoney(moneyReward)}`);
         
+        // Алмазы
         if (rarity > 0.4) {
             const diamondsReward = Math.floor(100 * rarity * 10);
             gameState.diamonds += diamondsReward;
             rewards.push(`💎 ${diamondsReward}`);
         }
         
+        // Крипта
         if (rarity > 0.5) {
             const randomCrypto = cryptoCurrencies[Math.floor(Math.random() * cryptoCurrencies.length)];
             const cryptoAmount = Math.floor(10000 * rarity);
             const userCrypto = gameState.crypto.find(c => c.id === randomCrypto.id);
-            userCrypto.owned += cryptoAmount;
-            rewards.push(`${randomCrypto.emoji} ${cryptoAmount} ${randomCrypto.name}`);
+            if (userCrypto) {
+                userCrypto.owned += cryptoAmount;
+                rewards.push(`${randomCrypto.emoji} ${cryptoAmount} ${randomCrypto.name}`);
+            }
         }
         
+        // Бесплатный уровень космоса
         if (rarity > 0.6) {
             if (gameState.space.level < SPACE_LEVELS.length) {
                 gameState.space.level++;
                 gameState.space.unlockedLevels.push(gameState.space.level);
-                rewards.push(`🚀 +1 уровень космоса`);
+                rewards.push(`🚀 +1 уровень космоса (бесплатно!)`);
             }
         }
         
         message = '🎉 УСПЕХ! Разведка удалась!';
     } else {
+        // Неудача - возврат 30%
         const refund = Math.floor(launch.cost * 0.3);
         gameState.balance += refund;
         message = '💥 НЕУДАЧА! Ракета потеряна... Но вы получили страховку';
