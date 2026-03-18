@@ -1,6 +1,242 @@
-function renderBusiness() {
-    if (!gameState) return;
+// ========== БИЗНЕСЫ ==========
+
+// Покупка бизнеса
+function buyBusiness(templateId) {
+    const t = businessTemplates.find(t => t.id === templateId);
+    if (!t) return;
     
+    const totalBusinesses = gameState.myBusinesses ? gameState.myBusinesses.length : 0;
+    
+    if (totalBusinesses >= MAX_BUSINESSES) {
+        alert(`❌ НЕЛЬЗЯ КУПИТЬ БОЛЬШЕ ${MAX_BUSINESSES} БИЗНЕСОВ!`);
+        return;
+    }
+    
+    if ((gameState.balance || 0) < t.baseUpgradeCost) {
+        alert('❌ НЕДОСТАТОЧНО МОНЕТ!');
+        return;
+    }
+    
+    gameState.balance -= t.baseUpgradeCost;
+    
+    if (!gameState.myBusinesses) gameState.myBusinesses = [];
+    
+    const newBusiness = {
+        id: Date.now() + Math.random(),
+        templateId: templateId,
+        name: t.name,
+        level: 1,
+        income: t.baseIncome,
+        upgradeCost: Math.floor(t.baseUpgradeCost * t.costMultiplier),
+        upgradeTime: t.upgradeTime,
+        upgradeEnd: 0,
+        manager: null,
+        totalEarned: 0,
+        incomeMultiplier: t.incomeMultiplier,
+        costMultiplier: t.costMultiplier,
+        diamondsSpent: 0,
+        taxBlocked: false
+    };
+    
+    gameState.myBusinesses.push(newBusiness);
+    
+    // ДОБАВЛЯЕМ В НАЛОГИ
+    addTaxItem('business', newBusiness.id, t.baseUpgradeCost);
+    
+    checkAchievements();
+    saveGame();
+    updateUI();
+    renderBusiness();
+    alert(`✅ Куплен ${t.name}!`);
+}
+
+// Расчет дохода с бизнесов (с учетом налогов)
+function calculateBusinessIncome() {
+    let income = 0;
+    if (!gameState.myBusinesses) return income;
+    
+    gameState.myBusinesses.forEach(b => {
+        // Проверяем налоги
+        const taxItem = gameState.taxes?.find(t => t.type === 'business' && t.id === b.id);
+        if (taxItem && taxItem.overdue) return; // Если налог просрочен - бизнес не работает
+        
+        let inc = b.income || 0;
+        if (b.manager) {
+            inc *= (1 + b.manager.level * 0.1);
+        }
+        if (gameState.businessPassUpgraded) {
+            inc *= 1.5;
+        }
+        income += inc;
+        b.totalEarned = (b.totalEarned || 0) + inc;
+    });
+    
+    return income;
+}
+
+// Запуск улучшения
+function startUpgrade(index) {
+    const business = gameState.myBusinesses[index];
+    if (!business) return;
+    
+    const t = businessTemplates[business.templateId];
+    if (!t) return;
+    
+    // Проверка налогов перед улучшением
+    const taxItem = gameState.taxes?.find(tax => tax.type === 'business' && tax.id === business.id);
+    if (taxItem && taxItem.overdue) {
+        alert('❌ СНАЧАЛА ОПЛАТИ НАЛОГ!');
+        return;
+    }
+    
+    if ((business.level || 1) >= t.maxLevel) {
+        alert('❌ МАКСИМАЛЬНЫЙ УРОВЕНЬ!');
+        return;
+    }
+    
+    if (business.upgradeEnd && business.upgradeEnd > Date.now()) {
+        alert('⏱️ УЛУЧШЕНИЕ УЖЕ ИДЕТ!');
+        return;
+    }
+    
+    if ((gameState.balance || 0) < (business.upgradeCost || 0)) {
+        alert('❌ НЕДОСТАТОЧНО МОНЕТ!');
+        return;
+    }
+    
+    gameState.balance -= (business.upgradeCost || 0);
+    
+    business.upgradeEnd = Date.now() + ((business.upgradeTime || t.upgradeTime) * 1000);
+    
+    saveGame();
+    updateUI();
+    renderBusiness();
+    
+    alert(`✅ Улучшение запущено на ${business.upgradeTime || t.upgradeTime} сек.`);
+}
+
+// Завершение улучшения
+function completeUpgrade(index) {
+    const business = gameState.myBusinesses[index];
+    if (!business) return;
+    
+    const t = businessTemplates[business.templateId];
+    if (!t) return;
+    
+    business.level++;
+    business.income = Math.floor(t.baseIncome * Math.pow(t.incomeMultiplier, business.level - 1));
+    business.upgradeCost = Math.floor(t.baseUpgradeCost * Math.pow(t.costMultiplier, business.level - 1));
+    business.upgradeTime = Math.floor((business.upgradeTime || t.upgradeTime) * 1.3);
+    business.upgradeEnd = 0;
+    
+    const taxItem = gameState.taxes.find(tax => tax.type === 'business' && tax.id === business.id);
+    if (taxItem) {
+        taxItem.value += (business.upgradeCost || 0) / (t.costMultiplier);
+        taxItem.totalAmount = Math.floor(taxItem.value * TAX_RATE);
+        taxItem.hourlyRate = taxItem.totalAmount / 72;
+        taxItem.paid = false;
+        taxItem.accrued = 0;
+        taxItem.dueDate = Date.now() + TAX_PERIOD;
+        taxItem.overdue = false;
+    }
+    
+    saveGame();
+    updateUI();
+    renderBusiness();
+}
+
+// Найм менеджера
+function hireManager(index) {
+    const business = gameState.myBusinesses[index];
+    if (!business) return;
+    
+    // Проверка налогов перед наймом
+    const taxItem = gameState.taxes?.find(tax => tax.type === 'business' && tax.id === business.id);
+    if (taxItem && taxItem.overdue) {
+        alert('❌ СНАЧАЛА ОПЛАТИ НАЛОГ!');
+        return;
+    }
+    
+    if (business.manager && business.manager.level >= 10) {
+        alert('❌ МАКСИМАЛЬНЫЙ УРОВЕНЬ МЕНЕДЖЕРА!');
+        return;
+    }
+    
+    const cost = 50;
+    
+    if (gameState.diamonds < cost) {
+        alert('❌ НУЖНО 50 АЛМАЗОВ!');
+        return;
+    }
+    
+    gameState.diamonds -= cost;
+    business.diamondsSpent = (business.diamondsSpent || 0) + cost;
+    
+    if (!business.manager) {
+        business.manager = { level: 1 };
+    } else {
+        business.manager.level++;
+    }
+    
+    saveGame();
+    updateUI();
+    renderBusiness();
+    alert(`✅ Менеджер улучшен до ${business.manager.level} уровня! (+${business.manager.level * 10}% прибыли)`);
+}
+
+// Продажа бизнеса
+function sellBusiness(index) {
+    const business = gameState.myBusinesses[index];
+    if (!business) return;
+    
+    const t = businessTemplates[business.templateId];
+    if (!t) return;
+    
+    const taxItem = gameState.taxes.find(tax => tax.type === 'business' && tax.id === business.id);
+    const totalSpent = taxItem ? taxItem.value : t.baseUpgradeCost;
+    
+    const sellPrice = Math.floor(totalSpent * 0.5);
+    const diamondsReturn = Math.floor((business.diamondsSpent || 0) * 0.5);
+    
+    if (confirm(`Продать ${business.name} за ${formatMoney(sellPrice)} и вернуть ${diamondsReturn}💎?`)) {
+        gameState.myBusinesses.splice(index, 1);
+        if (taxItem) {
+            const taxIndex = gameState.taxes.findIndex(tax => tax.type === 'business' && tax.id === business.id);
+            if (taxIndex !== -1) gameState.taxes.splice(taxIndex, 1);
+        }
+        gameState.balance += sellPrice;
+        gameState.diamonds += diamondsReturn;
+        
+        saveGame();
+        updateUI();
+        renderBusiness();
+        alert(`✅ Продано! +${formatMoney(sellPrice)} и +${diamondsReturn}💎`);
+    }
+}
+
+// Улучшение бизнес-пропуска
+function upgradeBusinessPass() {
+    if (gameState.businessPassUpgraded) {
+        alert('❌ ПРОПУСК УЖЕ УЛУЧШЕН!');
+        return;
+    }
+    
+    if (gameState.diamonds < 500) {
+        alert('❌ НУЖНО 500 АЛМАЗОВ!');
+        return;
+    }
+    
+    gameState.diamonds -= 500;
+    gameState.businessPassUpgraded = true;
+    
+    saveGame();
+    updateUI();
+    renderBusiness();
+    alert('✅ БИЗНЕС ПРОПУСК УЛУЧШЕН! Все улучшения бизнесов теперь дают +50% к прибыли');
+}
+
+// Рендер бизнесов
+function renderBusiness() {
     const businessLimit = gameState.businessSlots || MAX_BUSINESSES;
     
     let html = '';
@@ -26,10 +262,8 @@ function renderBusiness() {
     } else {
         gameState.myBusinesses.forEach((b, i) => {
             const t = businessTemplates[b.templateId];
-            if (!t) return;
-            
             const taxItem = gameState.taxes?.find(tax => tax.type === 'business' && tax.id === b.id);
-            const taxStatus = taxItem && !taxItem.paid && taxItem.accrued > 0 ? '⚠️' : '';
+            const isOverdue = taxItem && taxItem.overdue;
             
             const managerBonus = b.manager ? b.manager.level * 10 : 0;
             const passBonus = gameState.businessPassUpgraded ? 50 : 0;
@@ -43,10 +277,15 @@ function renderBusiness() {
                 totalIncome = Math.floor(b.income * (1 + totalBonus / 100));
             }
             
+            // Если налог просрочен - доход 0
+            if (isOverdue) {
+                totalIncome = 0;
+            }
+            
             html += `
                 <div class="business-item" onclick="openBusinessModal(${i})">
                     <div class="business-header">
-                        <span class="business-name">${b.name} ${taxStatus}</span>
+                        <span class="business-name">${b.name} ${isOverdue ? '🔴' : ''}</span>
                         <span class="business-level">Ур. ${b.level}/${t.maxLevel}</span>
                     </div>
                     <div class="business-stats">
@@ -60,8 +299,9 @@ function renderBusiness() {
                         <div class="upgrade-time">⏱️ Улучшение... ${timeLeft}с</div>
                     ` : ''}
                     ${taxItem ? `
-                        <div style="font-size:12px; color:#ff9800; margin:5px 0;">
+                        <div style="font-size:12px; color:${isOverdue ? '#ff4444' : '#ff9800'}; margin:5px 0;">
                             Налог: ${formatMoney(Math.floor(taxItem.accrued))} / ${formatMoney(taxItem.totalAmount)}
+                            ${isOverdue ? ' ⚠️ ПРОСРОЧЕН' : ''}
                         </div>
                     ` : ''}
                     ${b.manager ? `
@@ -70,6 +310,7 @@ function renderBusiness() {
                             <span class="manager-bonus">+${managerBonus}%</span>
                         </div>
                     ` : ''}
+                    ${isOverdue ? '<div style="color:#ff4444; font-size:12px; margin-top:5px;">⛔ БИЗНЕС НЕ РАБОТАЕТ (ОПЛАТИ НАЛОГ)</div>' : ''}
                 </div>
             `;
         });
@@ -78,4 +319,145 @@ function renderBusiness() {
     html += '<button class="card-btn" style="margin-top:16px;" onclick="showBuyBusinessModal()">+ КУПИТЬ БИЗНЕС</button>';
     
     document.getElementById('content').innerHTML = html;
+}
+
+// Показать модалку покупки бизнеса
+function showBuyBusinessModal() {
+    const modal = document.getElementById('modal');
+    const modalContent = document.getElementById('modalContent');
+    
+    const totalBusinesses = gameState.myBusinesses ? gameState.myBusinesses.length : 0;
+    const businessLimit = gameState.businessSlots || MAX_BUSINESSES;
+    
+    let html = '<div class="modal-title">🏪 КУПИТЬ БИЗНЕС</div>';
+    
+    if (totalBusinesses >= businessLimit) {
+        html += `
+            <div style="background:rgba(255,68,68,0.1); border:1px solid #ff4444; border-radius:16px; padding:16px; margin-bottom:16px; text-align:center;">
+                <span style="color:#ff4444;">⚠️ МАКСИМУМ ${businessLimit} БИЗНЕСОВ!</span>
+            </div>
+        `;
+    }
+    
+    businessTemplates.forEach(t => {
+        html += `
+            <div style="background:#0f1117; border-radius:16px; padding:16px; margin-bottom:8px; cursor:${totalBusinesses >= businessLimit ? 'not-allowed' : 'pointer'}; opacity:${totalBusinesses >= businessLimit ? '0.5' : '1'};"
+                 onclick="${totalBusinesses >= businessLimit ? '' : 'buyBusiness(' + t.id + '); closeModal(\'modal\');'}">
+                <div style="display:flex; justify-content:space-between;">
+                    <span style="font-weight:600;">${t.name}</span>
+                    <span style="color:#4caf50;">${formatMoney(t.baseUpgradeCost)}</span>
+                </div>
+                <div style="font-size:13px; color:#8e8e98; margin-top:4px;">
+                    💰 +${formatMoney(t.baseIncome * 60)}/мин
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '<div class="close-btn" onclick="closeModal(\'modal\')">ЗАКРЫТЬ</div>';
+    
+    modalContent.innerHTML = html;
+    modal.classList.add('active');
+}
+
+// Открыть модалку бизнеса
+function openBusinessModal(index) {
+    const business = gameState.myBusinesses[index];
+    if (!business) return;
+    
+    const t = businessTemplates[business.templateId];
+    const taxItem = gameState.taxes?.find(tax => tax.type === 'business' && tax.id === business.id);
+    const isOverdue = taxItem && taxItem.overdue;
+    
+    let totalSpent = taxItem ? taxItem.value : t.baseUpgradeCost;
+    
+    const sellPrice = Math.floor(totalSpent * 0.5);
+    const diamondsReturn = Math.floor((business.diamondsSpent || 0) * 0.5);
+    const managerBonus = business.manager ? business.manager.level * 10 : 0;
+    const passBonus = gameState.businessPassUpgraded ? 50 : 0;
+    const totalBonus = managerBonus + passBonus;
+    
+    const modal = document.getElementById('modal');
+    const modalContent = document.getElementById('modalContent');
+    
+    let totalIncome = business.income;
+    if (totalBonus > 0) {
+        totalIncome = Math.floor(business.income * (1 + totalBonus / 100));
+    }
+    if (isOverdue) {
+        totalIncome = 0;
+    }
+    
+    let content = `
+        <div class="modal-title">${business.name} ${isOverdue ? '🔴' : ''}</div>
+        <div style="background:#0f1117; border-radius:16px; padding:16px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+                <span>Уровень</span>
+                <span style="color:#ffd700;">${business.level}/${t.maxLevel}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+                <span>Базовая прибыль</span>
+                <span style="color:#4caf50;">+${formatMoney(business.income)}/мин</span>
+            </div>
+            ${totalBonus > 0 ? `
+                <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+                    <span>Итого прибыль</span>
+                    <span style="color:#4caf50;">+${formatMoney(totalIncome)}/мин</span>
+                </div>
+            ` : ''}
+            ${isOverdue ? `
+                <div style="color:#ff4444; text-align:center; margin:12px 0; font-weight:bold;">
+                    ⛔ БИЗНЕС НЕ РАБОТАЕТ ИЗ-ЗА ПРОСРОЧЕННОГО НАЛОГА
+                </div>
+            ` : ''}
+            <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+                <span>Заработано</span>
+                <span style="color:#ffd700;">${formatMoney(business.totalEarned || 0)}</span>
+            </div>
+            ${taxItem ? `
+                <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+                    <span>Налог накоплен</span>
+                    <span style="color:${isOverdue ? '#ff4444' : '#ff9800'};">
+                        ${formatMoney(Math.floor(taxItem.accrued))} / ${formatMoney(taxItem.totalAmount)}
+                        ${isOverdue ? ' ⚠️ ПРОСРОЧЕН' : ''}
+                    </span>
+                </div>
+            ` : ''}
+    `;
+    
+    if ((business.level || 1) < t.maxLevel && !isOverdue) {
+        if (business.upgradeEnd && business.upgradeEnd > Date.now()) {
+            const timeLeft = Math.ceil((business.upgradeEnd - Date.now()) / 1000);
+            content += `
+                <div style="color:#ff9800; text-align:center; margin:12px 0;">
+                    ⏱️ Улучшение... ${timeLeft}с
+                </div>
+            `;
+        } else {
+            content += `
+                <button class="card-btn" style="margin-top:12px;" onclick="startUpgrade(${index}); closeModal('modal');">
+                    🚀 Улучшить (${formatMoney(business.upgradeCost || 0)}) - ${business.upgradeTime || t.upgradeTime}с
+                </button>
+            `;
+        }
+    }
+    
+    if (!isOverdue) {
+        content += `
+            <button class="card-btn" style="margin-top:8px; background:#7b1fa2;" onclick="hireManager(${index}); closeModal('modal');">
+                👔 Улучшить менеджера (50💎) ${business.manager ? `ур.${business.manager.level}/10` : ''}
+            </button>
+        `;
+    }
+    
+    content += `
+        <button class="card-btn" style="margin-top:8px; background:#ff9800;" onclick="sellBusiness(${index}); closeModal('modal');">
+            Продать (${formatMoney(sellPrice)} + ${diamondsReturn}💎)
+        </button>
+        </div>
+        <div class="close-btn" onclick="closeModal('modal')">ЗАКРЫТЬ</div>
+    `;
+    
+    modalContent.innerHTML = content;
+    modal.classList.add('active');
 }
