@@ -1,11 +1,9 @@
-
-```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>IMPERIA CLICKER 2026 - ПОЛНАЯ ВЕРСИЯ</title>
+    <title>IMPERIA CLICKER 2026</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * {
@@ -920,16 +918,42 @@
             display: inline-block;
         }
         
-        .admin-panel-btn {
-            background: #ff4444;
-            border: 1px solid #ffd700;
+        .admin-panel {
+            background: linear-gradient(135deg, #ff4444, #ff8800);
+            border: 2px solid #ffd700;
+            border-radius: 20px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .admin-panel h3 {
             color: white;
-            padding: 12px;
-            border-radius: 16px;
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(255,215,0,0.5);
+        }
+        
+        .admin-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        .admin-btn {
+            background: rgba(0,0,0,0.5);
+            border: 2px solid #ffd700;
+            color: white;
+            padding: 15px;
+            border-radius: 15px;
+            font-size: 16px;
             font-weight: bold;
             cursor: pointer;
-            text-align: center;
-            margin: 8px 0;
+            backdrop-filter: blur(5px);
+        }
+        
+        .admin-btn:active {
+            background: rgba(255,215,0,0.3);
         }
         
         .floating-effect {
@@ -1476,7 +1500,7 @@
             <div class="balance-container">
                 <div class="balance-label">БАЛАНС</div>
                 <div class="balance-value" id="balance">$ 0</div>
-                <div class="balance-sub" id="balanceChange">+ $ 0 (0%) за все время</div>
+                <div class="balance-sub" id="balanceChange">+ $ 0 за все время</div>
             </div>
             
             <div class="per-click">
@@ -1541,7 +1565,7 @@
 
     <script>
         // ========== НАСТРОЙКИ ==========
-        const APP_VERSION = '12.0.0-FINAL';
+        const APP_VERSION = '12.0.0-FINAL-FIXED';
         const ADMIN_SECRETS = ['2a3d4g5j', 'test', 'test2', 'test3', 'dexter'];
         const ADMIN_PASSWORD = '2a3d4g5j';
         const MAX_BUSINESSES = 8;
@@ -1551,9 +1575,9 @@
         const HOUSE_INCOME_MULTIPLIER = 4.44;
         const MAX_PLAYER_LEVEL = 100;
         const MAX_HOUSE_UPGRADES = 42;
-        const TAX_RATE = 0.2;
-        const TAX_PERIOD = 72 * 60 * 60 * 1000;
-        const HOURLY_TAX_RATE = TAX_RATE / 72;
+        const TAX_RATE = 0.2; // 20% налог
+        const TAX_PERIOD = 72 * 60 * 60 * 1000; // 72 часа
+        const HOURLY_TAX_RATE = TAX_RATE / 72; // 0.2778% в час
         const CALENDAR_DAYS = 1000;
         const PASS_LEVELS_PER_PAGE = 10;
         const ACHIEVEMENTS_PER_PAGE = 12;
@@ -2018,7 +2042,7 @@
             }
         }
 
-        // ========== НАЛОГИ ==========
+        // ========== НАЛОГИ (ИСПРАВЛЕНО) ==========
         function addTaxItem(type, id, value) {
             if (!gameState.taxes) gameState.taxes = [];
             
@@ -2098,13 +2122,48 @@
             
             gameState.balance -= amountToPay;
             
-            gameState.taxes.splice(index, 1);
+            // СБРАСЫВАЕМ НАЛОГ - НО НЕ УДАЛЯЕМ!
+            tax.paid = true;
+            tax.accrued = 0;
+            tax.dueDate = Date.now() + TAX_PERIOD;
+            tax.lastUpdate = Date.now();
+            tax.paid = false; // Снова неоплачен, но таймер пошел заново
+            tax.overdue = false;
             
             saveGame();
             updateUI();
             renderTax();
             alert(`✅ Налог оплачен: ${formatMoney(amountToPay)}`);
             return true;
+        }
+
+        function payAllMiningTaxes() {
+            const miningTaxes = gameState.taxes.filter(t => t.type === 'mining' && !t.paid && t.accrued > 0 && !t.overdue);
+            if (miningTaxes.length === 0) return;
+            
+            const totalAmount = miningTaxes.reduce((sum, t) => sum + Math.floor(t.accrued), 0);
+            
+            if (gameState.balance < totalAmount) {
+                alert('❌ НЕДОСТАТОЧНО МОНЕТ!');
+                return;
+            }
+            
+            gameState.balance -= totalAmount;
+            
+            // Сбрасываем все майнинг налоги
+            miningTaxes.forEach(tax => {
+                tax.paid = true;
+                tax.accrued = 0;
+                tax.dueDate = Date.now() + TAX_PERIOD;
+                tax.lastUpdate = Date.now();
+                tax.paid = false;
+                tax.overdue = false;
+            });
+            
+            saveGame();
+            updateUI();
+            renderTax();
+            alert(`✅ Налоги на майнинг оплачены: ${formatMoney(totalAmount)}`);
         }
 
         function getTaxStatus(taxItem) {
@@ -2146,7 +2205,7 @@
             if (!gameState.miningFarms) gameState.miningFarms = [];
             
             const newFarm = {
-                id: Date.now(),
+                id: Date.now() + Math.random(),
                 level: 1,
                 crypto: miningCryptos[Math.floor(Math.random() * miningCryptos.length)],
                 progress: 0,
@@ -2168,6 +2227,13 @@
             const farm = gameState.miningFarms[index];
             if (!farm) return;
             
+            // Проверка налогов
+            const taxItem = gameState.taxes.find(t => t.type === 'mining' && t.id === farm.id);
+            if (taxItem && taxItem.overdue) {
+                alert('❌ СНАЧАЛА ОПЛАТИ НАЛОГ!');
+                return;
+            }
+            
             if (farm.level >= MAX_FARM_LEVEL) {
                 alert(`❌ МАКСИМАЛЬНЫЙ УРОВЕНЬ ${MAX_FARM_LEVEL}!`);
                 return;
@@ -2182,7 +2248,6 @@
             gameState.balance -= cost;
             farm.level++;
             
-            const taxItem = gameState.taxes.find(t => t.type === 'mining' && t.id === farm.id);
             if (taxItem) {
                 taxItem.value += cost;
                 taxItem.totalAmount = Math.floor(taxItem.value * TAX_RATE);
@@ -2217,226 +2282,6 @@
                 updateUI();
                 renderMining();
             }
-        }
-
-        // ========== БИЗНЕСЫ ==========
-        function buyBusiness(templateId) {
-            const t = businessTemplates.find(t => t.id === templateId);
-            if (!t) return;
-            
-            const totalBusinesses = gameState.myBusinesses ? gameState.myBusinesses.length : 0;
-            
-            if (totalBusinesses >= MAX_BUSINESSES) {
-                alert(`❌ НЕЛЬЗЯ КУПИТЬ БОЛЬШЕ ${MAX_BUSINESSES} БИЗНЕСОВ!`);
-                return;
-            }
-            
-            if ((gameState.balance || 0) < t.baseUpgradeCost) {
-                alert('❌ НЕДОСТАТОЧНО МОНЕТ!');
-                return;
-            }
-            
-            gameState.balance -= t.baseUpgradeCost;
-            
-            if (!gameState.myBusinesses) gameState.myBusinesses = [];
-            
-            const newBusiness = {
-                id: Date.now() + Math.random(),
-                templateId: templateId,
-                name: t.name,
-                level: 1,
-                income: t.baseIncome,
-                upgradeCost: Math.floor(t.baseUpgradeCost * t.costMultiplier),
-                upgradeTime: t.upgradeTime,
-                upgradeEnd: 0,
-                manager: null,
-                totalEarned: 0,
-                incomeMultiplier: t.incomeMultiplier,
-                costMultiplier: t.costMultiplier,
-                diamondsSpent: 0,
-                taxBlocked: false
-            };
-            
-            gameState.myBusinesses.push(newBusiness);
-            
-            addTaxItem('business', newBusiness.id, t.baseUpgradeCost);
-            
-            checkAchievements();
-            saveGame();
-            updateUI();
-            renderBusiness();
-            alert(`✅ Куплен ${t.name}!`);
-        }
-
-        function startUpgrade(index) {
-            const business = gameState.myBusinesses[index];
-            if (!business) return;
-            
-            const t = businessTemplates[business.templateId];
-            if (!t) return;
-            
-            const taxItem = gameState.taxes?.find(tax => tax.type === 'business' && tax.id === business.id);
-            if (taxItem && taxItem.overdue) {
-                alert('❌ СНАЧАЛА ОПЛАТИ НАЛОГ!');
-                return;
-            }
-            
-            if ((business.level || 1) >= t.maxLevel) {
-                alert('❌ МАКСИМАЛЬНЫЙ УРОВЕНЬ!');
-                return;
-            }
-            
-            if (business.upgradeEnd && business.upgradeEnd > Date.now()) {
-                alert('⏱️ УЛУЧШЕНИЕ УЖЕ ИДЕТ!');
-                return;
-            }
-            
-            if ((gameState.balance || 0) < (business.upgradeCost || 0)) {
-                alert('❌ НЕДОСТАТОЧНО МОНЕТ!');
-                return;
-            }
-            
-            gameState.balance -= (business.upgradeCost || 0);
-            
-            business.upgradeEnd = Date.now() + ((business.upgradeTime || t.upgradeTime) * 1000);
-            
-            saveGame();
-            updateUI();
-            renderBusiness();
-            
-            alert(`✅ Улучшение запущено на ${business.upgradeTime || t.upgradeTime} сек.`);
-        }
-
-        function completeUpgrade(index) {
-            const business = gameState.myBusinesses[index];
-            if (!business) return;
-            
-            const t = businessTemplates[business.templateId];
-            if (!t) return;
-            
-            business.level++;
-            business.income = Math.floor(t.baseIncome * Math.pow(t.incomeMultiplier, business.level - 1));
-            business.upgradeCost = Math.floor(t.baseUpgradeCost * Math.pow(t.costMultiplier, business.level - 1));
-            business.upgradeTime = Math.floor((business.upgradeTime || t.upgradeTime) * 1.3);
-            business.upgradeEnd = 0;
-            
-            const taxItem = gameState.taxes.find(tax => tax.type === 'business' && tax.id === business.id);
-            if (taxItem) {
-                taxItem.value += (business.upgradeCost || 0) / (t.costMultiplier);
-                taxItem.totalAmount = Math.floor(taxItem.value * TAX_RATE);
-                taxItem.hourlyRate = taxItem.totalAmount / 72;
-                taxItem.paid = false;
-                taxItem.accrued = 0;
-                taxItem.dueDate = Date.now() + TAX_PERIOD;
-            }
-            
-            saveGame();
-            updateUI();
-            renderBusiness();
-        }
-
-        function hireManager(index) {
-            const business = gameState.myBusinesses[index];
-            if (!business) return;
-            
-            const taxItem = gameState.taxes?.find(tax => tax.type === 'business' && tax.id === business.id);
-            if (taxItem && taxItem.overdue) {
-                alert('❌ СНАЧАЛА ОПЛАТИ НАЛОГ!');
-                return;
-            }
-            
-            if (business.manager && business.manager.level >= 10) {
-                alert('❌ МАКСИМАЛЬНЫЙ УРОВЕНЬ МЕНЕДЖЕРА!');
-                return;
-            }
-            
-            const cost = 50;
-            
-            if (gameState.diamonds < cost) {
-                alert('❌ НУЖНО 50 АЛМАЗОВ!');
-                return;
-            }
-            
-            gameState.diamonds -= cost;
-            business.diamondsSpent = (business.diamondsSpent || 0) + cost;
-            
-            if (!business.manager) {
-                business.manager = { level: 1 };
-            } else {
-                business.manager.level++;
-            }
-            
-            saveGame();
-            updateUI();
-            renderBusiness();
-            alert(`✅ Менеджер улучшен до ${business.manager.level} уровня! (+${business.manager.level * 10}% прибыли)`);
-        }
-
-        function sellBusiness(index) {
-            const business = gameState.myBusinesses[index];
-            if (!business) return;
-            
-            const t = businessTemplates[business.templateId];
-            if (!t) return;
-            
-            const taxItem = gameState.taxes.find(tax => tax.type === 'business' && tax.id === business.id);
-            const totalSpent = taxItem ? taxItem.value : t.baseUpgradeCost;
-            
-            const sellPrice = Math.floor(totalSpent * 0.5);
-            const diamondsReturn = Math.floor((business.diamondsSpent || 0) * 0.5);
-            
-            if (confirm(`Продать ${business.name} за ${formatMoney(sellPrice)} и вернуть ${diamondsReturn}💎?`)) {
-                gameState.myBusinesses.splice(index, 1);
-                if (taxItem) {
-                    const taxIndex = gameState.taxes.findIndex(tax => tax.type === 'business' && tax.id === business.id);
-                    if (taxIndex !== -1) gameState.taxes.splice(taxIndex, 1);
-                }
-                gameState.balance += sellPrice;
-                gameState.diamonds += diamondsReturn;
-                
-                saveGame();
-                updateUI();
-                renderBusiness();
-                alert(`✅ Продано! +${formatMoney(sellPrice)} и +${diamondsReturn}💎`);
-            }
-        }
-
-        function upgradeBusinessPass() {
-            if (gameState.businessPassUpgraded) {
-                alert('❌ ПРОПУСК УЖЕ УЛУЧШЕН!');
-                return;
-            }
-            
-            if (gameState.diamonds < 500) {
-                alert('❌ НУЖНО 500 АЛМАЗОВ!');
-                return;
-            }
-            
-            gameState.diamonds -= 500;
-            gameState.businessPassUpgraded = true;
-            
-            saveGame();
-            updateUI();
-            renderBusiness();
-            alert('✅ БИЗНЕС ПРОПУСК УЛУЧШЕН! Все улучшения бизнесов теперь дают +50% к прибыли');
-        }
-
-        function calculateBusinessIncome() {
-            let income = 0;
-            if (!gameState.myBusinesses) return income;
-            
-            gameState.myBusinesses.forEach(b => {
-                const taxItem = gameState.taxes?.find(t => t.type === 'business' && t.id === b.id);
-                if (taxItem && taxItem.overdue) return;
-                
-                let inc = b.income || 0;
-                if (b.manager) inc *= (1 + b.manager.level * 0.1);
-                if (gameState.businessPassUpgraded) inc *= 1.5;
-                income += inc;
-                b.totalEarned = (b.totalEarned || 0) + inc;
-            });
-            
-            return income;
         }
 
         // ========== КРИПТА ==========
@@ -2733,6 +2578,227 @@
             
             modalContent.innerHTML = html;
             modal.classList.add('active');
+        }
+
+        // ========== БИЗНЕСЫ ==========
+        function buyBusiness(templateId) {
+            const t = businessTemplates.find(t => t.id === templateId);
+            if (!t) return;
+            
+            const totalBusinesses = gameState.myBusinesses ? gameState.myBusinesses.length : 0;
+            
+            if (totalBusinesses >= MAX_BUSINESSES) {
+                alert(`❌ НЕЛЬЗЯ КУПИТЬ БОЛЬШЕ ${MAX_BUSINESSES} БИЗНЕСОВ!`);
+                return;
+            }
+            
+            if ((gameState.balance || 0) < t.baseUpgradeCost) {
+                alert('❌ НЕДОСТАТОЧНО МОНЕТ!');
+                return;
+            }
+            
+            gameState.balance -= t.baseUpgradeCost;
+            
+            if (!gameState.myBusinesses) gameState.myBusinesses = [];
+            
+            const newBusiness = {
+                id: Date.now() + Math.random(),
+                templateId: templateId,
+                name: t.name,
+                level: 1,
+                income: t.baseIncome,
+                upgradeCost: Math.floor(t.baseUpgradeCost * t.costMultiplier),
+                upgradeTime: t.upgradeTime,
+                upgradeEnd: 0,
+                manager: null,
+                totalEarned: 0,
+                incomeMultiplier: t.incomeMultiplier,
+                costMultiplier: t.costMultiplier,
+                diamondsSpent: 0
+            };
+            
+            gameState.myBusinesses.push(newBusiness);
+            
+            addTaxItem('business', newBusiness.id, t.baseUpgradeCost);
+            
+            checkAchievements();
+            saveGame();
+            updateUI();
+            renderBusiness();
+            alert(`✅ ВЫ КУПИЛИ БИЗНЕС: ${t.name}\n\n💰 Стоимость: ${formatMoney(t.baseUpgradeCost)}\n📈 Доход: +${formatMoney(t.baseIncome * 60)}/мин`);
+        }
+
+        function startUpgrade(index) {
+            const business = gameState.myBusinesses[index];
+            if (!business) return;
+            
+            const t = businessTemplates[business.templateId];
+            if (!t) return;
+            
+            // Проверка налогов
+            const taxItem = gameState.taxes?.find(tax => tax.type === 'business' && tax.id === business.id);
+            if (taxItem && taxItem.overdue) {
+                alert('❌ СНАЧАЛА ОПЛАТИ НАЛОГ!');
+                return;
+            }
+            
+            if ((business.level || 1) >= t.maxLevel) {
+                alert('❌ МАКСИМАЛЬНЫЙ УРОВЕНЬ!');
+                return;
+            }
+            
+            if (business.upgradeEnd && business.upgradeEnd > Date.now()) {
+                alert('⏱️ УЛУЧШЕНИЕ УЖЕ ИДЕТ!');
+                return;
+            }
+            
+            if ((gameState.balance || 0) < (business.upgradeCost || 0)) {
+                alert('❌ НЕДОСТАТОЧНО МОНЕТ!');
+                return;
+            }
+            
+            gameState.balance -= (business.upgradeCost || 0);
+            
+            business.upgradeEnd = Date.now() + ((business.upgradeTime || t.upgradeTime) * 1000);
+            
+            saveGame();
+            updateUI();
+            renderBusiness();
+            
+            alert(`✅ Улучшение запущено на ${business.upgradeTime || t.upgradeTime} сек.`);
+        }
+
+        function completeUpgrade(index) {
+            const business = gameState.myBusinesses[index];
+            if (!business) return;
+            
+            const t = businessTemplates[business.templateId];
+            if (!t) return;
+            
+            business.level++;
+            business.income = Math.floor(t.baseIncome * Math.pow(t.incomeMultiplier, business.level - 1));
+            business.upgradeCost = Math.floor(t.baseUpgradeCost * Math.pow(t.costMultiplier, business.level - 1));
+            business.upgradeTime = Math.floor((business.upgradeTime || t.upgradeTime) * 1.3);
+            business.upgradeEnd = 0;
+            
+            const taxItem = gameState.taxes.find(tax => tax.type === 'business' && tax.id === business.id);
+            if (taxItem) {
+                taxItem.value += (business.upgradeCost || 0) / (t.costMultiplier);
+                taxItem.totalAmount = Math.floor(taxItem.value * TAX_RATE);
+                taxItem.hourlyRate = taxItem.totalAmount / 72;
+                taxItem.paid = false;
+                taxItem.accrued = 0;
+                taxItem.dueDate = Date.now() + TAX_PERIOD;
+            }
+            
+            saveGame();
+            updateUI();
+            renderBusiness();
+        }
+
+        function hireManager(index) {
+            const business = gameState.myBusinesses[index];
+            if (!business) return;
+            
+            // Проверка налогов
+            const taxItem = gameState.taxes?.find(tax => tax.type === 'business' && tax.id === business.id);
+            if (taxItem && taxItem.overdue) {
+                alert('❌ СНАЧАЛА ОПЛАТИ НАЛОГ!');
+                return;
+            }
+            
+            if (business.manager && business.manager.level >= 10) {
+                alert('❌ МАКСИМАЛЬНЫЙ УРОВЕНЬ МЕНЕДЖЕРА!');
+                return;
+            }
+            
+            const cost = 50;
+            
+            if (gameState.diamonds < cost) {
+                alert('❌ НУЖНО 50 АЛМАЗОВ!');
+                return;
+            }
+            
+            gameState.diamonds -= cost;
+            business.diamondsSpent = (business.diamondsSpent || 0) + cost;
+            
+            if (!business.manager) {
+                business.manager = { level: 1 };
+            } else {
+                business.manager.level++;
+            }
+            
+            saveGame();
+            updateUI();
+            renderBusiness();
+            alert(`✅ Менеджер улучшен до ${business.manager.level} уровня! (+${business.manager.level * 10}% прибыли)`);
+        }
+
+        function sellBusiness(index) {
+            const business = gameState.myBusinesses[index];
+            if (!business) return;
+            
+            const t = businessTemplates[business.templateId];
+            if (!t) return;
+            
+            const taxItem = gameState.taxes.find(tax => tax.type === 'business' && tax.id === business.id);
+            const totalSpent = taxItem ? taxItem.value : t.baseUpgradeCost;
+            
+            const sellPrice = Math.floor(totalSpent * 0.5);
+            const diamondsReturn = Math.floor((business.diamondsSpent || 0) * 0.5);
+            
+            if (confirm(`Продать ${business.name} за ${formatMoney(sellPrice)} и вернуть ${diamondsReturn}💎?`)) {
+                gameState.myBusinesses.splice(index, 1);
+                if (taxItem) {
+                    const taxIndex = gameState.taxes.findIndex(tax => tax.type === 'business' && tax.id === business.id);
+                    if (taxIndex !== -1) gameState.taxes.splice(taxIndex, 1);
+                }
+                gameState.balance += sellPrice;
+                gameState.diamonds += diamondsReturn;
+                
+                saveGame();
+                updateUI();
+                renderBusiness();
+                alert(`✅ Продано! +${formatMoney(sellPrice)} и +${diamondsReturn}💎`);
+            }
+        }
+
+        function upgradeBusinessPass() {
+            if (gameState.businessPassUpgraded) {
+                alert('❌ ПРОПУСК УЖЕ УЛУЧШЕН!');
+                return;
+            }
+            
+            if (gameState.diamonds < 500) {
+                alert('❌ НУЖНО 500 АЛМАЗОВ!');
+                return;
+            }
+            
+            gameState.diamonds -= 500;
+            gameState.businessPassUpgraded = true;
+            
+            saveGame();
+            updateUI();
+            renderBusiness();
+            alert('✅ БИЗНЕС ПРОПУСК УЛУЧШЕН! Все улучшения бизнесов теперь дают +50% к прибыли');
+        }
+
+        function calculateBusinessIncome() {
+            let income = 0;
+            if (!gameState.myBusinesses) return income;
+            
+            gameState.myBusinesses.forEach(b => {
+                const taxItem = gameState.taxes?.find(t => t.type === 'business' && t.id === b.id);
+                if (taxItem && taxItem.overdue) return;
+                
+                let inc = b.income || 0;
+                if (b.manager) inc *= (1 + b.manager.level * 0.1);
+                if (gameState.businessPassUpgraded) inc *= 1.5;
+                income += inc;
+                b.totalEarned = (b.totalEarned || 0) + inc;
+            });
+            
+            return income;
         }
 
         // ========== КАЛЕНДАРЬ ==========
@@ -3370,6 +3436,7 @@
                     const progress = getTaxProgress(tax);
                     const timeLeft = getTimeLeft(tax);
                     const hoursLeft = Math.floor(timeLeft / (60 * 60 * 1000));
+                    const minutesLeft = Math.floor((timeLeft % (60 * 60 * 1000)) / (60 * 1000));
                     
                     html += `
                         <div class="tax-item ${tax.overdue ? 'tax-overdue' : 'tax-normal'}">
@@ -3381,7 +3448,7 @@
                             <div class="tax-progress">
                                 <div class="tax-progress-bar" style="width: ${progress}%"></div>
                             </div>
-                            <div class="tax-timer">⏱️ ${tax.overdue ? 'ПРОСРОЧЕНО' : `Осталось: ${hoursLeft}ч`}</div>
+                            <div class="tax-timer">⏱️ ${tax.overdue ? 'ПРОСРОЧЕНО' : `Осталось: ${hoursLeft}ч ${minutesLeft}м`}</div>
                             ${!tax.paid && tax.accrued > 0 && !tax.overdue ? 
                                 `<button class="tax-btn" onclick="payTaxByIndex(${gameState.taxes.indexOf(tax)})">ОПЛАТИТЬ ${formatMoney(Math.floor(tax.accrued))}</button>` : ''}
                             ${tax.overdue ? '<div style="color:#ff4444; font-size:12px; margin-top:8px; font-weight:bold;">⚠️ БИЗНЕС НЕ РАБОТАЕТ</div>' : ''}
@@ -3476,7 +3543,7 @@
                         <div class="tax-progress">
                             <div class="tax-progress-bar" style="width: ${progress}%"></div>
                         </div>
-                        <div class="tax-timer">⏱️ ${anyOverdue ? 'ЕСТЬ ПРОСРОЧЕННЫЕ' : 'Ожидание'}</div>
+                        <div class="tax-timer">⏱️ ${anyOverdue ? 'ЕСТЬ ПРОСРОЧЕННЫЕ' : 'В ожидании'}</div>
                         ${anyOverdue ? '<div style="color:#ff4444; font-size:12px; margin-top:8px; font-weight:bold;">⚠️ МАЙНИНГ НЕ РАБОТАЕТ</div>' : ''}
                     </div>
                 `;
@@ -3527,7 +3594,7 @@
             let cryptoIncome = 0;
             gameState.crypto.forEach(c => {
                 const taxItem = gameState.taxes?.find(t => t.type === 'crypto' && t.id === c.id);
-                if ((!taxItem || !taxItem.paid) && c.owned > 0) {
+                if ((!taxItem || !taxItem.paid) && c.owned > 0 && !taxItem?.overdue) {
                     const cryptoData = cryptoCurrencies.find(cr => cr.id === c.id);
                     if (cryptoData) {
                         cryptoIncome += cryptoData.incomePerCoin * c.owned;
@@ -4327,10 +4394,112 @@
                     </div>
                 </div>
                 
+                ${isAdmin ? `
+                    <div class="admin-panel">
+                        <h3>🔰 АДМИН ПАНЕЛЬ</h3>
+                        <div class="admin-grid">
+                            <button class="admin-btn" onclick="adminAddMoney()">💰 +1 Триллион</button>
+                            <button class="admin-btn" onclick="adminAddDiamonds()">💎 +10,000 Алмазов</button>
+                            <button class="admin-btn" onclick="adminAddExp()">⚡ +1 млн Опыта</button>
+                            <button class="admin-btn" onclick="adminAddAll()">🎁 +Всё сразу</button>
+                            <button class="admin-btn" onclick="adminResetTaxes()">🔄 Сброс налогов</button>
+                            <button class="admin-btn" onclick="adminUnlockAll()">🔓 Открыть всё</button>
+                        </div>
+                    </div>
+                ` : ''}
+                
                 <button class="card-btn" onclick="showTop100()">🏆 ТОП-100 FORBES</button>
                 <button class="card-btn" style="margin-top:8px;" onclick="showNicknameModal()">✏️ Изменить ник</button>
                 <button class="card-btn" style="margin-top:8px; background:#ff4444;" onclick="resetGame()">🔄 Сбросить прогресс</button>
             `;
+        }
+
+        // ========== АДМИН ФУНКЦИИ ==========
+        function adminAddMoney() {
+            gameState.balance += 1000000000000;
+            saveGame();
+            updateUI();
+            renderProfile();
+            alert('✅ +1,000,000,000,000 монет');
+        }
+
+        function adminAddDiamonds() {
+            gameState.diamonds += 10000;
+            saveGame();
+            updateUI();
+            renderProfile();
+            alert('✅ +10,000 алмазов');
+        }
+
+        function adminAddExp() {
+            gameState.exp += 1000000;
+            const expNeeded = (gameState.level || 1) * 1500;
+            while (gameState.exp >= expNeeded && (gameState.level || 1) < MAX_PLAYER_LEVEL) {
+                gameState.exp -= expNeeded;
+                gameState.level = (gameState.level || 1) + 1;
+            }
+            saveGame();
+            updateUI();
+            renderProfile();
+            alert('✅ +1,000,000 опыта');
+        }
+
+        function adminAddAll() {
+            gameState.balance += 1000000000000;
+            gameState.diamonds += 10000;
+            gameState.exp += 1000000;
+            const expNeeded = (gameState.level || 1) * 1500;
+            while (gameState.exp >= expNeeded && (gameState.level || 1) < MAX_PLAYER_LEVEL) {
+                gameState.exp -= expNeeded;
+                gameState.level = (gameState.level || 1) + 1;
+            }
+            saveGame();
+            updateUI();
+            renderProfile();
+            alert('✅ Получено всё!');
+        }
+
+        function adminResetTaxes() {
+            gameState.taxes = [];
+            saveGame();
+            updateUI();
+            renderProfile();
+            alert('✅ Налоги сброшены');
+        }
+
+        function adminUnlockAll() {
+            // Разблокировка всего контента для теста
+            gameState.balance = 1e18;
+            gameState.diamonds = 1000000;
+            gameState.exp = 10000000;
+            gameState.level = MAX_PLAYER_LEVEL;
+            
+            // Добавляем по 1 бизнесу каждого типа
+            if (gameState.myBusinesses.length === 0) {
+                businessTemplates.forEach(t => {
+                    const newBusiness = {
+                        id: Date.now() + Math.random(),
+                        templateId: t.id,
+                        name: t.name,
+                        level: 20,
+                        income: t.baseIncome * Math.pow(t.incomeMultiplier, 19),
+                        upgradeCost: Math.floor(t.baseUpgradeCost * Math.pow(t.costMultiplier, 19)),
+                        upgradeTime: t.upgradeTime * 1.3,
+                        upgradeEnd: 0,
+                        manager: { level: 10 },
+                        totalEarned: 0,
+                        incomeMultiplier: t.incomeMultiplier,
+                        costMultiplier: t.costMultiplier,
+                        diamondsSpent: 0
+                    };
+                    gameState.myBusinesses.push(newBusiness);
+                });
+            }
+            
+            saveGame();
+            updateUI();
+            renderProfile();
+            alert('✅ Всё открыто для теста!');
         }
 
         function getPlayerRank() {
@@ -4689,6 +4858,27 @@
             }
         }
 
+        function buyHouse(houseId) {
+            const house = gameState.houses.find(h => h.id === houseId);
+            if (!house || house.owned) return;
+            
+            if (gameState.balance < house.price) {
+                alert('❌ НЕДОСТАТОЧНО МОНЕТ!');
+                return;
+            }
+            
+            gameState.balance -= house.price;
+            house.owned = true;
+            
+            addTaxItem('house', house.id, house.price);
+            
+            checkAchievements();
+            saveGame();
+            updateUI();
+            showAllHouses();
+            alert(`✅ Куплен дом ${house.name}!`);
+        }
+
         function upgradeHouse(houseId, upgradeType) {
             const house = gameState.houses.find(h => h.id === houseId);
             if (!house || !house.owned) return;
@@ -4880,17 +5070,15 @@
             document.body.appendChild(flash);
             setTimeout(() => flash.remove(), 1000);
             
-            alert('🔥 АДМИН РЕЖИМ АКТИВИРОВАН!\n\n💰 +1,000,000,000,000 монет\n💎 +10,000 алмазов\n⚡ +1,000,000 опыта');
-            
-            updateUI();
             saveGame();
+            updateUI();
             
-            const activeTab = document.querySelector('.nav-item.active')?.innerText || '';
-            if (activeTab.includes('Профиль')) {
+            // Если мы на странице профиля - обновляем её, чтобы показать админ панель
+            if (document.querySelector('.nav-item.active')?.innerText.includes('Профиль')) {
                 renderProfile();
-            } else if (activeTab.includes('Заработок')) {
-                renderEarn();
             }
+            
+            alert('🔥 АДМИН РЕЖИМ АКТИВИРОВАН!\n\n💰 +1,000,000,000,000 монет\n💎 +10,000 алмазов\n⚡ +1,000,000 опыта');
         }
 
         function disableAdminMode() {
@@ -4903,6 +5091,11 @@
             document.querySelector('.bottom-nav').classList.remove('admin-nav');
             
             saveGame();
+            
+            // Обновляем профиль если открыт
+            if (document.querySelector('.nav-item.active')?.innerText.includes('Профиль')) {
+                renderProfile();
+            }
         }
 
         // ========== НАВИГАЦИЯ ==========
@@ -5220,4 +5413,3 @@
     </script>
 </body>
 </html>
-```
