@@ -1561,7 +1561,7 @@
 
     <script>
         // ========== НАСТРОЙКИ ==========
-        const APP_VERSION = '12.0.1-TAX-FIX';
+        const APP_VERSION = '13.0.0-TAX-FIX';
         const ADMIN_SECRETS = ['2a3d4g5j', 'test', 'test2', 'test3', 'dexter'];
         const ADMIN_PASSWORD = '2a3d4g5j';
         const MAX_BUSINESSES = 8;
@@ -1571,9 +1571,10 @@
         const HOUSE_INCOME_MULTIPLIER = 4.44;
         const MAX_PLAYER_LEVEL = 100;
         const MAX_HOUSE_UPGRADES = 42;
-        const TAX_RATE = 0.2;
-        const TAX_PERIOD = 72 * 60 * 60 * 1000;
-        const HOURLY_TAX_RATE = TAX_RATE / 72;
+        const TAX_RATE = 0.2; // 20% налог
+        const TAX_PERIOD = 72 * 60 * 60 * 1000; // 72 часа
+        const HOURLY_TAX_RATE = TAX_RATE / 72; // 0.2777% в час
+        const MINUTE_TAX_RATE = HOURLY_TAX_RATE / 60; // ~0.00463% в минуту
         const CALENDAR_DAYS = 1000;
         const PASS_LEVELS_PER_PAGE = 10;
         const ACHIEVEMENTS_PER_PAGE = 12;
@@ -1609,7 +1610,7 @@
             { name: "🌀 ВСЕЛЕННАЯ", bonus: 500, price: 1e18, desc: "Властелин космоса" }
         ];
 
-        // ========== 50 КРИПТОВАЛЮТ ==========
+        // ========== 50 КРИПТОВАЛЮТ (ПОЛНЫЙ СПИСОК) ==========
         const cryptoCurrencies = [
             { id: 0, name: "BITCOIN", emoji: "₿", basePrice: 1000000, maxBuy: 5000000000, volatility: 0.2, incomePerCoin: 0.05 },
             { id: 1, name: "ETHEREUM", emoji: "Ξ", basePrice: 500000, maxBuy: 5000000000, volatility: 0.25, incomePerCoin: 0.03 },
@@ -1630,7 +1631,37 @@
             { id: 16, name: "FLOKI", emoji: "🐕", basePrice: 10, maxBuy: 5000000000, volatility: 1.0, incomePerCoin: 0.0003 },
             { id: 17, name: "SAMO", emoji: "🐶", basePrice: 5, maxBuy: 5000000000, volatility: 1.0, incomePerCoin: 0.0002 },
             { id: 18, name: "MYRO", emoji: "🐕", basePrice: 2, maxBuy: 5000000000, volatility: 1.0, incomePerCoin: 0.0001 },
-            { id: 19, name: "SUGURU COIN", emoji: "🍬", basePrice: 1, maxBuy: 5000000000, volatility: 1.0, incomePerCoin: 0.00005 }
+            { id: 19, name: "SUGURU COIN", emoji: "🍬", basePrice: 1, maxBuy: 5000000000, volatility: 1.0, incomePerCoin: 0.00005 },
+            { id: 20, name: "TERRA LUNA", emoji: "🌕", basePrice: 500, maxBuy: 5000000000, volatility: 0.8, incomePerCoin: 0.0005 },
+            { id: 21, name: "AVALANCHE", emoji: "🔺", basePrice: 15000, maxBuy: 5000000000, volatility: 0.4, incomePerCoin: 0.005 },
+            { id: 22, name: "POLKADOT", emoji: "◉", basePrice: 7000, maxBuy: 5000000000, volatility: 0.45, incomePerCoin: 0.0035 },
+            { id: 23, name: "NEAR", emoji: "⬇️", basePrice: 3000, maxBuy: 5000000000, volatility: 0.5, incomePerCoin: 0.002 },
+            { id: 24, name: "APTOS", emoji: "⚛️", basePrice: 5000, maxBuy: 5000000000, volatility: 0.55, incomePerCoin: 0.0025 },
+            { id: 25, name: "SUI", emoji: "🌊", basePrice: 2000, maxBuy: 5000000000, volatility: 0.6, incomePerCoin: 0.0015 },
+            { id: 26, name: "SEI", emoji: "⚡", basePrice: 1000, maxBuy: 5000000000, volatility: 0.65, incomePerCoin: 0.001 },
+            { id: 27, name: "INJECTIVE", emoji: "💉", basePrice: 8000, maxBuy: 5000000000, volatility: 0.5, incomePerCoin: 0.004 },
+            { id: 28, name: "ARBITRUM", emoji: "🔵", basePrice: 1200, maxBuy: 5000000000, volatility: 0.55, incomePerCoin: 0.0012 },
+            { id: 29, name: "OPTIMISM", emoji: "✨", basePrice: 1500, maxBuy: 5000000000, volatility: 0.55, incomePerCoin: 0.0013 },
+            { id: 30, name: "BASE", emoji: "🔷", basePrice: 800, maxBuy: 5000000000, volatility: 0.6, incomePerCoin: 0.0009 },
+            { id: 31, name: "WORLDCOIN", emoji: "🌐", basePrice: 2000, maxBuy: 5000000000, volatility: 0.7, incomePerCoin: 0.0014 },
+            { id: 32, name: "STARKNET", emoji: "⚫", basePrice: 1800, maxBuy: 5000000000, volatility: 0.65, incomePerCoin: 0.0013 },
+            { id: 33, name: "ZKSYNC", emoji: "⏫", basePrice: 900, maxBuy: 5000000000, volatility: 0.6, incomePerCoin: 0.001 },
+            { id: 34, name: "LINEA", emoji: "📏", basePrice: 700, maxBuy: 5000000000, volatility: 0.65, incomePerCoin: 0.0008 },
+            { id: 35, name: "SCROLL", emoji: "📜", basePrice: 600, maxBuy: 5000000000, volatility: 0.7, incomePerCoin: 0.0007 },
+            { id: 36, name: "CELESTIA", emoji: "🌌", basePrice: 5000, maxBuy: 5000000000, volatility: 0.5, incomePerCoin: 0.003 },
+            { id: 37, name: "DYMENSION", emoji: "🌀", basePrice: 3000, maxBuy: 5000000000, volatility: 0.55, incomePerCoin: 0.0022 },
+            { id: 38, name: "SAGA", emoji: "📖", basePrice: 2500, maxBuy: 5000000000, volatility: 0.6, incomePerCoin: 0.0018 },
+            { id: 39, name: "PIXEL", emoji: "🖼️", basePrice: 400, maxBuy: 5000000000, volatility: 0.8, incomePerCoin: 0.0004 },
+            { id: 40, name: "PORTAL", emoji: "🚪", basePrice: 600, maxBuy: 5000000000, volatility: 0.75, incomePerCoin: 0.0006 },
+            { id: 41, name: "MANTA", emoji: "🐟", basePrice: 800, maxBuy: 5000000000, volatility: 0.7, incomePerCoin: 0.0008 },
+            { id: 42, name: "ALTLAYER", emoji: "🔶", basePrice: 300, maxBuy: 5000000000, volatility: 0.85, incomePerCoin: 0.0003 },
+            { id: 43, name: "XAI", emoji: "🤖", basePrice: 500, maxBuy: 5000000000, volatility: 0.8, incomePerCoin: 0.0005 },
+            { id: 44, name: "AEVO", emoji: "📊", basePrice: 700, maxBuy: 5000000000, volatility: 0.75, incomePerCoin: 0.0007 },
+            { id: 45, name: "ENA", emoji: "👑", basePrice: 400, maxBuy: 5000000000, volatility: 0.8, incomePerCoin: 0.0004 },
+            { id: 46, name: "ETHFI", emoji: "💰", basePrice: 600, maxBuy: 5000000000, volatility: 0.75, incomePerCoin: 0.0006 },
+            { id: 47, name: "REZ", emoji: "🏠", basePrice: 200, maxBuy: 5000000000, volatility: 0.9, incomePerCoin: 0.0002 },
+            { id: 48, name: "OMNI", emoji: "🌍", basePrice: 1500, maxBuy: 5000000000, volatility: 0.65, incomePerCoin: 0.0012 },
+            { id: 49, name: "SATS", emoji: "🔴", basePrice: 0.001, maxBuy: 5000000000, volatility: 1.0, incomePerCoin: 0.000001 }
         ];
 
         // ========== ДАННЫЕ ДЛЯ МАЙНИНГА ==========
@@ -1662,7 +1693,22 @@
             { id: 6, name: "ПЕРВЫЙ МИЛЛИОН", desc: "Заработать 1M", icon: "💰", category: 'money', difficulty: 'easy', target: 1e6, type: 'money', reward: 15 },
             { id: 7, name: "МИЛЛИАРДЕР", desc: "Заработать 1B", icon: "💰", category: 'money', difficulty: 'medium', target: 1e9, type: 'money', reward: 50 },
             { id: 8, name: "ТРИЛЛИОНЕР", desc: "Заработать 1T", icon: "💰", category: 'money', difficulty: 'hard', target: 1e12, type: 'money', reward: 200 },
-            { id: 9, name: "КВАДРИЛЛИОНЕР", desc: "Заработать 1Q", icon: "💰", category: 'money', difficulty: 'epic', target: 1e15, type: 'money', reward: 1000 }
+            { id: 9, name: "КВАДРИЛЛИОНЕР", desc: "Заработать 1Q", icon: "💰", category: 'money', difficulty: 'epic', target: 1e15, type: 'money', reward: 1000 },
+            { id: 10, name: "ПРЕДПРИНИМАТЕЛЬ", desc: "Купить 1 бизнес", icon: "💼", category: 'business', difficulty: 'easy', target: 1, type: 'businessCount', reward: 10 },
+            { id: 11, name: "МАГНАТ", desc: "Купить 5 бизнесов", icon: "💼", category: 'business', difficulty: 'medium', target: 5, type: 'businessCount', reward: 50 },
+            { id: 12, name: "ИМПЕРИЯ", desc: "Купить 8 бизнесов", icon: "💼", category: 'business', difficulty: 'hard', target: 8, type: 'businessCount', reward: 200 },
+            { id: 13, name: "КРИПТО-ИНВЕСТОР", desc: "Купить 1000 крипты", icon: "📈", category: 'crypto', difficulty: 'easy', target: 1000, type: 'cryptoAmount', reward: 10 },
+            { id: 14, name: "КРИПТО-КИТ", desc: "Купить 100k крипты", icon: "📈", category: 'crypto', difficulty: 'hard', target: 100000, type: 'cryptoAmount', reward: 200 },
+            { id: 15, name: "МАЙНЕР", desc: "Купить 1 ферму", icon: "⛏️", category: 'mining', difficulty: 'easy', target: 1, type: 'farmCount', reward: 10 },
+            { id: 16, name: "МАЙНИНГ-МАГНАТ", desc: "Купить 10 ферм", icon: "⛏️", category: 'mining', difficulty: 'hard', target: 10, type: 'farmCount', reward: 200 },
+            { id: 17, name: "ДОМОВЛАДЕЛЕЦ", desc: "Купить 1 дом", icon: "🏠", category: 'houses', difficulty: 'easy', target: 1, type: 'houseCount', reward: 10 },
+            { id: 18, name: "МАГНАТ НЕДВИЖИМОСТИ", desc: "Купить 10 домов", icon: "🏠", category: 'houses', difficulty: 'medium', target: 10, type: 'houseCount', reward: 50 },
+            { id: 19, name: "ВЛАСТЕЛИН НЕДВИЖИМОСТИ", desc: "Купить 25 домов", icon: "🏠", category: 'houses', difficulty: 'hard', target: 25, type: 'houseCount', reward: 200 },
+            { id: 20, name: "ОСТРОВИТЯНИН", desc: "Купить 1 остров", icon: "🏝️", category: 'islands', difficulty: 'medium', target: 1, type: 'islandCount', reward: 50 },
+            { id: 21, name: "АРХИПЕЛАГ", desc: "Купить 5 островов", icon: "🏝️", category: 'islands', difficulty: 'hard', target: 5, type: 'islandCount', reward: 500 },
+            { id: 22, name: "КАЛЕНДАРНЫЙ МАРАФОН", desc: "Забрать 30 дней календаря", icon: "📅", category: 'calendar', difficulty: 'medium', target: 30, type: 'calendarClaims', reward: 100 },
+            { id: 23, name: "ВЕРНЫЙ ИГРОК", desc: "Забрать 100 дней календаря", icon: "📅", category: 'calendar', difficulty: 'hard', target: 100, type: 'calendarClaims', reward: 500 },
+            { id: 24, name: "ЛЕГЕНДА КАЛЕНДАРЯ", desc: "Забрать 365 дней", icon: "👑", category: 'calendar', difficulty: 'epic', target: 365, type: 'calendarClaims', reward: 5000 }
         ];
 
         // ========== ТОП-100 ==========
@@ -1715,15 +1761,69 @@
         const salonItems = {
             cars: [
                 { id: 0, name: "ЛАДА ГРАНТА", emoji: "🚗", price: 20000 },
-                { id: 1, name: "LADA VESTA", emoji: "🚙", price: 50000 }
+                { id: 1, name: "LADA VESTA", emoji: "🚙", price: 50000 },
+                { id: 2, name: "RENAULT LOGAN", emoji: "🚌", price: 80000 },
+                { id: 3, name: "KIA RIO", emoji: "🚎", price: 150000 },
+                { id: 4, name: "HYUNDAI SOLARIS", emoji: "🏎️", price: 200000 },
+                { id: 5, name: "TOYOTA CAMRY", emoji: "🚓", price: 300000 },
+                { id: 6, name: "MERCEDES E-CLASS", emoji: "🚘", price: 500000 },
+                { id: 7, name: "BMW X5", emoji: "🚙", price: 800000 },
+                { id: 8, name: "AUDI R8", emoji: "🚗", price: 1500000 },
+                { id: 9, name: "PORSCHE 911", emoji: "🏎️", price: 3000000 },
+                { id: 10, name: "LAMBORGHINI AVENTADOR", emoji: "🚀", price: 10000000 },
+                { id: 11, name: "FERRARI LA FERRARI", emoji: "🔥", price: 30000000 },
+                { id: 12, name: "BUGATTI VEYRON", emoji: "💨", price: 100000000 },
+                { id: 13, name: "KOENIGSEGG AGERA", emoji: "⚡", price: 300000000 },
+                { id: 14, name: "PAGANI ZONDA", emoji: "🌀", price: 500000000 },
+                { id: 15, name: "LYKAN HYPERSPORT", emoji: "👽", price: 1000000000 },
+                { id: 16, name: "DEVEL SIXTEEN", emoji: "💥", price: 3000000000 },
+                { id: 17, name: "THRUST SSC", emoji: "📏", price: 10000000000 },
+                { id: 18, name: "BLOODHOUND SSC", emoji: "🎯", price: 30000000000 },
+                { id: 19, name: "СВЕТОВОЙ МОТОЦИКЛ", emoji: "✨", price: 100000000000 }
             ],
             planes: [
                 { id: 0, name: "КУКУРУЗНИК", emoji: "✈️", price: 50000 },
-                { id: 1, name: "CESSNA 172", emoji: "🛩️", price: 150000 }
+                { id: 1, name: "CESSNA 172", emoji: "🛩️", price: 150000 },
+                { id: 2, name: "BOEING 737", emoji: "🛫", price: 500000 },
+                { id: 3, name: "AIRBUS A320", emoji: "🛬", price: 800000 },
+                { id: 4, name: "BOEING 747", emoji: "🛰️", price: 2000000 },
+                { id: 5, name: "AIRBUS A380", emoji: "🌍", price: 5000000 },
+                { id: 6, name: "CONCORDE", emoji: "⚡", price: 10000000 },
+                { id: 7, name: "F-22 RAPTOR", emoji: "🎯", price: 30000000 },
+                { id: 8, name: "SR-71 BLACKBIRD", emoji: "🕶️", price: 50000000 },
+                { id: 9, name: "B-2 SPIRIT", emoji: "👻", price: 100000000 },
+                { id: 10, name: "АН-225 МРИЯ", emoji: "🏆", price: 300000000 },
+                { id: 11, name: "КОСМИЧЕСКИЙ ШАТТЛ", emoji: "🚀", price: 1000000000 },
+                { id: 12, name: "STARSHIP", emoji: "⭐", price: 3000000000 },
+                { id: 13, name: "ЛУННЫЙ МОДУЛЬ", emoji: "🌕", price: 10000000000 },
+                { id: 14, name: "МАРСОХОД", emoji: "🔴", price: 30000000000 },
+                { id: 15, name: "ЗВЕЗДА СМЕРТИ", emoji: "💀", price: 100000000000 },
+                { id: 16, name: "ТЫСЯЧЕЛЕТНИЙ СОКОЛ", emoji: "🛸", price: 300000000000 },
+                { id: 17, name: "ЭНТЕРПРАЙЗ", emoji: "🖖", price: 1000000000000 },
+                { id: 18, name: "ТАРДИС", emoji: "📞", price: 3000000000000 },
+                { id: 19, name: "СВЕТОВОЙ КОРАБЛЬ", emoji: "✨", price: 10000000000000 }
             ],
             ships: [
                 { id: 0, name: "ЛОДКА", emoji: "🛶", price: 10000 },
-                { id: 1, name: "КАТЕР", emoji: "⛵", price: 50000 }
+                { id: 1, name: "КАТЕР", emoji: "⛵", price: 50000 },
+                { id: 2, name: "ЯХТА", emoji: "🛥️", price: 200000 },
+                { id: 3, name: "ПАРУСНИК", emoji: "⛵", price: 500000 },
+                { id: 4, name: "ТЕПЛОХОД", emoji: "🚢", price: 1000000 },
+                { id: 5, name: "ЛАЙНЕР", emoji: "🛳️", price: 5000000 },
+                { id: 6, name: "ТАНКЕР", emoji: "⛽", price: 10000000 },
+                { id: 7, name: "КОНТЕЙНЕРОВОЗ", emoji: "📦", price: 20000000 },
+                { id: 8, name: "ЛЕДОКОЛ", emoji: "❄️", price: 50000000 },
+                { id: 9, name: "АВИАНОСЕЦ", emoji: "🛩️", price: 100000000 },
+                { id: 10, name: "ПОДВОДНАЯ ЛОДКА", emoji: "🐟", price: 200000000 },
+                { id: 11, name: "ТИТАНИК", emoji: "🧊", price: 500000000 },
+                { id: 12, name: "БИСМАРК", emoji: "⚔️", price: 1000000000 },
+                { id: 13, name: "ЯМАТО", emoji: "🗾", price: 2000000000 },
+                { id: 14, name: "МИССУРИ", emoji: "🇺🇸", price: 5000000000 },
+                { id: 15, name: "АДМИРАЛ КУЗНЕЦОВ", emoji: "🇷🇺", price: 10000000000 },
+                { id: 16, name: "ПИРАТСКИЙ КОРАБЛЬ", emoji: "🏴‍☠️", price: 20000000000 },
+                { id: 17, name: "ЛЕТУЧИЙ ГОЛЛАНДЕЦ", emoji: "👻", price: 50000000000 },
+                { id: 18, name: "КОВЧЕГ", emoji: "🌈", price: 100000000000 },
+                { id: 19, name: "ПОСЕЙДОН", emoji: "🌊", price: 200000000000 }
             ]
         };
 
@@ -2003,7 +2103,7 @@
             });
         }
 
-        // ИСПРАВЛЕННАЯ ФУНКЦИЯ ОПЛАТЫ НАЛОГА
+        // ИСПРАВЛЕННАЯ ФУНКЦИЯ ОПЛАТЫ НАЛОГА - налог СБРАСЫВАЕТСЯ и НАЧИНАЕТ КАПАТЬ ЗАНОВО
         function payTax(index) {
             const tax = gameState.taxes[index];
             if (!tax) return false;
@@ -2022,18 +2122,51 @@
             
             gameState.balance -= amountToPay;
             
-            // Правильный сброс налога после оплаты
-            tax.paid = true;
-            tax.accrued = 0;
-            tax.dueDate = Date.now() + TAX_PERIOD;
-            tax.lastUpdate = Date.now();
-            tax.overdue = false;
+            // СБРАСЫВАЕМ налог, но ОН ПРОДОЛЖАЕТ КАПАТЬ ДАЛЬШЕ
+            tax.paid = false; // <-- ВАЖНО: налог снова активен
+            tax.accrued = 0; // Обнуляем накопленное
+            tax.dueDate = Date.now() + TAX_PERIOD; // Новый период 72 часа
+            tax.lastUpdate = Date.now(); // Обновляем время
+            tax.overdue = false; // Снимаем просрочку
             
             saveGame();
             updateUI();
             renderTax();
             alert(`✅ Налог оплачен: ${formatMoney(amountToPay)}`);
             return true;
+        }
+
+        // НОВАЯ ФУНКЦИЯ: Оплатить все налоги за 100 алмазов
+        function payAllTaxesWithDiamonds() {
+            const unpaidTaxes = gameState.taxes.filter(t => !t.paid && t.accrued > 0);
+            if (unpaidTaxes.length === 0) {
+                alert('❌ НЕТ НАЛОГОВ ДЛЯ ОПЛАТЫ!');
+                return;
+            }
+            
+            if (gameState.diamonds < 100) {
+                alert('❌ НУЖНО 100 АЛМАЗОВ!');
+                return;
+            }
+            
+            const totalAmount = unpaidTaxes.reduce((sum, t) => sum + Math.floor(t.accrued), 0);
+            
+            if (confirm(`Оплатить ВСЕ налоги (${unpaidTaxes.length} шт) на сумму ${formatMoney(totalAmount)} за 100💎?`)) {
+                gameState.diamonds -= 100;
+                
+                unpaidTaxes.forEach(tax => {
+                    tax.paid = false;
+                    tax.accrued = 0;
+                    tax.dueDate = Date.now() + TAX_PERIOD;
+                    tax.lastUpdate = Date.now();
+                    tax.overdue = false;
+                });
+                
+                saveGame();
+                updateUI();
+                renderTax();
+                alert(`✅ Все налоги оплачены за 100💎! Сэкономлено: ${formatMoney(totalAmount)}`);
+            }
         }
 
         // Функция для оплаты всех налогов майнинга
@@ -2051,7 +2184,7 @@
             gameState.balance -= totalAmount;
             
             miningTaxes.forEach(tax => {
-                tax.paid = true;
+                tax.paid = false;
                 tax.accrued = 0;
                 tax.dueDate = Date.now() + TAX_PERIOD;
                 tax.lastUpdate = Date.now();
@@ -2085,7 +2218,7 @@
             return timeLeft;
         }
 
-        // ========== КРИПТО-МАЙНИНГ (ИСПРАВЛЕНО) ==========
+        // ========== КРИПТО-МАЙНИНГ ==========
         function buyMiningFarm() {
             if (gameState.miningFarms.length >= MAX_MINING_FARMS) {
                 alert(`❌ МАКСИМУМ ${MAX_MINING_FARMS} ФЕРМ!`);
@@ -2184,6 +2317,54 @@
             }
         }
 
+        // ========== БИЗНЕСЫ ==========
+        function buyBusiness(templateId) {
+            const t = businessTemplates.find(t => t.id === templateId);
+            if (!t) return;
+            
+            const totalBusinesses = gameState.myBusinesses ? gameState.myBusinesses.length : 0;
+            
+            if (totalBusinesses >= MAX_BUSINESSES) {
+                alert(`❌ НЕЛЬЗЯ КУПИТЬ БОЛЬШЕ ${MAX_BUSINESSES} БИЗНЕСОВ!`);
+                return;
+            }
+            
+            if ((gameState.balance || 0) < t.baseUpgradeCost) {
+                alert('❌ НЕДОСТАТОЧНО МОНЕТ!');
+                return;
+            }
+            
+            gameState.balance -= t.baseUpgradeCost;
+            
+            if (!gameState.myBusinesses) gameState.myBusinesses = [];
+            
+            const newBusiness = {
+                id: Date.now() + Math.random(),
+                templateId: templateId,
+                name: t.name,
+                level: 1,
+                income: t.baseIncome,
+                upgradeCost: Math.floor(t.baseUpgradeCost * t.costMultiplier),
+                upgradeTime: t.upgradeTime,
+                upgradeEnd: 0,
+                manager: null,
+                totalEarned: 0,
+                incomeMultiplier: t.incomeMultiplier,
+                costMultiplier: t.costMultiplier,
+                diamondsSpent: 0
+            };
+            
+            gameState.myBusinesses.push(newBusiness);
+            
+            addTaxItem('business', newBusiness.id, t.baseUpgradeCost);
+            
+            checkAchievements();
+            saveGame();
+            updateUI();
+            renderBusiness();
+            alert(`✅ ВЫ КУПИЛИ БИЗНЕС: ${t.name}\n\n💰 Стоимость: ${formatMoney(t.baseUpgradeCost)}\n📈 Доход: +${formatMoney(t.baseIncome * 60)}/мин`);
+        }
+
         // ========== РЕНДЕР НАЛОГОВ (ИСПРАВЛЕН) ==========
         function renderTax() {
             checkOverdueTaxes();
@@ -2208,6 +2389,10 @@
                         ⚠️ Просрочено: ${overdueCount} | ✅ Оплачено: ${paidCount} | 📊 Всего: ${gameState.taxes.length}
                     </div>
                 </div>
+                
+                <button class="card-btn" style="background:#7b1fa2; margin-bottom:16px;" onclick="payAllTaxesWithDiamonds()">
+                    💎 ОПЛАТИТЬ ВСЕ НАЛОГИ ЗА 100 АЛМАЗОВ
+                </button>
             `;
             
             if (gameState.taxes.length === 0) {
@@ -2251,7 +2436,7 @@
                 });
             }
             
-            // МАЙНИНГ ФЕРМЫ (каждая отдельно)
+            // МАЙНИНГ ФЕРМЫ
             const miningTaxes = gameState.taxes.filter(t => t.type === 'mining');
             if (miningTaxes.length > 0) {
                 html += '<h4 style="color:#ffd700; margin:16px 0 8px;">⛏️ МАЙНИНГ ФЕРМЫ</h4>';
@@ -2400,48 +2585,6 @@
 
         function payTaxByIndex(index) {
             payTax(index);
-        }
-
-        // ========== РЕНДЕР МАЙНИНГА ==========
-        function renderMining() {
-            let html = '<div class="section-title"><h3>⛏️ КРИПТО-МАЙНИНГ</h3></div>';
-            html += `<div style="text-align:center; margin:10px 0; color:#8e8e98;">📊 ФЕРМ: ${gameState.miningFarms?.length || 0}/${MAX_MINING_FARMS}</div>`;
-            
-            if (!gameState.miningFarms || gameState.miningFarms.length === 0) {
-                html += '<div style="text-align:center; padding:30px; color:#8e8e98;">У вас нет майнинг-ферм</div>';
-            } else {
-                gameState.miningFarms.forEach((farm, index) => {
-                    const taxItem = gameState.taxes?.find(t => t.type === 'mining' && t.id === farm.id);
-                    const isOverdue = taxItem && taxItem.overdue;
-                    
-                    html += `
-                        <div class="mining-farm">
-                            <div class="farm-header">
-                                <span class="farm-name">${farm.crypto.emoji} ${farm.crypto.name} ${isOverdue ? '🔴' : ''}</span>
-                                <span class="farm-level">УРОВЕНЬ ${farm.level}/${MAX_FARM_LEVEL}</span>
-                            </div>
-                            <div class="farm-income">💰 ДОХОД: ${isOverdue ? '🔴 ЗАБЛОКИРОВАН' : '+'+formatMoney(farm.crypto.basePrice * farm.level * 10 / 60)+'/мин'}</div>
-                            ${taxItem ? `
-                                <div style="font-size:12px; color:${isOverdue ? '#ff4444' : '#ff9800'}; margin:5px 0;">
-                                    Налог: ${formatMoney(Math.floor(taxItem.accrued))} / ${formatMoney(taxItem.totalAmount)}
-                                    ${isOverdue ? ' ⚠️ ПРОСРОЧЕН' : taxItem.paid ? ' ✅ ОПЛАЧЕН' : ''}
-                                </div>
-                            ` : ''}
-                            ${isOverdue ? '<div style="color:#ff4444; font-size:12px; margin:5px 0;">⛔ ФЕРМА НЕ РАБОТАЕТ (ОПЛАТИТЕ НАЛОГ)</div>' : ''}
-                            <div class="farm-actions">
-                                <button class="farm-btn" onclick="upgradeMiningFarm(${index})" ${isOverdue ? 'disabled style="opacity:0.5;"' : ''}>📈 Улучшить (${formatMoney(2000000000 * farm.level)})</button>
-                                <button class="farm-btn" style="background:#ff4444;" onclick="sellMiningFarm(${index})">💰 Продать</button>
-                            </div>
-                        </div>
-                    `;
-                });
-            }
-            
-            if (gameState.miningFarms.length < MAX_MINING_FARMS) {
-                html += '<button class="card-btn" style="margin-top:16px;" onclick="buyMiningFarm()">+ КУПИТЬ ФЕРМУ (1.000.000.000💰)</button>';
-            }
-            
-            document.getElementById('content').innerHTML = html;
         }
 
         // ========== РЕНДЕР ЗАРАБОТКА ==========
@@ -2646,7 +2789,7 @@
                             ${taxItem ? `
                                 <div style="font-size:12px; color:${isOverdue ? '#ff4444' : '#ff9800'}; margin:5px 0;">
                                     Налог: ${formatMoney(Math.floor(taxItem.accrued))} / ${formatMoney(taxItem.totalAmount)}
-                                    ${isOverdue ? ' ⚠️ ПРОСРОЧЕН' : taxItem.paid ? ' ✅ ОПЛАЧЕН' : ''}
+                                    ${isOverdue ? ' ⚠️ ПРОСРОЧЕН' : ''}
                                 </div>
                             ` : ''}
                             ${b.manager ? `
@@ -2702,53 +2845,6 @@
             
             modalContent.innerHTML = html;
             modal.classList.add('active');
-        }
-
-        function buyBusiness(templateId) {
-            const t = businessTemplates.find(t => t.id === templateId);
-            if (!t) return;
-            
-            const totalBusinesses = gameState.myBusinesses ? gameState.myBusinesses.length : 0;
-            
-            if (totalBusinesses >= MAX_BUSINESSES) {
-                alert(`❌ НЕЛЬЗЯ КУПИТЬ БОЛЬШЕ ${MAX_BUSINESSES} БИЗНЕСОВ!`);
-                return;
-            }
-            
-            if ((gameState.balance || 0) < t.baseUpgradeCost) {
-                alert('❌ НЕДОСТАТОЧНО МОНЕТ!');
-                return;
-            }
-            
-            gameState.balance -= t.baseUpgradeCost;
-            
-            if (!gameState.myBusinesses) gameState.myBusinesses = [];
-            
-            const newBusiness = {
-                id: Date.now() + Math.random(),
-                templateId: templateId,
-                name: t.name,
-                level: 1,
-                income: t.baseIncome,
-                upgradeCost: Math.floor(t.baseUpgradeCost * t.costMultiplier),
-                upgradeTime: t.upgradeTime,
-                upgradeEnd: 0,
-                manager: null,
-                totalEarned: 0,
-                incomeMultiplier: t.incomeMultiplier,
-                costMultiplier: t.costMultiplier,
-                diamondsSpent: 0
-            };
-            
-            gameState.myBusinesses.push(newBusiness);
-            
-            addTaxItem('business', newBusiness.id, t.baseUpgradeCost);
-            
-            checkAchievements();
-            saveGame();
-            updateUI();
-            renderBusiness();
-            alert(`✅ ВЫ КУПИЛИ БИЗНЕС: ${t.name}\n\n💰 Стоимость: ${formatMoney(t.baseUpgradeCost)}\n📈 Доход: +${formatMoney(t.baseIncome * 60)}/мин`);
         }
 
         function openBusinessModal(index) {
@@ -2809,7 +2905,7 @@
                             <span>Налог накоплен</span>
                             <span style="color:${isOverdue ? '#ff4444' : '#ff9800'};">
                                 ${formatMoney(Math.floor(taxItem.accrued))} / ${formatMoney(taxItem.totalAmount)}
-                                ${isOverdue ? ' ⚠️ ПРОСРОЧЕН' : taxItem.paid ? ' ✅ ОПЛАЧЕН' : ''}
+                                ${isOverdue ? ' ⚠️ ПРОСРОЧЕН' : ''}
                             </span>
                         </div>
                     ` : ''}
@@ -3003,6 +3099,48 @@
             alert('✅ БИЗНЕС ПРОПУСК УЛУЧШЕН! Все улучшения бизнесов теперь дают +50% к прибыли');
         }
 
+        // ========== РЕНДЕР МАЙНИНГА ==========
+        function renderMining() {
+            let html = '<div class="section-title"><h3>⛏️ КРИПТО-МАЙНИНГ</h3></div>';
+            html += `<div style="text-align:center; margin:10px 0; color:#8e8e98;">📊 ФЕРМ: ${gameState.miningFarms?.length || 0}/${MAX_MINING_FARMS}</div>`;
+            
+            if (!gameState.miningFarms || gameState.miningFarms.length === 0) {
+                html += '<div style="text-align:center; padding:30px; color:#8e8e98;">У вас нет майнинг-ферм</div>';
+            } else {
+                gameState.miningFarms.forEach((farm, index) => {
+                    const taxItem = gameState.taxes?.find(t => t.type === 'mining' && t.id === farm.id);
+                    const isOverdue = taxItem && taxItem.overdue;
+                    
+                    html += `
+                        <div class="mining-farm">
+                            <div class="farm-header">
+                                <span class="farm-name">${farm.crypto.emoji} ${farm.crypto.name} ${isOverdue ? '🔴' : ''}</span>
+                                <span class="farm-level">УРОВЕНЬ ${farm.level}/${MAX_FARM_LEVEL}</span>
+                            </div>
+                            <div class="farm-income">💰 ДОХОД: ${isOverdue ? '🔴 ЗАБЛОКИРОВАН' : '+'+formatMoney(farm.crypto.basePrice * farm.level * 10 / 60)+'/мин'}</div>
+                            ${taxItem ? `
+                                <div style="font-size:12px; color:${isOverdue ? '#ff4444' : '#ff9800'}; margin:5px 0;">
+                                    Налог: ${formatMoney(Math.floor(taxItem.accrued))} / ${formatMoney(taxItem.totalAmount)}
+                                    ${isOverdue ? ' ⚠️ ПРОСРОЧЕН' : ''}
+                                </div>
+                            ` : ''}
+                            ${isOverdue ? '<div style="color:#ff4444; font-size:12px; margin:5px 0;">⛔ ФЕРМА НЕ РАБОТАЕТ (ОПЛАТИТЕ НАЛОГ)</div>' : ''}
+                            <div class="farm-actions">
+                                <button class="farm-btn" onclick="upgradeMiningFarm(${index})" ${isOverdue ? 'disabled style="opacity:0.5;"' : ''}>📈 Улучшить (${formatMoney(2000000000 * farm.level)})</button>
+                                <button class="farm-btn" style="background:#ff4444;" onclick="sellMiningFarm(${index})">💰 Продать</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            
+            if (gameState.miningFarms.length < MAX_MINING_FARMS) {
+                html += '<button class="card-btn" style="margin-top:16px;" onclick="buyMiningFarm()">+ КУПИТЬ ФЕРМУ (1.000.000.000💰)</button>';
+            }
+            
+            document.getElementById('content').innerHTML = html;
+        }
+
         // ========== РЕНДЕР ПРОФИЛЯ ==========
         function renderProfile() {
             const expNeeded = (gameState.level || 1) * 1500;
@@ -3124,13 +3262,41 @@
             `;
         }
 
-        // ========== РЕНДЕР ИНВЕСТИЦИЙ ==========
+        // ========== РЕНДЕР КРИПТЫ (ВСЕ 50 МОНЕТ) ==========
         function renderInvestments() {
             let totalPortfolio = calculateTotalCryptoPortfolio();
             let totalIncome = calculateTotalCryptoIncome();
             
             const ownedHouses = gameState.houses.filter(h => h.owned).length;
             const totalHouses = gameState.houses.length;
+            
+            let cryptoList = '';
+            
+            // ПОКАЗЫВАЕМ ВСЕ 50 КРИПТОВАЛЮТ
+            for (let i = 0; i < cryptoCurrencies.length; i++) {
+                const crypto = cryptoCurrencies[i];
+                const userCrypto = gameState.crypto.find(c => c.id === crypto.id);
+                const currentPrice = cryptoPrices[i] || crypto.basePrice;
+                const priceChange = ((currentPrice / crypto.basePrice) - 1) * 100;
+                
+                cryptoList += `
+                    <div class="crypto-item" onclick="openTradeModal(${crypto.id}, 'buy')">
+                        <div class="crypto-header">
+                            <span class="crypto-name">${crypto.emoji} ${crypto.name}</span>
+                            <span class="crypto-price">${formatMoney(currentPrice)}</span>
+                        </div>
+                        <div class="crypto-owned">У вас: ${formatFullNumber(userCrypto.owned)} шт</div>
+                        <div class="crypto-income">💰 Доход: +${formatMoney(crypto.incomePerCoin * userCrypto.owned)}/мин</div>
+                        <div style="font-size:11px; color:${priceChange >= 0 ? '#4caf50' : '#ff4444'}; margin-top:4px;">
+                            ${priceChange >= 0 ? '📈' : '📉'} ${priceChange.toFixed(2)}%
+                        </div>
+                        <div class="crypto-actions">
+                            <button class="crypto-btn" onclick="event.stopPropagation(); openTradeModal(${crypto.id}, 'buy')">📈 Купить</button>
+                            <button class="crypto-btn" onclick="event.stopPropagation(); openTradeModal(${crypto.id}, 'sell')">📉 Продать</button>
+                        </div>
+                    </div>
+                `;
+            }
             
             document.getElementById('content').innerHTML = `
                 <div class="houses-section" onclick="showAllHouses()">
@@ -3147,11 +3313,19 @@
                     <span class="portfolio-mini-label">📊 КРИПТОПОРТФЕЛЬ</span>
                     <span class="portfolio-mini-value">${formatMoney(totalPortfolio)}</span>
                 </div>
+                
+                <div class="section-title">
+                    <h3>🪙 ВСЕ КРИПТОВАЛЮТЫ (50)</h3>
+                </div>
+                
+                <div style="max-height: 400px; overflow-y: auto; padding-right: 5px;">
+                    ${cryptoList}
+                </div>
             `;
             
             if (!specialItem.owned) {
                 document.getElementById('content').innerHTML += `
-                    <div style="background:linear-gradient(135deg, rgba(255,215,0,0.1), rgba(255,0,255,0.1)); border:2px solid #ff00ff; border-radius:16px; padding:16px; margin-bottom:20px; text-align:center; cursor:pointer;" onclick="buySpecialItem()">
+                    <div style="background:linear-gradient(135deg, rgba(255,215,0,0.1), rgba(255,0,255,0.1)); border:2px solid #ff00ff; border-radius:16px; padding:16px; margin:20px 0; text-align:center; cursor:pointer;" onclick="buySpecialItem()">
                         <div style="font-size:48px; margin-bottom:8px;">❓</div>
                         <div style="font-size:20px; font-weight:bold; color:#ff00ff; margin-bottom:8px;">SUGURU COIN</div>
                         <div style="font-size:16px; color:#ffd700; margin-bottom:8px;">${formatMoney(specialItem.price)}</div>
@@ -3159,40 +3333,6 @@
                         <button class="card-btn">КУПИТЬ</button>
                     </div>
                 `;
-            } else {
-                document.getElementById('content').innerHTML += `
-                    <div style="background:linear-gradient(135deg, rgba(255,215,0,0.1), rgba(255,0,255,0.1)); border:2px solid #ff00ff; border-radius:16px; padding:16px; margin-bottom:20px; text-align:center;">
-                        <div style="font-size:48px; margin-bottom:8px;">💎</div>
-                        <div style="font-size:20px; font-weight:bold; color:#ff00ff; margin-bottom:8px;">SUGURU COIN</div>
-                        <div style="font-size:14px; color:#4caf50; margin-bottom:12px;">⏱️ +${formatMoney(specialItem.income)}/мин</div>
-                        <div style="color:#4caf50;">ВЛАДЕЮ</div>
-                    </div>
-                `;
-            }
-        }
-
-        function buySpecialItem() {
-            if (specialItem.owned) {
-                alert('❌ У вас уже есть Suguru Coin!');
-                return;
-            }
-            
-            if ((gameState.balance || 0) < specialItem.price) {
-                alert('❌ НЕДОСТАТОЧНО МОНЕТ!');
-                return;
-            }
-            
-            if (confirm(`Купить Suguru Coin за ${formatMoney(specialItem.price)}?\n\nДоход: +${formatMoney(specialItem.income)}/мин`)) {
-                gameState.balance -= specialItem.price;
-                specialItem.owned = true;
-                specialItem.revealed = true;
-                
-                saveGame();
-                updateUI();
-                renderInvestments();
-                alert('✅ ПОЗДРАВЛЯЮ!\n\nВы купили легендарный Suguru Coin!');
-                
-                document.getElementById('username').innerHTML += ' <span class="suguru-badge">💎</span>';
             }
         }
 
@@ -3280,6 +3420,215 @@
             
             modalContent.innerHTML = html;
             modal.classList.add('active');
+        }
+
+        function openTradeModal(cryptoId, type) {
+            const crypto = cryptoCurrencies.find(c => c.id === cryptoId);
+            const userCrypto = gameState.crypto.find(c => c.id === cryptoId);
+            const currentPrice = cryptoPrices[cryptoId] || crypto.basePrice;
+            
+            const modal = document.getElementById('modal');
+            const modalContent = document.getElementById('modalContent');
+            
+            const maxBuy = crypto.maxBuy - userCrypto.owned;
+            const maxSell = userCrypto.owned;
+            const maxBuyWithMoney = Math.floor(gameState.balance / currentPrice);
+            
+            let html = `
+                <div class="modal-title">${type === 'buy' ? '📈 КУПИТЬ' : '📉 ПРОДАТЬ'} ${crypto.emoji} ${crypto.name}</div>
+                
+                <div style="background:#0f1117; border-radius:16px; padding:16px; margin-bottom:16px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                        <span>Цена:</span>
+                        <span style="color:#ffd700;">${formatMoney(currentPrice)}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between;">
+                        <span>У вас:</span>
+                        <span style="color:#4caf50;">${formatFullNumber(userCrypto.owned)} шт</span>
+                    </div>
+                </div>
+            `;
+            
+            if (type === 'buy') {
+                html += `
+                    <div class="quick-amount-container">
+                        <div class="quick-amount-btn" onclick="setTradeAmount(1)">1</div>
+                        <div class="quick-amount-btn" onclick="setTradeAmount(10)">10</div>
+                        <div class="quick-amount-btn" onclick="setTradeAmount(100)">100</div>
+                        <div class="quick-amount-btn" onclick="setTradeAmount(1000)">1K</div>
+                        <div class="quick-amount-btn" onclick="setTradeAmount(10000)">10K</div>
+                        <div class="quick-amount-btn" onclick="setTradeAmount(${maxBuy})">МАКС</div>
+                    </div>
+                    
+                    <input type="number" id="tradeAmount" class="input-field" placeholder="Количество" min="1" max="${maxBuy}" value="1">
+                    
+                    <div style="display: flex; gap: 10px; margin: 15px 0;">
+                        <button class="crypto-btn" onclick="quickBuyMaxMoney(${cryptoId})">💰 На все деньги (${formatFullNumber(Math.min(maxBuy, maxBuyWithMoney))} шт)</button>
+                    </div>
+                    
+                    <div style="background:rgba(255,215,0,0.1); border-radius:16px; padding:12px; margin:16px 0; text-align:center;">
+                        <span>Стоимость: </span>
+                        <span id="totalPrice" style="color:#ffd700; font-weight:600;">${formatMoney(currentPrice)}</span>
+                    </div>
+                    
+                    <button class="card-btn" onclick="executeTrade(${cryptoId}, 'buy')">✅ КУПИТЬ</button>
+                `;
+            } else {
+                html += `
+                    <div class="quick-amount-container">
+                        <div class="quick-amount-btn" onclick="setTradeAmount(1)">1</div>
+                        <div class="quick-amount-btn" onclick="setTradeAmount(10)">10</div>
+                        <div class="quick-amount-btn" onclick="setTradeAmount(100)">100</div>
+                        <div class="quick-amount-btn" onclick="setTradeAmount(1000)">1K</div>
+                        <div class="quick-amount-btn" onclick="setTradeAmount(10000)">10K</div>
+                        <div class="quick-amount-btn" onclick="setTradeAmount(${maxSell})">ВСЁ</div>
+                    </div>
+                    
+                    <input type="number" id="tradeAmount" class="input-field" placeholder="Количество" min="1" max="${maxSell}" value="1">
+                    
+                    <div style="background:rgba(255,215,0,0.1); border-radius:16px; padding:12px; margin:16px 0; text-align:center;">
+                        <span>Получите: </span>
+                        <span id="totalPrice" style="color:#ffd700; font-weight:600;">${formatMoney(currentPrice)}</span>
+                    </div>
+                    
+                    <button class="card-btn" onclick="executeTrade(${cryptoId}, 'sell')">✅ ПРОДАТЬ</button>
+                    <button class="card-btn" style="margin-top:8px; background:#ff4444;" onclick="quickSellAll(${cryptoId})">💰 Продать всё</button>
+                `;
+            }
+            
+            html += '<div class="close-btn" onclick="closeModal(\'modal\')">ОТМЕНА</div>';
+            
+            modalContent.innerHTML = html;
+            modal.classList.add('active');
+            
+            setTimeout(() => {
+                const input = document.getElementById('tradeAmount');
+                if (input) {
+                    input.addEventListener('input', function() {
+                        updateTotalPrice(cryptoId, currentPrice);
+                    });
+                }
+            }, 100);
+        }
+
+        function setTradeAmount(amount) {
+            const input = document.getElementById('tradeAmount');
+            if (input) {
+                input.value = amount;
+                input.dispatchEvent(new Event('input'));
+            }
+        }
+
+        function quickBuyMaxMoney(cryptoId) {
+            const crypto = cryptoCurrencies.find(c => c.id === cryptoId);
+            const userCrypto = gameState.crypto.find(c => c.id === cryptoId);
+            const currentPrice = cryptoPrices[cryptoId] || crypto.basePrice;
+            
+            const maxBuy = crypto.maxBuy - userCrypto.owned;
+            const maxWithMoney = Math.floor(gameState.balance / currentPrice);
+            const maxPossible = Math.min(maxBuy, maxWithMoney);
+            
+            const input = document.getElementById('tradeAmount');
+            if (input) {
+                input.value = maxPossible;
+                updateTotalPrice(cryptoId, currentPrice);
+            }
+        }
+
+        function quickSellAll(cryptoId) {
+            const crypto = cryptoCurrencies.find(c => c.id === cryptoId);
+            const userCrypto = gameState.crypto.find(c => c.id === cryptoId);
+            
+            const input = document.getElementById('tradeAmount');
+            if (input) {
+                input.value = userCrypto.owned;
+                updateTotalPrice(cryptoId, cryptoPrices[cryptoId] || crypto.basePrice);
+            }
+        }
+
+        function updateTotalPrice(cryptoId, currentPrice) {
+            const amount = parseInt(document.getElementById('tradeAmount')?.value) || 0;
+            const totalPriceEl = document.getElementById('totalPrice');
+            if (totalPriceEl) {
+                totalPriceEl.textContent = formatMoney(currentPrice * amount);
+            }
+        }
+
+        function executeTrade(cryptoId, type) {
+            const crypto = cryptoCurrencies.find(c => c.id === cryptoId);
+            const userCrypto = gameState.crypto.find(c => c.id === cryptoId);
+            const currentPrice = cryptoPrices[cryptoId] || crypto.basePrice;
+            const amount = parseInt(document.getElementById('tradeAmount')?.value);
+            
+            if (!amount || amount <= 0) {
+                alert('❌ Введите количество!');
+                return;
+            }
+            
+            if (type === 'buy') {
+                const maxBuy = crypto.maxBuy - userCrypto.owned;
+                if (amount > maxBuy) {
+                    alert(`❌ Можно купить только ${formatFullNumber(maxBuy)}!`);
+                    return;
+                }
+                
+                const totalPrice = currentPrice * amount;
+                if (gameState.balance < totalPrice) {
+                    alert('❌ НЕДОСТАТОЧНО МОНЕТ!');
+                    return;
+                }
+                
+                gameState.balance -= totalPrice;
+                userCrypto.owned += amount;
+                
+                const taxItem = gameState.taxes.find(t => t.type === 'crypto' && t.id === cryptoId);
+                if (taxItem) {
+                    taxItem.value += totalPrice;
+                    taxItem.totalAmount = Math.floor(taxItem.value * TAX_RATE);
+                    taxItem.hourlyRate = taxItem.totalAmount / 72;
+                    taxItem.paid = false;
+                    taxItem.accrued = 0;
+                    taxItem.dueDate = Date.now() + TAX_PERIOD;
+                } else {
+                    addTaxItem('crypto', cryptoId, totalPrice);
+                }
+                
+                saveGame();
+                updateUI();
+                closeModal('modal');
+                alert(`✅ Куплено ${amount} ${crypto.name} за ${formatMoney(totalPrice)}`);
+                
+            } else {
+                if (amount > userCrypto.owned) {
+                    alert(`❌ У вас только ${formatFullNumber(userCrypto.owned)}!`);
+                    return;
+                }
+                
+                const totalPrice = currentPrice * amount;
+                gameState.balance += totalPrice;
+                userCrypto.owned -= amount;
+                
+                if (userCrypto.owned === 0) {
+                    const taxIndex = gameState.taxes.findIndex(t => t.type === 'crypto' && t.id === cryptoId);
+                    if (taxIndex !== -1) gameState.taxes.splice(taxIndex, 1);
+                }
+                
+                saveGame();
+                updateUI();
+                closeModal('modal');
+                alert(`✅ Продано ${amount} ${crypto.name} за ${formatMoney(totalPrice)}`);
+            }
+        }
+
+        function updateCryptoPrices() {
+            cryptoPrices = cryptoPrices.map((price, i) => {
+                const crypto = cryptoCurrencies[i];
+                const change = (Math.random() - 0.5) * 2 * crypto.volatility;
+                let newPrice = price * (1 + change);
+                newPrice = Math.max(newPrice, crypto.basePrice * 0.1);
+                newPrice = Math.min(newPrice, crypto.basePrice * 10);
+                return Math.floor(newPrice);
+            });
         }
 
         // ========== РЕНДЕР КАЛЕНДАРЯ ==========
@@ -4543,6 +4892,31 @@
             
             modalContent.innerHTML = html;
             modal.classList.add('active');
+        }
+
+        function buySpecialItem() {
+            if (specialItem.owned) {
+                alert('❌ У вас уже есть Suguru Coin!');
+                return;
+            }
+            
+            if ((gameState.balance || 0) < specialItem.price) {
+                alert('❌ НЕДОСТАТОЧНО МОНЕТ!');
+                return;
+            }
+            
+            if (confirm(`Купить Suguru Coin за ${formatMoney(specialItem.price)}?\n\nДоход: +${formatMoney(specialItem.income)}/мин`)) {
+                gameState.balance -= specialItem.price;
+                specialItem.owned = true;
+                specialItem.revealed = true;
+                
+                saveGame();
+                updateUI();
+                renderInvestments();
+                alert('✅ ПОЗДРАВЛЯЮ!\n\nВы купили легендарный Suguru Coin!');
+                
+                document.getElementById('username').innerHTML += ' <span class="suguru-badge">💎</span>';
+            }
         }
 
         // ========== АДМИНКА ==========
