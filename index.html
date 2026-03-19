@@ -1,3 +1,6 @@
+📁 Файл: index.html (ПОЛНАЯ ПОСЛЕДНЯЯ ВЕРСИЯ СО ВСЕМИ ИСПРАВЛЕНИЯМИ)
+
+```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -4570,267 +4573,87 @@
                 }
             });
             
-           Modal();">Купить</button>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }
-            });
-            
-            html += '</div><div class=" '</div><div class="close-btn" onclick="closeHousesModal()">ЗАКРЫТЬ</div>';
-            
-            modalContent.innerHTML = html;
-            modal.classList.add(' html += '</div><div class="close-btn" onclick="closeHousesModal()">ЗАКРЫТЬ</div>';
-            
-            modalContent.innerHTML = html;
-            modal.classList.add('close-btn" onclick="closeHousesModal()">ЗАКРЫТЬ</div>';
+            html += '</div><div class="close-btn" onclick="closeHousesModal()">ЗАКРЫТЬ</div>';
             
             modalContent.innerHTML = html;
             modal.classList.add('active');
         }
 
-        functionactive');
-        }
-
         function openHouseModal(houseId) {
-            const house = gameState.houses.find(h => h.idactive');
-        }
-
-        function openHouseModal(houseId) {
-            const house = gameState.houses.find(h => h.id openHouseModal(houseId) {
             const house = gameState.houses.find(h => h.id === houseId);
             if (!house) return;
             
-            const taxItem = gameState.taxes?.find(t => t.type === 'house' && t.id === === houseId);
-            if (!house) return;
-            
-            const taxItem = gameState.taxes?.find(t => t.type === 'house' && t.id === house.id);
-            const isOverdue === houseId);
-            if (!house) return;
-            
             const taxItem = gameState.taxes?.find(t => t.type === 'house' && t.id === house.id);
             const isOverdue = taxItem && taxItem.overdue;
-            
-            const modal = document.getElementById('modal');
- house.id);
-            const isOverdue = taxItem && taxItem.overdue;
-            
-            const modal = document.getElementById('modal');
-            const modalContent = taxItem && taxItem.overdue;
             
             const modal = document.getElementById('modal');
             const modalContent = document.getElementById('modalContent');
             
             const totalUpgrades = Object.values(house.upgrades).reduce((a, b) => a + b, 0);
-                       const modalContent = document.getElementById('modalContent');
-            
-            const totalUpgrades = Object.values(house.upgrades).reduce((a, b) => a + b, 0);
-            const houseIncome = house.baseIncome * = document.getElementById('modalContent');
-            
-            const totalUpgrades = Object.values(house.upgrades).reduce((a, b) => a + b, 0);
-            const houseIncome = house.baseIncome * (1 + total const houseIncome = house.baseIncome * (1 + totalUpgrades);
-            
-            let html = `
-                <div class="modal-title (1 + totalUpgrades);
+            const houseIncome = house.baseIncome * (1 + totalUpgrades);
             
             let html = `
                 <div class="modal-title">${house.emoji} ${house.name} ${isOverdue ? '🔴' : ''}</div>
-                <div style="background:#Upgrades);
-            
-            let html = `
-                <div class="modal-title">${house.emoji} ${house.name} ${isOverdue ? '🔴' : ''}</div>
-                <div style="background:#0f1117">${house.emoji} ${house.name} ${isOverdue ? '🔴' : ''}</div>
                 <div style="background:#0f1117; border-radius:16px; padding:16px; margin-bottom:16px;">
-                    <div style="display:flex; justify-content:space-between; margin0f1117; border-radius:16px; padding:16px; margin-bottom:16px;">
-                    <div style="display:flex; justify-content:space-between;; border-radius:16px; padding:16px; margin-bottom:16px;">
                     <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
                         <span>Текущий доход</span>
-                        <span style="color:#4caf50;">+${formatMoney(is-bottom:8px;">
-                        <span>Текущий доход</span>
-                        <span style="color:#4caf50;">+${formatMoney(is margin-bottom:8px;">
-                        <span>Текущий доход</span>
-                        <span style="color:#4caf50;">+${formatMoneyOverdue ? 0 : houseIncome)}/мин</span>
-                    </div>
-                    <div style="display:flex; justify-content:space-between;">
-                       Overdue ? 0 : houseIncome)}/мин</span>
-                    </div>
-                    <div style="display:flex; justify-content:space-between;">
-                        <span>Доступно улучшений</span>
-                        <span style="color:#ffd700;">${MAX_HOUSE_UPGRADES - totalUp(isOverdue ? 0 : houseIncome)}/мин</span>
+                        <span style="color:#4caf50;">+${formatMoney(isOverdue ? 0 : houseIncome)}/мин</span>
                     </div>
                     <div style="display:flex; justify-content:space-between;">
                         <span>Доступно улучшений</span>
                         <span style="color:#ffd700;">${MAX_HOUSE_UPGRADES - totalUpgrades}</span>
- <span>Доступно улучшений</span>
-                        <span style="color:#ffd700;">${MAX_HOUSE_UPGRADES - totalUpgrades}</span>
                     </div>
-                    ${isOverdue ? '<div style="color:#ff4444; font-size:12px;grades}</span>
-                    </div>
-                    ${isOverdue ? '<div style="color:#ff4444; font-size:12                    </div>
-                    ${isOverdue ? '<div style="color:#ff4444; font-size:12 margin-top:8px;">⛔ ДОХОД ЗАБЛОКИРОВАН (ОПЛАТИТЕ НАЛОГ)</div>' : ''}
-                </divpx; margin-top:8px;">⛔ ДОХОД ЗАБЛОКИРОВАН (ОПЛАТИТЕ НАЛОГ)</div>' : ''}
-                </divpx; margin-top:8px;">⛔ ДОХОД ЗАБЛОКИРОВАН (ОПЛАТИТЕ НАЛОГ)</div>' : ''}
+                    ${isOverdue ? '<div style="color:#ff4444; font-size:12px; margin-top:8px;">⛔ ДОХОД ЗАБЛОКИРОВАН (ОПЛАТИТЕ НАЛОГ)</div>' : ''}
                 </div>
                 <div style="background:#0f1117; border-radius:16px; padding:16px;">
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
                         <div>
-                <div style="background:#0f1117; border-radius:16px; padding:16px;">
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-                        <div>
-                            <div>
-                <div style="background:#0f1117; border-radius:16px; padding:16px;">
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-                        <div>
-                            <div>
                             <div style="color:#8e8e98;">Интерьер</div>
-                            <div style="display:flex; justify-content:space-between;">
-                                <span>Ур. ${house.upgrades style="color:#8e8e98;">Интерьер</div>
-                            <div style="display:flex; justify-content:space-between;">
-                                <span>Ур. ${house.upgrades.interior style="color:#8e8e98;">Интерьер</div>
                             <div style="display:flex; justify-content:space-between;">
                                 <span>Ур. ${house.upgrades.interior}</span>
                                 ${totalUpgrades < MAX_HOUSE_UPGRADES && !isOverdue ? 
-                                    `<button class="card-btn" style="width:auto.interior}</span>
-                                ${totalUpgrades < MAX_HOUSE_UPGRADES && !isOverdue ? 
-                                    `<button class="card-btn" style="width}</span>
-                                ${totalUpgrades < MAX_HOUSE_UPGRADES && !isOverdue ? 
-                                    `<button class="card-btn" style="width:auto; background:#7b1fa2;" onclick="upgradeHouse(${house.id}, 'interior'); closeModal('modal');">+; background:#7b1fa2;" onclick="upgradeHouse(${house.id}, 'interior'); closeModal('modal');:auto; background:#7b1fa2;" onclick="upgradeHouse(${house.id}, 'interior'); closeModal('modal');">+ (${formatMoney(50000000 * Math.pow(2, house.upgrades.interior))})</button>` :
-                                    isOverdue ? '<span style="color:#ff4444;">Н (${formatMoney(50000000 * Math.pow(2, house.upgrades.interior))})</button>` :
-                                    isOverdue ? '<span style="color:#ff4444;">Н">+ (${formatMoney(50000000 * Math.pow(2, house.upgrades.interior))})</button>` :
+                                    `<button class="card-btn" style="width:auto; background:#7b1fa2;" onclick="upgradeHouse(${house.id}, 'interior'); closeModal('modal');">+ (${formatMoney(50000000 * Math.pow(2, house.upgrades.interior))})</button>` :
                                     isOverdue ? '<span style="color:#ff4444;">Налог</span>' : '<span style="color:#ff4444;">Макс</span>'
                                 }
-                            </divалог</span>' : '<span style="color:#ff4444;">Макс</span>'
-                                }
                             </div>
-                        </div>
-                        <div>
-                            <div style="color:#8e8e98;">Кухня</div>
-                            <div style="алог</span>' : '<span style="color:#ff4444;">Макс</span>'
-                                }
-                            </div>
-                        </div>
-                        <div>
-                            <div style="color:#8e8e98;">Кухня</div>
-                            <div style="display:flex; justify-content:space-between;">
-display:flex; justify-content:space-between;">
-                                <span>Ур. ${house.upgrades.kitchen}</span>
-                                ${total>
                         </div>
                         <div>
                             <div style="color:#8e8e98;">Кухня</div>
                             <div style="display:flex; justify-content:space-between;">
                                 <span>Ур. ${house.upgrades.kitchen}</span>
                                 ${totalUpgrades < MAX_HOUSE_UPGRADES && !isOverdue ? 
-                                    `<button class="card-btn" style="width:auto; background:#7                                <span>Ур. ${house.upgrades.kitchen}</span>
-                                ${totalUpgrades < MAXUpgrades < MAX_HOUSE_UPGRADES && !isOverdue ? 
-                                    `<button class="card-btn" style="width:auto; background:#7b1fa2;" onclick="upgradeHouse(${b1fa2;" onclick="upgradeHouse(${house.id}, 'kitchen'); closeModal('modal');">+ (${formatMoney(100000000 * Math_HOUSE_UPGRADES && !isOverdue ? 
                                     `<button class="card-btn" style="width:auto; background:#7b1fa2;" onclick="upgradeHouse(${house.id}, 'kitchen'); closeModal('modal');">+ (${formatMoney(100000000 * Math.pow(2, house.upgrades.kitchen))})</button>` :
-                                    isOverdue ? '<span style="color:#ff4444;">Нhouse.id}, 'kitchen'); closeModal('modal');">+ (${formatMoney(100000000 * Math.pow(2, house.upgrades.kitchen))})</button>` :
-                                    isOverdue ? '<span style="color:#ff4444;">Н.pow(2, house.upgrades.kitchen))})</button>` :
-                                    isOverdue ? '<span style="color:#ff4444;">Налог</span>' : '<span style="color:#ff444алог</span>' : '<span style="color:#ff4444;">Макс</span>'
+                                    isOverdue ? '<span style="color:#ff4444;">Налог</span>' : '<span style="color:#ff4444;">Макс</span>'
                                 }
                             </div>
                         </div>
                         <div>
-                            <divалог</span>' : '<span style="color:#ff4444;">Макс</span>'
-                                }
-                            </div>
-                        </div>
-                        <div>
-                            <div4;">Макс</span>'
-                                }
-                            </div>
-                        </div>
-                        <div>
-                            <div style=" style="color:#8e8e98;">Кровать</div>
-                            <div style="display:flex; justify-content:space-between;">
-                                <span>Ур. ${ style="color:#8e8e98;">Кровать</div>
-                            <div style="display:flex; justify-content:space-between;">
-                                <span>Ур. ${color:#8e8e98;">Кровать</div>
+                            <div style="color:#8e8e98;">Кровать</div>
                             <div style="display:flex; justify-content:space-between;">
                                 <span>Ур. ${house.upgrades.bed}</span>
                                 ${totalUpgrades < MAX_HOUSE_UPGRADES && !isOverdue ? 
-                                    `<button class="card-btn" style="width:auto; background:#7b1fa2;" onclickhouse.upgrades.bed}</span>
-                                ${totalUpgrades < MAX_HOUSE_UPGRADES && !isOverdue ? 
-                                    `<button class="card-btn" style="width:auto; background:#7b1fa2;"house.upgrades.bed}</span>
-                                ${totalUpgrades < MAX_HOUSE_UPGRADES && !isOverdue ? 
-                                    `<button class="card-btn" style="width:auto; background:#7b1fa2;" onclick="upgradeHouse(${house.id}, 'bed'); close="upgradeHouse(${house.id}, 'bed'); closeModal('modal');">+ (${formatMoney(150000000 * Math.pow(2, house.upgrades.bed))})</ onclick="upgradeHouse(${house.id}, 'bed'); closeModal('modal');">+ (${formatMoney(150000000 * Math.pow(2, house.upgrades.bed))})</Modal('modal');">+ (${formatMoney(150000000 * Math.pow(2, house.upgrades.bed))})</button>` :
-                                    isOverdue ? '<span style="color:#ff4444;">Налог</span>' : '<span style="color:#ffbutton>` :
-                                    isOverdue ? '<span style="color:#ff4444;">Налог</span>' : '<span style="color:#ff4444;">Макс</spanbutton>` :
-                                    isOverdue ? '<span style="color:#ff4444;">Налог</span>' : '<span style="color:#ff4444;">Макс</span4444;">Макс</span>'
-                                }
-                            </div>
-                        </div>
-                        <div>
-                            <div style="color:#8e8>'
-                                }
-                            </div>
-                        </div>
-                        <div>
-                            <div style="color:#8e8e98;">А>'
+                                    `<button class="card-btn" style="width:auto; background:#7b1fa2;" onclick="upgradeHouse(${house.id}, 'bed'); closeModal('modal');">+ (${formatMoney(150000000 * Math.pow(2, house.upgrades.bed))})</button>` :
+                                    isOverdue ? '<span style="color:#ff4444;">Налог</span>' : '<span style="color:#ff4444;">Макс</span>'
                                 }
                             </div>
                         </div>
                         <div>
                             <div style="color:#8e8e98;">Антенна</div>
                             <div style="display:flex; justify-content:space-between;">
-                                <span>Ур.e98;">Антенна</div>
-                            <div style="display:flex; justify-content:space-between;">
-                                <span>Ур. ${house.upgrades.antenna}</span>
-                                ${totalUpgrades < MAX_HOUSE_UPGRADнтенна</div>
-                            <div style="display:flex; justify-content:space-between;">
                                 <span>Ур. ${house.upgrades.antenna}</span>
                                 ${totalUpgrades < MAX_HOUSE_UPGRADES && !isOverdue ? 
-                                    `<button class="card-btn" style="width:auto; background:#7b1fa2;" onclick="upgradeHouse(${house.id}, ${house.upgrades.antenna}</span>
-                                ${totalUpgrades < MAX_HOUSE_UPGRADES && !isOverdue ? 
-                                    `<button class="card-btn" style="width:auto; background:#7b1fa2;" onclick="upgradeHouse(${house.id}, 'antenna'); closeModal('modal');">+ (${formatES && !isOverdue ? 
-                                    `<button class="card-btn" style="width:auto; background:#7b1fa2;" onclick="upgradeHouse(${house.id}, 'antenna'); closeModal('modal');">+ ( 'antenna'); closeModal('modal');">+ (${formatMoney(200000000 * Math.pow(2, house.upgrades.antenna))})</button>` :
-                                    isOverdue ? '<spanMoney(200000000 * Math.pow(2, house.upgrades.antenna))})</button>` :
-                                    isOverdue ?${formatMoney(200000000 * Math.pow(2, house.upgrades.antenna))})</button>` :
-                                    isOverdue ? '<span style="color:#ff4444;">Налог</span>' : '<span style="color:#ff4444;">Макс</span>'
-                                }
-                            </ style="color:#ff4444;">Налог</span>' : '<span style="color:#ff4444;">Макс</span>'
-                                }
-                            </div>
- '<span style="color:#ff4444;">Налог</span>' : '<span style="color:#ff4444;">Макс</span>'
-                                }
-                            </div>
-                        </div>
-                        <div>
-                            <div style="color:#8e8e98;">Телевизор</div>
-                           div>
-                        </div>
-                        <div>
-                            <div style="color:#8e8e98;">Телевизор</div>
-                        </div>
-                        <div>
-                            <div style="color:#8e8e98;">Телевизор</div>
-                            <div style="display:flex; justify-content:space-between;">
-                                <span>Ур. ${house.upgrades.tv}</span>
-                                ${totalUpgrades < MAX_H <div style="display:flex; justify-content:space-between;">
-                                <span>Ур. ${house.upgrades.tv}</span>
-                                ${totalUpgrades                            <div style="display:flex; justify-content:space-between;">
-                                <span>Ур. ${house.upgrades.tv}</span>
-                                ${totalUpgrades < MAX_HOUSE_UPGRADES && !isOverdue ? 
-                                    `<button class="card-btn" style="OUSE_UPGRADES && !isOverdue ? 
-                                    `<button class="card-btn" style="width:auto; < MAX_HOUSE_UPGRADES && !isOverdue ? 
-                                    `<button class="card-btn" style="width:auto; background:#7b1fa2;" onclick="upgradeHouse(${house.id}, 'tv'); closeModal('modal');">+ (${formatMoney(300000000 * Mathwidth:auto; background:#7b1fa2;" onclick="upgradeHouse(${house.id}, 'tv'); closeModal('modal');">+ (${formatMoney(300000000 * Math background:#7b1fa2;" onclick="upgradeHouse(${house.id}, 'tv'); closeModal('modal');">+ (${formatMoney(300000000 * Math.pow(2, house.upgrades.tv))})</button>` :
-                                    isOverdue ? '<span style="color:#ff4444;">Налог.pow(2, house.upgrades.tv))})</button>` :
-                                    isOverdue ? '<span style="color:#ff4444;">Н.pow(2, house.upgrades.tv))})</button>` :
+                                    `<button class="card-btn" style="width:auto; background:#7b1fa2;" onclick="upgradeHouse(${house.id}, 'antenna'); closeModal('modal');">+ (${formatMoney(200000000 * Math.pow(2, house.upgrades.antenna))})</button>` :
                                     isOverdue ? '<span style="color:#ff4444;">Налог</span>' : '<span style="color:#ff4444;">Макс</span>'
                                 }
                             </div>
                         </div>
-                    </div>
-                </div>
-                <</span>' : '<span style="color:#ff4444;">Макс</span>'
-                                }
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="алог</span>' : '<span style="color:#ff4444;">Макс</span>'
+                        <div>
+                            <div style="color:#8e8e98;">Телевизор</div>
+                            <div style="display:flex; justify-content:space-between;">
+                                <span>Ур. ${house.upgrades.tv}</span>
+                                ${totalUpgrades < MAX_HOUSE_UPGRADES && !isOverdue ? 
+                                    `<button class="card-btn" style="width:auto; background:#7b1fa2;" onclick="upgradeHouse(${house.id}, 'tv'); closeModal('modal');">+ (${formatMoney(300000000 * Math.pow(2, house.upgrades.tv))})</button>` :
+                                    isOverdue ? '<span style="color:#ff4444;">Налог</span>' : '<span style="color:#ff4444;">Макс</span>'
                                 }
                             </div>
                         </div>
@@ -4839,25 +4662,7 @@ display:flex; justify-content:space-between;">
                 <div class="close-btn" onclick="closeModal('modal')">ЗАКРЫТЬ</div>
             `;
             
-            modalContent.innerHTML =div class="close-btn" onclick="closeModal('modal')">ЗАКРЫТЬ</div>
-            `;
-            
-            modalContent.innerHTML =close-btn" onclick="closeModal('modal')">ЗАКРЫТЬ</div>
-            `;
-            
             modalContent.innerHTML = html;
-            modal.classList.add('active');
-        }
-
-        function sellHouse(houseId) {
-            const house = gameState.houses.find(h => h.id === houseId);
-            if (! html;
-            modal.classList.add('active');
-        }
-
-        function sellHouse(houseId) {
-            const house = gameState.houses.find(h => h.id === houseId);
-            html;
             modal.classList.add('active');
         }
 
@@ -4865,17 +4670,7 @@ display:flex; justify-content:space-between;">
             const house = gameState.houses.find(h => h.id === houseId);
             if (!house || !house.owned) return;
             
-            const taxItem = gameState.taxes?.find(t => t.type === 'house' &&house || !house.owned) return;
-            
-            const taxItem = gameState.taxes?.find(t => t.type === 'house' && t.id if (!house || !house.owned) return;
-            
-            const taxItem = gameState.taxes?.find(t => t.type === 'house' && t.id t.id === house.id);
-            const sellPrice = Math.floor(house.price * 0.5);
-            
-            if (confirm(`Продать дом ${house.name} за ${formatMoney(sellPrice)} === house.id);
-            const sellPrice = Math.floor(house.price * 0.5);
-            
-            if (confirm(`Продать дом ${house.name} за ${formatMoney(sellPrice)}?` === house.id);
+            const taxItem = gameState.taxes?.find(t => t.type === 'house' && t.id === house.id);
             const sellPrice = Math.floor(house.price * 0.5);
             
             if (confirm(`Продать дом ${house.name} за ${formatMoney(sellPrice)}?`)) {
@@ -4884,21 +4679,7 @@ display:flex; justify-content:space-between;">
                 gameState.balance += sellPrice;
                 
                 if (taxItem) {
-                    const taxIndex =?`)) {
-                house.owned = false;
-                house.upgrades = { interior: 0, kitchen: 0, bed: 0, antenna: 0, tv: 0 };
-                gameState.balance += sellPrice;
-                
-                if (taxItem) {
-                    const tax)) {
-                house.owned = false;
-                house.upgrades = { interior: 0, kitchen: 0, bed: 0, antenna: 0, tv: 0 };
-                gameState.balance += sellPrice;
-                
-                if (taxItem) {
                     const taxIndex = gameState.taxes.findIndex(t => t.type === 'house' && t.id === house.id);
-                    if (taxIndex !== -1) gameState.taxes.splice(taxIndex,Index = gameState.taxes.findIndex(t => t.type === 'house' && t.id === house.id);
-                    if (taxIndex !== -1) gameState.taxes.splice(taxIndex, gameState.taxes.findIndex(t => t.type === 'house' && t.id === house.id);
                     if (taxIndex !== -1) gameState.taxes.splice(taxIndex, 1);
                 }
                 
@@ -4906,76 +4687,22 @@ display:flex; justify-content:space-between;">
                 updateUI();
                 showAllHouses();
                 alert(`✅ Дом продан! +${formatMoney(sellPrice)}`);
- 1);
-                }
-                
-                saveGame();
-                updateUI();
-                showAllHouses();
-                alert(`✅ Дом продан! +${formatMoney(sellPrice)}`);
-            }
-        }
-
- 1);
-                }
-                
-                saveGame();
-                updateUI();
-                showAllHouses();
-                alert(`✅ Дом продан! +${formatMoney(sellPrice)}`);
             }
         }
 
         function upgradeHouse(houseId, upgradeType) {
-            const house = gameState.houses.find(h => h.id ===            }
-        }
-
-        function upgradeHouse(houseId, upgradeType) {
-            const house = gameState.houses.find(h => h.id ===        function upgradeHouse(houseId, upgradeType) {
             const house = gameState.houses.find(h => h.id === houseId);
             if (!house || !house.owned) return;
             
-            const taxItem = gameState.taxes?.find(t => t.type === 'house houseId);
-            if (!house || !house.owned) return;
-            
-            const taxItem = gameState.taxes?.find(t => t.type === 'house' && t.id === house.id);
-            if houseId);
-            if (!house || !house.owned) return;
-            
             const taxItem = gameState.taxes?.find(t => t.type === 'house' && t.id === house.id);
             if (taxItem && taxItem.overdue) {
-                alert('❌ СНАЧА' && t.id === house.id);
-            if (taxItem && taxItem.overdue) {
-                alert('❌ СНАЧА (taxItem && taxItem.overdue) {
                 alert('❌ СНАЧАЛА ОПЛАТИТЕ НАЛОГ!');
                 return;
             }
             
-            const totalUpgrades = Object.values(house.upgrades).reduce((a, b) => a +ЛА ОПЛАТИТЕ НАЛОГ!');
-                return;
-            }
-            
-            const totalUpgrades = Object.values(house.upgrades).reduce((a, b) => a + b, 0);
-           ЛА ОПЛАТИТЕ НАЛОГ!');
-                return;
-            }
-            
             const totalUpgrades = Object.values(house.upgrades).reduce((a, b) => a + b, 0);
             if (totalUpgrades >= MAX_HOUSE_UPGRADES) {
-                alert(`❌ МАКСИМУМ ${MAX b, 0);
-            if (totalUpgrades >= MAX_HOUSE_UPGRADES) {
-                alert(`❌ МАКСИМУМ if (totalUpgrades >= MAX_HOUSE_UPGRADES) {
                 alert(`❌ МАКСИМУМ ${MAX_HOUSE_UPGRADES} УЛУЧШЕНИЙ ДЛЯ ДОМА!`);
-                return;
-            }
-            
-            const costs = {
-                interior: 500000 ${MAX_HOUSE_UPGRADES} УЛУЧШЕНИЙ ДЛЯ ДОМА!`);
-                return;
-            }
-            
-            const costs = {
-                interior: 500000_HOUSE_UPGRADES} УЛУЧШЕНИЙ ДЛЯ ДОМА!`);
                 return;
             }
             
@@ -4983,23 +4710,7 @@ display:flex; justify-content:space-between;">
                 interior: 50000000 * Math.pow(2, house.upgrades.interior),
                 kitchen: 100000000 * Math.pow(2, house.upgrades.kitchen),
                 bed: 150000000 * Math.pow(2, house.upgrades.bed),
-                antenna: 20000000 * Math.pow(2, house.upgrades.interior),
-                kitchen: 100000000 * Math.pow(2, house.upgrades.kitchen),
-                bed: 150000000 * Math.pow(2, house.upgrades.bed),
-                antenna: 20000000 * Math.pow(2, house.upgrades.interior),
-                kitchen: 100000000 * Math.pow(2, house.upgrades.kitchen),
-                bed: 150000000 * Math.pow(2, house.upgrades.bed),
                 antenna: 200000000 * Math.pow(2, house.upgrades.antenna),
-                tv: 300000000 * Math.pow(2, house.upgrades.tv)
-            };
-            
-            const cost = costs[upgradeType];
-            if (000 * Math.pow(2, house.upgrades.antenna),
-                tv: 300000000 * Math.pow(2, house.upgrades.tv)
-            };
-            
-            const cost = costs[upgradeType];
-           000 * Math.pow(2, house.upgrades.antenna),
                 tv: 300000000 * Math.pow(2, house.upgrades.tv)
             };
             
@@ -5009,73 +4720,23 @@ display:flex; justify-content:space-between;">
                 return;
             }
             
-            gamegameState.balance < cost) {
-                alert('❌ НЕДОСТАТОЧНО МОНЕТ!');
-                return;
-            }
-            
             gameState.balance -= cost;
-            house.upgrades[upgradeType]++;
-            
-            const taxItem2 = gameState.taxes.find if (gameState.balance < cost) {
-                alert('❌ НЕДОСТАТОЧНО МОНЕТ!');
-                return;
-            }
-            
-            gameState.balance -= cost;
-            house.upgrades[upgradeType]++;
-            
-            const taxItem2 = gameState.taxes.find(t => t.type === 'house' && t.id === house.id);
-            if (taxItem2) {
-                taxItem2.value += cost;
-                taxItem(t => t.type === 'house' && t.id === house.id);
-            if (taxItem2) {
-                taxItem2.value += cost;
-                taxItem2.totalAmount =State.balance -= cost;
             house.upgrades[upgradeType]++;
             
             const taxItem2 = gameState.taxes.find(t => t.type === 'house' && t.id === house.id);
             if (taxItem2) {
                 taxItem2.value += cost;
                 taxItem2.totalAmount = Math.floor(taxItem2.value * TAX_RATE);
-                taxItem2.hourlyRate = taxItem2.totalAmount = Math.floor(taxItem2.value * TAX_RATE);
-                taxItem2.hourlyRate = taxItem Math.floor(taxItem2.value * TAX_RATE);
                 taxItem2.hourlyRate = taxItem2.totalAmount / 72;
                 taxItem2.paid = false;
                 taxItem2.accrued = 0;
                 taxItem2.dueDate = Date.now() + TAX_PERIOD;
-           2.totalAmount / 72;
-                taxItem2.paid = false;
-                taxItem2.accrued = 0;
-                taxItem2.dueDate = Date.now() + TAX_PERIOD2.totalAmount / 72;
-                taxItem2.paid = false;
-                taxItem2.accrued = 0;
-                taxItem2.dueDate = Date.now() + TAX_PERIOD;
-            }
-            
-            saveGame();
-            updateUI();
-            openHouseModal(houseId);
-            alert(`✅ Улучшение ${upgrade }
-            
-            saveGame();
-            updateUI();
-            openHouseModal(houseId);
-            alert(`✅ Улучшение ${upgradeType} дома;
             }
             
             saveGame();
             updateUI();
             openHouseModal(houseId);
             alert(`✅ Улучшение ${upgradeType} дома выполнено!`);
-        }
-
-        // ========== ПОКАЗ ВСЕХ ОСТРОВОВ ==========
-        function showAllIslandsType} дома выполнено!`);
-        }
-
-        // ========== ПОКАЗ ВСЕХ ОСТРОВОВ ==========
-        function showAllIslands выполнено!`);
         }
 
         // ========== ПОКАЗ ВСЕХ ОСТРОВОВ ==========
@@ -5087,86 +4748,24 @@ display:flex; justify-content:space-between;">
             html += '<div class="all-items-list">';
             
             gameState.islands.forEach(island => {
-               () {
-            const modal = document.getElementById('islandsModal');
-            const modalContent = document.getElementById('islandsModalContent');
-            
-            let html = '<div class="modal-title">🏝️ ВСЕ ОСТРОВА</div>';
-            html += '<div class="all-items-list">';
-            
-            gameState.islands.forEach(island =>() {
-            const modal = document.getElementById('islandsModal');
-            const modalContent = document.getElementById('islandsModalContent');
-            
-            let html = '<div class="modal-title">🏝️ ВСЕ ОСТРОВА</div>';
-            html += '<div class="all-items-list">';
-            
-            gameState.islands.forEach(island => {
-                const taxItem = gameState.taxes?.find(t => const taxItem = gameState.taxes?.find(t => t.type === 'island' && t.id === island.id);
-                const isOverdue = taxItem && taxItem.overdue;
- {
                 const taxItem = gameState.taxes?.find(t => t.type === 'island' && t.id === island.id);
-                const isOverdue = taxItem && taxItem.overdue t.type === 'island' && t.id === island.id);
                 const isOverdue = taxItem && taxItem.overdue;
-                
-                if (!island.owned) {
-                    html += `
-                        <div class="island-item">
-                            <div class="island-name">${island.emoji                
-                if (!island.owned) {
-                    html += `
-                        <div class="island-item">
-                            <div class="island-name">${island.emoji} ${;
                 
                 if (!island.owned) {
                     html += `
                         <div class="island-item">
                             <div class="island-name">${island.emoji} ${island.name}</div>
                             <div class="island-income">💰 +${formatMoney(island.income)}/мин</div>
-                           } ${island.name}</div>
-                            <div class="island-income">💰 +${formatMoney(island.income)}/мин</div>
-                            <div classisland.name}</div>
-                            <div class="island-income">💰 +${formatMoney(island.income)}/мин</div>
                             <div class="island-price">${formatMoney(island.price)}</div>
-                            <button class="card-btn" onclick="buyIsland(${island.id}); closeIslandsModal <div class="island-price">${formatMoney(island.price)}</div>
-                            <button class="card-btn" onclick="buyIsland(${island.id}); closeIslandsModal();">="island-price">${formatMoney(island.price)}</div>
-                            <button class="card-btn" onclick="buyIsland(${island.id}); closeIslandsModal();">();">Купить остров</button>
+                            <button class="card-btn" onclick="buyIsland(${island.id}); closeIslandsModal();">Купить остров</button>
                         </div>
                     `;
                 } else {
                     html += `
                         <div class="island-item">
-                            <div classКупить остров</button>
-                        </div>
-                    `;
-                } else {
-                    html += `
-                        <div class="island-item">
-                            <div class="isКупить остров</button>
-                        </div>
-                    `;
-                } else {
-                    html += `
-                        <div class="island-item">
-                            <div class="island-name="island-name">${island.emoji} ${island.name} ${isOverdue ? '🔴' : ''}</div>
-                            <div class="island-income">💰 Доland-name">${island.emoji} ${island.name} ${isOverdue ? '🔴' : ''}</div>
-                            <div class="island-income">💰 Доход: ${isOverdue ? 'ЗАБЛОКИРОВАН' : '+' + formatMoney(island.">${island.emoji} ${island.name} ${isOverdue ? '🔴' : ''}</div>
-                            <div class="island-income">💰 Доход: ${isOverdue ? 'Зход: ${isOverdue ? 'ЗАБЛОКИРОВАН' : '+' + formatMoney(island.income) + '/мин'}</div>
-                            ${isOverdue ? '<div style="color:#ff4444; font-size:12px; margin-top:5px;">⚠️ ТРЕБincome) + '/мин'}</div>
-                            ${isOverdue ? '<div style="color:#ff4444; font-size:12px; margin-top:5px;">⚠️ ТРЕБАБЛОКИРОВАН' : '+' + formatMoney(island.income) + '/мин'}</div>
+                            <div class="island-name">${island.emoji} ${island.name} ${isOverdue ? '🔴' : ''}</div>
+                            <div class="island-income">💰 Доход: ${isOverdue ? 'ЗАБЛОКИРОВАН' : '+' + formatMoney(island.income) + '/мин'}</div>
                             ${isOverdue ? '<div style="color:#ff4444; font-size:12px; margin-top:5px;">⚠️ ТРЕБУЕТСЯ ОПЛАТА НАЛОГА</div>' : ''}
-                        </div>
-                    `;
-                }
-            });
-            
-            html += '</div><div class="УЕТСЯ ОПЛАТА НАЛОГА</div>' : ''}
-                        </div>
-                    `;
-                }
-            });
-            
-            html += '</div><div class="УЕТСЯ ОПЛАТА НАЛОГА</div>' : ''}
                         </div>
                     `;
                 }
@@ -5178,52 +4777,12 @@ display:flex; justify-content:space-between;">
             modal.classList.add('active');
         }
 
-        function buyIsclose-btn" onclick="closeIslandsModal()">ЗАКРЫТЬ</div>';
-            
-            modalContent.innerHTML = html;
-            modal.classList.add('active');
-        }
-
-        function buyIsclose-btn" onclick="closeIslandsModal()">ЗАКРЫТЬ</div>';
-            
-            modalContent.innerHTML = html;
-            modal.classList.add('active');
-        }
-
         function buyIsland(islandId) {
             const island = gameState.islands.find(i => i.id === islandId);
             if (!island || island.owned) return;
             
             if (gameState.balance < island.price) {
-                alert('❌ НЕДОСТland(islandId) {
-            const island = gameState.islands.find(i => i.id === islandId);
-            if (!island || island.owned) return;
-            
-            if (gameState.balance < island.price) {
-                alert('❌ НЕДОСТland(islandId) {
-            const island = gameState.islands.find(i => i.id === islandId);
-            if (!island || island.owned) return;
-            
-            if (gameState.balance < island.price) {
-                alert('❌ НЕДОСТАТОАТОЧНО МОНЕТ!');
-                return;
-            }
-            
-            gameState.balance -= island.price;
-            island.owned = true;
-            
-            addTaxItem('island', island.id, island.price);
-            
-           АТОЧНО МОНЕТ!');
-                return;
-            }
-            
-            gameState.balance -= island.price;
-            island.owned = true;
-            
-            addTaxItem('island', island.id, island.price);
-            
-           ЧНО МОНЕТ!');
+                alert('❌ НЕДОСТАТОЧНО МОНЕТ!');
                 return;
             }
             
@@ -5239,59 +4798,15 @@ display:flex; justify-content:space-between;">
             alert(`✅ Куплен ${island.name}!`);
         }
 
-        // ========== А checkAchievements();
-            saveGame();
-            updateUI();
-            showAllIslands();
-            alert(`✅ Куплен ${island.name}!`);
-        }
-
-        // ========== АДМИ checkAchievements();
-            saveGame();
-            updateUI();
-            showAllIslands();
-            alert(`✅ Куплен ${island.name}!`);
-        }
-
         // ========== АДМИНКА ==========
         function showNicknameModal() {
             document.getElementById('nicknameInput').value = currentUser;
-ДМИНКА ==========
-        function showNicknameModal() {
-            document.getElementById('nicknameInput').value = currentНКА ==========
-        function showNicknameModal() {
-            document.getElementById('nicknameInput').value = currentUser;
-            document            document.getElementById('nicknameModal').classList.add('active');
-        }
-
-        function saveNickname() {
-            const newNick = document.getElementById('nicknameInput').value.trim();
-            if (!newNick) return;
-User;
             document.getElementById('nicknameModal').classList.add('active');
         }
 
         function saveNickname() {
             const newNick = document.getElementById('nicknameInput').value.trim();
-            if (!newNick).getElementById('nicknameModal').classList.add('active');
-        }
-
-        function saveNickname() {
-            const newNick = document.getElementById('nicknameInput').value.trim();
             if (!newNick) return;
-            
-            const oldUser = currentUser;
-            currentUser = newNick;
-            
-            if (ADMIN_SECRETS.includes(currentUser) && !ADMIN_SECRETS.includes(oldUser)) {
-                showAdminPasswordModal();
-            } else if (!ADMIN_SECRETS.includes(currentUser) &&            
-            const oldUser = currentUser;
-            currentUser = newNick;
-            
-            if (ADMIN_SECRETS.includes(currentUser) && !ADMIN_SECRETS.includes(oldUser)) {
-                showAdminPasswordModal();
-            } else if (!ADMIN_SECRETS.includes(currentUser return;
             
             const oldUser = currentUser;
             currentUser = newNick;
@@ -5302,65 +4817,19 @@ User;
                 disableAdminMode();
             }
             
-            updateUsername ADMIN_SECRETS.includes(oldUser)) {
-                disableAdminMode();
-            }
-            
             updateUsernameDisplay();
-            
-            saveGame();
-            closeNicknameModal();
-            
-            if (document.querySelector('.nav-item.active')?.innerText.includes('Профиль) && ADMIN_SECRETS.includes(oldUser)) {
-                disableAdminMode();
-            }
-            
-            updateUsernameDisplay();
-            
-            saveGame();
-            closeNicknameModal();
-            
-            if (document.querySelector('.nav-item.active')?.innerText.includes('ПрофильDisplay();
             
             saveGame();
             closeNicknameModal();
             
             if (document.querySelector('.nav-item.active')?.innerText.includes('Профиль')) {
                 renderProfile();
-')) {
-                renderProfile();
-            }
-        }
-
-        function updateUsernameDisplay() {
-            let usernameHtml = '👑 ' + currentUser + ' <span class="warning-badge')) {
-                renderProfile();
             }
         }
 
         function updateUsernameDisplay() {
             let usernameHtml = '👑 ' + currentUser + ' <span class="warning-badge">⚠️ ЛОКАЛЬНО</span>';
-            if (specialItem.owned            }
-        }
-
-        function updateUsernameDisplay() {
-            let usernameHtml = '👑 ' + currentUser + ' <span class="warning-badge">⚠️ ЛОКАЛЬНО</span>';
-            if (specialItem.owned">⚠️ ЛОКАЛЬНО</span>';
             if (specialItem.owned) {
-                usernameHtml += ' <span class="suguru-badge">💎</span>';
-            }
-            document.getElementById('username').innerHTML = usernameHtml;
-        }
-
-        function showAdminPasswordModal() {
-            document.getElementById('adminPasswordInput').value =) {
-                usernameHtml += ' <span class="suguru-badge">💎</span>';
-            }
-            document.getElementById('username').innerHTML = usernameHtml;
-        }
-
-        function showAdminPasswordModal() {
-            document.getElementById('adminPasswordInput').value =) {
                 usernameHtml += ' <span class="suguru-badge">💎</span>';
             }
             document.getElementById('username').innerHTML = usernameHtml;
@@ -5373,35 +4842,7 @@ User;
 
         function checkAdminPassword() {
             const password = document.getElementById('adminPasswordInput').value;
-            if (password === ADMIN_P '';
-            document.getElementById('adminPasswordModal').classList.add('active');
-        }
-
-        function checkAdminPassword() {
-            const password = document.getElementById('adminPasswordInput').value;
-            if (password === ADMIN_P '';
-            document.getElementById('adminPasswordModal').classList.add('active');
-        }
-
-        function checkAdminPassword() {
-            const password = document.getElementById('adminPasswordInput').value;
-            if (password ===ASSWORD) {
-                enableAdminMode();
-                closeAdminPasswordModal();
-            } else {
-                alert('❌ Неверный пароль!');
-            }
-        }
-
-        functionASSWORD) {
-                enableAdminMode();
-                closeAdminPasswordModal();
-            } else {
-                alert('❌ Неверный пароль!');
-            }
-        }
-
-        function enableAdmin ADMIN_PASSWORD) {
+            if (password === ADMIN_PASSWORD) {
                 enableAdminMode();
                 closeAdminPasswordModal();
             } else {
@@ -5414,70 +4855,21 @@ User;
             
             document.body.classList.add('admin-mode');
             document.querySelector('.app-container').classList.add('admin-app');
-            document.querySelector enableAdminMode() {
-            isAdmin = true;
-            
-            document.body.classList.add('admin-mode');
-            document.querySelector('.app-container').classList.add('admin-app');
-           Mode() {
-            isAdmin = true;
-            
-            document.body.classList.add('admin-mode');
-            document.querySelector('.app-container').classList.add('admin-app');
             document.querySelector('.header').classList.add('admin-header');
             document.getElementById('username').classList.add('admin-username');
             document.querySelector('.bottom-nav').classList.add('admin-nav');
             
-            gameState.balance = (gameState.balance || 0) + 100000000000('.header').classList.add('admin-header');
-            document.getElementById('username').classList.add('admin-username');
-            document.querySelector('.bottom-nav').classList.add('admin-nav');
-            
-            gameState.balance = (gameState.balance || 0) + 100000000000 document.querySelector('.header').classList.add('admin-header');
-            document.getElementById('username').classList.add('admin-username');
-            document.querySelector('.bottom-nav').classList.add('admin-nav');
-            
-            gameState.balance = (gameState.balance || 0) + 1000000;
-            gameState.diamonds = (gameState.diamonds || 0) + 10000;
-            gameState.exp = (gameState.exp || 0) + 1000000;
-            
-            const expNe0;
-            gameState.diamonds = (gameState.diamonds || 0) + 10000;
-            gameState.exp = (gameState.exp || 0) + 1000000;
-            
-            const0000000;
+            gameState.balance = (gameState.balance || 0) + 1000000000000;
             gameState.diamonds = (gameState.diamonds || 0) + 10000;
             gameState.exp = (gameState.exp || 0) + 1000000;
             
             const expNeeded = (gameState.level || 1) * 1500;
-            while (gameState.exp >= expNeeded && (gameState.level || 1) < MAX_PLAYeded = (gameState.level || 1) * 1500;
-            while (gameState.exp >= expNeeded && (gameState.level || 1) < MAX_PLAYER_LEVEL) expNeeded = (gameState.level || 1) * 1500;
             while (gameState.exp >= expNeeded && (gameState.level || 1) < MAX_PLAYER_LEVEL) {
                 gameState.exp -= expNeeded;
                 gameState.level = (gameState.level || 1) + 1;
             }
             
-            const flash = document.createElementER_LEVEL) {
-                gameState.exp -= expNeeded;
-                gameState.level = (gameState.level || 1) + 1;
-            }
-            
-            const flash = document.createElement('div {
-                gameState.exp -= expNeeded;
-                gameState.level = (gameState.level || 1) + 1;
-            }
-            
-            const flash = document.createElement('div('div');
-            flash.style.position = 'fixed';
-            flash.style.top = '0';
-            flash.style.left = '0';
-            flash.style.width = '100%';
-            flash.style.height = '');
-            flash.style.position = 'fixed';
-            flash.style.top = '0';
-            flash.style.left = '0';
-            flash.style.width = '100%';
-            flash.style.height = '100%';
-            flash.style');
+            const flash = document.createElement('div');
             flash.style.position = 'fixed';
             flash.style.top = '0';
             flash.style.left = '0';
@@ -5488,55 +4880,14 @@ User;
             flash.style.pointerEvents = 'none';
             document.body.appendChild(flash);
             setTimeout(() => flash.remove(), 1000);
-100%';
-            flash.style.background = 'rgba(255, 0, 0, 0.3)';
-            flash.style.zIndex = '9999.background = 'rgba(255, 0, 0, 0.3)';
-            flash.style.zIndex = '9999';
-            flash.style.pointerEvents = 'none';
-            document.body.appendChild(flash);
-            setTimeout(() => flash.remove(), 100            
-            alert('🔥 АДМИН РЕЖИМ АКТИВИРОВАН!\n\n💰 +1,000,000,000,000 монет\n💎 +10,000 алмазов\n⚡';
-            flash.style.pointerEvents = 'none';
-            document.body.appendChild(flash);
-            setTimeout(() => flash.remove(), 1000);
             
-            alert('🔥 АДМИН РЕЖИМ АКТ0);
-            
-            alert('🔥 АДМИН РЕЖИМ АКТИВИРОВАН!\n\n💰 +1,000,000,000,000 монет\n💎 +10,000 алмазов\n +1,000,000 опыта');
+            alert('🔥 АДМИН РЕЖИМ АКТИВИРОВАН!\n\n💰 +1,000,000,000,000 монет\n💎 +10,000 алмазов\n⚡ +1,000,000 опыта');
             
             updateUI();
             saveGame();
             
             const activeTab = document.querySelector('.nav-item.active')?.innerText || '';
-            if (activeИВИРОВАН!\n\n💰 +1,000,000,000,000 монет\n💎 +10,000 алмазов\n⚡ +1,000,000 опыта');
-            
-            updateUI();
-            saveGame();
-            
-            const activeTab = document.querySelector('.nav-item.active')?.innerText || '';
-            if (activeTab.includes('Про⚡ +1,000,000 опыта');
-            
-            updateUI();
-            saveGame();
-            
-            const activeTab = document.querySelector('.nav-item.active')?.innerText || '';
-            ifTab.includes('Профиль')) {
-                renderProfile();
-            } else if (activeTab.includes('Заработок')) {
-                renderEarn();
-            }
-        }
-
-        function disableAdminMode() {
-            isAdminфиль')) {
-                renderProfile();
-            } else if (activeTab.includes('Заработок')) {
-                renderEarn();
-            }
-        }
-
-        function disableAdminMode() {
-            isAdmin = false (activeTab.includes('Профиль')) {
+            if (activeTab.includes('Профиль')) {
                 renderProfile();
             } else if (activeTab.includes('Заработок')) {
                 renderEarn();
@@ -5550,25 +4901,6 @@ User;
             document.querySelector('.app-container').classList.remove('admin-app');
             document.querySelector('.header').classList.remove('admin-header');
             document.getElementById('username').classList.remove('admin-username');
-            document.querySelector('.bottom-nav').classList.remove = false;
-            
-            document.body.classList.remove('admin-mode');
-            document.querySelector('.app-container').classList.remove('admin-app');
-            document.querySelector('.header').classList.remove;
-            
-            document.body.classList.remove('admin-mode');
-            document.querySelector('.app-container').classList.remove('admin-app');
-            document.querySelector('.header').classList.remove('admin-header');
-            document.getElementById('username').classList.remove('admin-username');
-            document.querySelector('.bottom-nav').classList.remove('admin('admin-nav');
-            
-            saveGame();
-        }
-
-        // ========== НАВИГАЦИЯ ==========
-        function switchTab(tab) {
-            document.querySelectorAll('.nav-item').('admin-header');
-            document.getElementById('username').classList.remove('admin-username');
             document.querySelector('.bottom-nav').classList.remove('admin-nav');
             
             saveGame();
@@ -5580,127 +4912,37 @@ User;
             event.target.classList.add('active');
             
             if (tab === 'earn') renderEarn();
-            else if-nav');
-            
-            saveGame();
-        }
-
-        // ========== НАВИГАЦИЯ ==========
-        function switchTab(tab) {
-            document.querySelectorAll('.nav-item').forEach(elforEach(el => el.classList.remove('active'));
-            event.target.classList.add('active');
-            
-            if (tab === 'earn') renderEarn();
-            else if (tab === 'calendar') renderCalendar();
-            else if (tab === ' (tab === 'calendar') renderCalendar();
-            else if (tab === 'space') renderSpace();
-            => el.classList.remove('active'));
-            event.target.classList.add('active');
-            
-            if (tab === 'earn') renderEarn();
             else if (tab === 'calendar') renderCalendar();
             else if (tab === 'space') renderSpace();
             else if (tab === 'achievements') renderAchievements();
             else if (tab === 'investments') renderInvestments();
             else if (tab === 'business') renderBusiness();
             else if (tab === 'mining') renderMining();
-            else if (tab === 'space') renderSpace();
-            else if (tab === 'achievements') renderAchievements();
-            else if (tab === 'investments') renderInvestments();
-            else if (tab === 'business') renderBusiness();
-            else if (tab === 'mining') renderMining();
-            else if (tab === ' else if (tab === 'achievements') renderAchievements();
-            else if (tab === 'investments') renderInvestments();
-            else if (tab === 'business') renderBusiness();
-            else if (tab === 'mining') renderMining();
-            else if (tab === 'tax') renderTaxtax') renderTax();
             else if (tab === 'tax') renderTax();
-            else if (tab === 'items')();
             else if (tab === 'items') renderItems();
             else if (tab === 'profile') renderProfile();
         }
 
         function updateUI() {
             document.getElementById('balance').textContent = formatMoney(gameState.balance || 0);
-            document.getElementById('balanceChange').innerHTML = '+ ' + formatMoney(gameState.totalEarned ||items') renderItems();
-            else if (tab === 'profile') renderProfile();
-        }
-
-        function updateUI() {
-            document.getElementById('balance renderItems();
-            else if (tab === 'profile') renderProfile();
-        }
-
-        function updateUI() {
-            document.getElementById('balance').textContent = formatMoney(gameState.balance || 0);
-            document.getElementById('balanceChange').innerHTML = '+ ' + formatMoney(gameState.totalEarn 0) + ' за все время';
-            document.getElementById('clickPower').textContent = formatMoney(BASE_CLICK_POWER * (gameState.level || 1));
-        }
-
-').textContent = formatMoney(gameState.balance || 0);
             document.getElementById('balanceChange').innerHTML = '+ ' + formatMoney(gameState.totalEarned || 0) + ' за все время';
             document.getElementById('clickPower').textContent = formatMoney(BASE_CLICK_POWER * (gameState.level || 1));
         }
 
         function handleClick(event) {
             const earned = BASE_CLICK_POWER * (gameState.level || 1);
-            gameState.balance = (gameState.balance || 0)ed || 0) + ' за все время';
-            document.getElementById('clickPower').textContent = formatMoney(BASE_CLICK_POWER * (gameState.level || 1));
-        function handleClick(event) {
-            const earned = BASE_CLICK_POWER * (gameState.level || 1);
-            gameState.balance = (gameState.balance || 0) + earned;
-            gameState.totalC + earned;
-            gameState.totalClicks = (gameState.totalClicks || 0) + 1;
-            gameState.totalEarned = (gameState.totalEarn        }
-
-        function handleClick(event) {
-            const earned = BASE_CLICK_POWER * (gameState.level || 1);
             gameState.balance = (gameState.balance || 0) + earned;
             gameState.totalClicks = (gameState.totalClicks || 0) + 1;
             gameState.totalEarned = (gameState.totalEarned || 0) + earned;
             
             gameState.exp = (gameState.exp || 0) + earned / 100;
-            constlicks = (gameState.totalClicks || 0) + 1;
-            gameState.totalEarned = (gameState.totalEarned || 0) + earned;
-            
-            gameState.exp = (gameState.exp || 0) + earned / 100;
-            const expNeed || 0) + earned;
-            
-            gameState.exp = (gameState.exp || 0) + earned / 100;
-            const expNeeded = (gameState.level expNeeded = (gameState.level || 1) * 1500;
-            while (gameState.exp >= expNeeded && (gameState.level || 1) < MAX_PLAYER_LEVEL)eded = (gameState.level || 1) * 1500;
+            const expNeeded = (gameState.level || 1) * 1500;
             while (gameState.exp >= expNeeded && (gameState.level || 1) < MAX_PLAYER_LEVEL) {
-                || 1) * 1500;
-            while (gameState.exp >= expNeeded && (gameState.level || 1) < MAX_PLAYER_LEVEL) {
-                {
                 gameState.exp -= expNeeded;
                 gameState.level = (gameState.level || 1) + 1;
-                gameState.diamonds = (gameState.diamonds || 0) +  gameState.exp -= expNeeded;
-                gameState.level = (gameState.level || 1) + 1;
-                gameState.diamonds = (gameState.diamonds || 0) + 5;
-            }
- gameState.exp -= expNeeded;
-                gameState.level = (gameState.level || 1) + 1;
                 gameState.diamonds = (gameState.diamonds || 0) + 5;
             }
             
-            if (gameState.battlePass && gameState.battlePass.level < 200) {
-                gameState.battlePass.exp += 100;
-                checkBattlePassLevel();
-            }
-            
-            playClickSound();
-            if (settings.effectsEnabled && event) {
-5;
-            }
-            
-            if (gameState.battlePass && gameState.battlePass.level < 200) {
-                gameState.battlePass.exp += 100;
-                checkBattlePassLevel();
-            }
-            
-            playClickSound();
-            if (settings.effectsEnabled && event)            
             if (gameState.battlePass && gameState.battlePass.level < 200) {
                 gameState.battlePass.exp += 100;
                 checkBattlePassLevel();
@@ -5712,26 +4954,7 @@ User;
             }
             
             checkAchievements();
-            {
-                createFloatingEffect(event.clientX || 200, event.clientY || 200, `+${formatNumber(earned)}💰`);
-            }
-            
-            checkAchievements();
-            updateUI                createFloatingEffect(event.clientX || 200, event.clientY || 200, `+${formatNumber(earned)}💰`);
-            }
-            
-            checkAchievements();
-            updateUI updateUI();
-            saveGame();
-            
-            const activeTab = document.querySelector('.nav-item.active')?.innerText || '';
-            if (activeTab.includes('Заработок')) {
-                render();
-            saveGame();
-            
-            const activeTab = document.querySelector('.nav-item.active')?.innerText || '';
-            if (activeTab.includes('Заработок')) {
-                render();
+            updateUI();
             saveGame();
             
             const activeTab = document.querySelector('.nav-item.active')?.innerText || '';
@@ -5745,29 +4968,6 @@ User;
             try {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 const oscillator = audioCtx.createOscillator();
-                const gainNode = audioCtx.createEarn();
-            }
-        }
-
-        function playClickSound() {
-            if (!settings.soundEnabled) return;
-            try {
-                const audioCtx = newEarn();
-            }
-        }
-
-        function playClickSound() {
-            if (!settings.soundEnabled) return;
-            try {
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const oscillator = audioCtx.createOscillator();
-                const gainNode = audioCtx.createGain();
-                
-                oscillator.type = 'sine';
-                oscillator.frequency.value = 523.25;
-                gainNode.gain.value = 0.1;
-                gainNode.gain.exponentialRamp (window.AudioContext || window.webkitAudioContext)();
-                const oscillator = audioCtx.createOscillator();
                 const gainNode = audioCtx.createGain();
                 
                 oscillator.type = 'sine';
@@ -5775,32 +4975,9 @@ User;
                 gainNode.gain.value = 0.1;
                 gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
                 oscillator.connect(gainNode);
-                gainNode.connect(audioCtx.dGain();
-                
-                oscillator.type = 'sine';
-                oscillator.frequency.value = 523.25;
-                gainNode.gain.value = 0.1;
-                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
-                oscillator.connect(gainNode);
                 gainNode.connect(audioCtx.destination);
-                oscillator.start();
-                oscillatorToValueAtTime(0.001, audioCtx.currentTime + 0.05);
-                oscillator.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-                oscillator.start();
-                oscillator.stop(aestination);
                 oscillator.start();
                 oscillator.stop(audioCtx.currentTime + 0.05);
-            } catch(e) {}
-        }
-
-        function createFloatingEffect(x, y, text) {
-            const el = document.createElement('.stop(audioCtx.currentTime + 0.05);
-            } catch(e) {}
-        }
-
-        function createFloatingEffect(x, y, text) {
-            const el = document.createElement('udioCtx.currentTime + 0.05);
             } catch(e) {}
         }
 
@@ -5809,45 +4986,13 @@ User;
             el.className = 'floating-effect';
             el.textContent = text;
             el.style.left = x + 'px';
-            el.stylediv');
-            el.className = 'floating-effect';
-            el.textContent = text;
-            el.style.left = x + 'px';
-            el.stylediv');
-            el.className = 'floating-effect';
-            el.textContent = text;
-            el.style.left = x + 'px';
             el.style.top = y + 'px';
-           .top = y + 'px';
-            document.body.appendChild(el);
-            setTimeout(() => el.remove(), 800);
-        }
-
-        function closeModal(id) {
-            document.getElementById(id).classList.remove.top = y + 'px';
             document.body.appendChild(el);
             setTimeout(() => el.remove(), 800);
         }
 
         function closeModal(id) {
             document.getElementById(id).classList.remove('active');
-        document.body.appendChild(el);
-            setTimeout(() => el.remove(), 800);
-        }
-
-        function closeModal(id) {
-            document.getElementById(id).classList.remove('active');
-        }
-
-        function closeNicknameModal() {
-            closeModal('nicknameModal');
-        }
-
-        function closeAdminPasswordModal() {
-            closeModal('adminPasswordModal');
-        }
-
-        function close('active');
         }
 
         function closeNicknameModal() {
@@ -5864,43 +5009,7 @@ User;
 
         function closeTopModal() {
             closeModal('topModal');
- }
-
-        function closeNicknameModal() {
-            closeModal('nicknameModal');
         }
-
-        function closeAdminPasswordModal() {
-            closeModal('adminPasswordModal');
-        }
-
-        function closeHousesModal() {
-            closeModal('housesModal');
-        }
-
-        function closeTopModal() {
-            closeModal('topModal');
-        }
-
-        function closeIslandsModal() {
-            closeModal('islandsModal');
-        }
-
-        function toggleSound() {
-            settings.soundEnabled = !settingsHousesModal() {
-            closeModal('housesModal');
-        }
-
-        function closeTopModal() {
-            closeModal('topModal');
-        }
-
-        function closeIslandsModal() {
-            closeModal('islandsModal');
-        }
-
-        function toggleSound() {
-            settings.soundEnabled =        }
 
         function closeIslandsModal() {
             closeModal('islandsModal');
@@ -5909,27 +5018,7 @@ User;
         function toggleSound() {
             settings.soundEnabled = !settings.soundEnabled;
             saveGame();
-.soundEnabled;
-            saveGame();
         }
-
-        function toggleEffects() {
-            settings.effectsEnabled = !settings.effectsEnabled;
-            saveGame();
-        }
-
-        function resetGame() {
-            if (confirm !settings.soundEnabled;
-            saveGame();
-        }
-
-        function toggleEffects() {
-            settings.effectsEnabled = !settings.effectsEnabled;
-            saveGame();
-        }
-
-        function resetGame() {
-            if (confirm        }
 
         function toggleEffects() {
             settings.effectsEnabled = !settings.effectsEnabled;
@@ -5938,8 +5027,6 @@ User;
 
         function resetGame() {
             if (confirm('ТОЧНО СБРОСИТЬ ВЕСЬ ПРОГРЕСС? Это действие необратимо!')) {
-                localStorage.removeItem('imperiaClickerSave_' +('ТОЧНО СБРОСИТЬ ВЕСЬ ПРОГРЕСС? Это действие необратимо!')) {
-                localStorage.removeItem('imperiaClickerSave('ТОЧНО СБРОСИТЬ ВЕСЬ ПРОГРЕСС? Это действие необратимо!')) {
                 localStorage.removeItem('imperiaClickerSave_' + currentUserId);
                 localStorage.removeItem('deviceId');
                 location.reload();
@@ -5947,40 +5034,8 @@ User;
         }
 
         // ========== ИНТЕРВАЛЫ ==========
-        setInterval(() => currentUserId);
-                localStorage.removeItem('deviceId');
-                location.reload();
-            }
-        }
-
-        // ========== ИНТЕРВАЛЫ ==========
-        setInterval(() => {
-            if (!_' + currentUserId);
-                localStorage.removeItem('deviceId');
-                location.reload();
-            }
-        }
-
-        // ========== ИНТЕРВАЛЫ ==========
         setInterval(() => {
             if (!gameState) return;
-            
-            let income = 0;
-            
-            if (gameState.autoClickerLevel > 0) {
-                income += gameState.autoClickerLevel;
-            }
-            
-            {
-            if (!gameState) return;
-            
-            let income = 0;
-            
-            if (gameState.autoClickerLevel > 0) {
-                income += gameState.autoClickerLevel;
-            }
-            
-           gameState) return;
             
             let income = 0;
             
@@ -5990,44 +5045,14 @@ User;
             
             if (gameState.myBusinesses && gameState.myBusinesses.length > 0) {
                 gameState.myBusinesses.forEach(b => {
-                    const tax if (gameState.myBusinesses && gameState.myBusinesses.length > 0) {
-                gameState.myBusinesses.forEach(b => {
-                    const taxItem = gameState.taxes?.find if (gameState.myBusinesses && gameState.myBusinesses.length > 0) {
-                gameState.myBusinesses.forEach(b => {
-                    const taxItem = gameState.taxes?.findItem = gameState.taxes?.find(t => t.type === 'business' && t.id === b.id);
-                    if ((!taxItem || !taxItem.paid) && !taxItem?.over(t => t.type === 'business' && t.id === b.id);
-                    if ((!taxItem || !taxItem.paid) && !taxItem?.overdue) {
-                        let inc = b.income || 0;
-                        if (b.manager) inc *= (1 + b.manager.level * 0.1);
-                        if(t => t.type === 'business' && t.id === b.id);
+                    const taxItem = gameState.taxes?.find(t => t.type === 'business' && t.id === b.id);
                     if ((!taxItem || !taxItem.paid) && !taxItem?.overdue) {
                         let inc = b.income || 0;
                         if (b.manager) inc *= (1 + b.manager.level * 0.1);
                         if (gameState.businessPassUpgraded) inc *= 1.5;
                         income += inc;
-                        b.totalEarned = (b.totalEarndue) {
-                        let inc = b.income || 0;
-                        if (b.manager) inc *= (1 + b.manager.level * 0.1);
-                        if (gameState.businessPassUpgraded) inc *= 1.5;
-                        income += inc;
                         b.totalEarned = (b.totalEarned || 0) + inc;
- (gameState.businessPassUpgraded) inc *= 1.5;
-                        income += inc;
-                        b.totalEarned = (b.totalEarned || 0) + inc;
-ed || 0) + inc;
                     }
-                });
-            }
-            
-            if (gameState.crypto && cryptoPrices) {
-                gameState.crypto.forEach(c => {
-                    const taxItem = gameState.taxes?.                    }
-                });
-            }
-            
-            if (gameState.crypto && cryptoPrices) {
-                gameState.crypto.forEach(c => {
-                    const taxItem = gameState.taxes?.find(t => t.type ===                    }
                 });
             }
             
@@ -6035,45 +5060,17 @@ ed || 0) + inc;
                 gameState.crypto.forEach(c => {
                     const taxItem = gameState.taxes?.find(t => t.type === 'crypto' && t.id === c.id);
                     if ((!taxItem || !taxItem.paid) && c.owned > 0 && !taxItem?.overdue) {
-                        const cryptoDatafind(t => t.type === 'crypto' && t.id === c.id);
-                    if ((!taxItem || !taxItem.paid) && c.owned > 0 && !taxItem?.overdue) {
-                        const 'crypto' && t.id === c.id);
-                    if ((!taxItem || !taxItem.paid) && c.owned > 0 && !taxItem?.overdue) {
-                        const cryptoData = crypto = cryptoCurrencies.find(cr => cr.id === c.id);
+                        const cryptoData = cryptoCurrencies.find(cr => cr.id === c.id);
                         if (cryptoData) {
                             income += cryptoData.incomePerCoin * c.owned;
                         }
                     }
- cryptoData = cryptoCurrencies.find(cr => cr.id === c.id);
-                        if (cryptoData) {
-                            income += cryptoData.incomePerCoin * c.owned;
-                        }
-Currencies.find(cr => cr.id === c.id);
-                        if (cryptoData) {
-                            income += cryptoData.incomePerCoin * c.owned;
-                        }
-                    }
-                });
-            }
-            
-            if (gameState.miningFarms) {
-                gameState.miningFarms.forEach(farm => {
-                    const taxItem = gameState.taxes?.find(t => t.type === 'min                });
-            }
-            
-            if (gameState.miningFarms) {
-                gameState.miningFarms.forEach(farm => {
-                    const taxItem = gameState.taxes?.find(t => t.type ===                    }
                 });
             }
             
             if (gameState.miningFarms) {
                 gameState.miningFarms.forEach(farm => {
                     const taxItem = gameState.taxes?.find(t => t.type === 'mining' && t.id === farm.id);
-                    if ((!taxItem || !taxItem.paid) && !taxItem?.overdue) {
-                        income += farm.cing' && t.id === farm.id);
-                    if ((!taxItem || !taxItem.paid) && !taxItem?.overdue) {
-                        income += farm.crypto.basePrice * farm.level *  'mining' && t.id === farm.id);
                     if ((!taxItem || !taxItem.paid) && !taxItem?.overdue) {
                         income += farm.crypto.basePrice * farm.level * 10 / 60;
                     }
@@ -6083,39 +5080,9 @@ Currencies.find(cr => cr.id === c.id);
             if (gameState.houses) {
                 gameState.houses.forEach(h => {
                     if (h.owned) {
-                        constrypto.basePrice * farm.level * 10 / 60;
-                    }
-                });
-            }
-            
-            if (gameState.houses) {
-                gameState.houses.forEach(h => {
-                    if (h.owned) {
-                        const10 / 60;
-                    }
-                });
-            }
-            
-            if (gameState.houses) {
-                gameState.houses.forEach(h => {
-                    if (h.owned) {
-                        const taxItem = game taxItem = gameState.taxes?.find(t => t.type === 'house' && t.id === h.id);
+                        const taxItem = gameState.taxes?.find(t => t.type === 'house' && t.id === h.id);
                         if ((!taxItem || !taxItem.paid) && !taxItem?.overdue) {
-                            let taxItem = gameState.taxes?.find(t => t.type === 'house' && t.id === h.id);
-                        if ((!taxItem || !taxItem.paid) && !taxItem?.overdue) {
-                            let houseIncomeState.taxes?.find(t => t.type === 'house' && t.id === h.id);
-                        if ((!taxItem || !taxItem.paid) && !taxItem?.overdue) {
-                            let houseIncome = h houseIncome = h.baseIncome;
-                            const upgradeCount = Object.values(h.upgrades).reduce((a, b) => a + b, 0);
-                            houseIncome *= (1 + upgradeCount);
-                            income += houseIncome;
-                        }
- = h.baseIncome;
-                            const upgradeCount = Object.values(h.upgrades).reduce((a, b) => a + b, 0);
-                            houseIncome *= (1 + upgradeCount);
-                            income += houseIncome;
-                        }
-.baseIncome;
+                            let houseIncome = h.baseIncome;
                             const upgradeCount = Object.values(h.upgrades).reduce((a, b) => a + b, 0);
                             houseIncome *= (1 + upgradeCount);
                             income += houseIncome;
@@ -6127,41 +5094,9 @@ Currencies.find(cr => cr.id === c.id);
             if (gameState.islands) {
                 gameState.islands.forEach(i => {
                     if (i.owned) {
-                        const tax                    }
-                });
-            }
-            
-            if (gameState.islands) {
-                gameState.islands.forEach(i => {
-                    if (i.owned)                    }
-                });
-            }
-            
-            if (gameState.islands) {
-                gameState.islands.forEach(i => {
-                    if (i.owned) {
-                        const taxItem = gameState.taxes?.find(t => t.type === 'island' && t.id === i.id);
-                        if ((!taxItem || !taxItem.paid) && !taxItem?.overdueItem = gameState.taxes?.find(t => t.type === 'island' && t.id === i.id);
-                        if ((!taxItem || !taxItem.paid) && !taxItem?.overdue) {
-                            income {
                         const taxItem = gameState.taxes?.find(t => t.type === 'island' && t.id === i.id);
                         if ((!taxItem || !taxItem.paid) && !taxItem?.overdue) {
                             income += i.income;
-                        }
-                    }
-                });
-            }
-            
-            if (specialItem.owned) {
-                income += specialItem.income) {
-                            income += i.income;
-                        }
-                    }
-                });
-            }
-            
-            if (specialItem.owned) {
-                income += specialItem.income += i.income;
                         }
                     }
                 });
@@ -6173,44 +5108,12 @@ Currencies.find(cr => cr.id === c.id);
             
             let spaceBonus = 0;
             if (gameState.space) {
-                spaceBonus = SPACE_LEVELS.slice(0, gameState.space.level).reduce((sum, l) => sum + l.bon;
-            }
-            
-            let spaceBonus = 0;
-            if (gameState.space) {
-                spaceBonus = SPACE_LEVELS.slice(0, gameState.space.level).reduce((sum, l) => sum + l.bon;
-            }
-            
-            let spaceBonus = 0;
-            if (gameState.space) {
                 spaceBonus = SPACE_LEVELS.slice(0, gameState.space.level).reduce((sum, l) => sum + l.bonus, 0);
                 income *= (1 + spaceBonus / 100);
             }
             
             if (income > 0) {
-                gameState.balance = (gameState.balance || us, 0);
-                income *= (1 + spaceBonus / 100);
-            }
-            
-            if (income > 0) {
-                gameState.balance = (gameState.balance || us, 0);
-                income *= (1 + spaceBonus / 100);
-            }
-            
-            if (income > 0) {
                 gameState.balance = (gameState.balance || 0) + Math.floor(income);
-                gameState.totalEarned = (gameState.totalEarned || 0) + Math.floor(income);
-            }
-            
-            updateTaxes();
-            checkBattlePassLevel();
-           0) + Math.floor(income);
-                gameState.totalEarned = (gameState.totalEarned || 0) + Math.floor(income);
-            }
-            
-            updateTaxes();
-            checkBattlePassLevel();
-           0) + Math.floor(income);
                 gameState.totalEarned = (gameState.totalEarned || 0) + Math.floor(income);
             }
             
@@ -6222,46 +5125,12 @@ Currencies.find(cr => cr.id === c.id);
             saveGame();
             
             const activeTab = document.querySelector('.nav-item.active')?.innerText || '';
-            if ( checkAchievements();
-            
-            updateUI();
-            saveGame();
-            
-            const activeTab = document.querySelector('.nav-item.active')?.innerText || checkAchievements();
-            
-            updateUI();
-            saveGame();
-            
-            const activeTab = document.querySelector('.nav-item.active')?.innerText || '';
-            if (activeTab.includes('Заработок')) {
-                renderEarn();
-            } else if (activeTab.includes('Налоги')) {
-                renderTax();
-            }
-        }, activeTab.includes('Заработок')) {
-                renderEarn();
-            } else if (activeTab.includes('Налоги')) {
-                renderTax();
-            }
-        }, 60000 '';
             if (activeTab.includes('Заработок')) {
                 renderEarn();
             } else if (activeTab.includes('Налоги')) {
                 renderTax();
             }
         }, 60000);
-
-        setInterval(() => {
-            if (gameState) {
-                updateCryptoPrices();
-                const activeTab = document.querySelector('.nav-item.active')?.innerText || '';
-                if (activeTab60000);
-
-        setInterval(() => {
-            if (gameState) {
-                updateCryptoPrices();
-                const activeTab = document.querySelector('.nav-item.active')?.innerText || '';
-                if (activeTab);
 
         setInterval(() => {
             if (gameState) {
@@ -6278,55 +5147,11 @@ Currencies.find(cr => cr.id === c.id);
             
             updateUI();
             
-            if.includes('Инвестиции')) {
-                    renderInvestments();
-                }
-            }
-        }, 300000);
-
-        setInterval(() => {
-            if (!gameState) return;
-            
-            updateUI();
-            
-            if.includes('Инвестиции')) {
-                    renderInvestments();
-                }
-            }
-        }, 300000);
-
-        setInterval(() => {
-            if (!gameState) return;
-            
-            updateUI();
-            
- (gameState.myBusinesses) {
+            if (gameState.myBusinesses) {
                 gameState.myBusinesses.forEach((b, index) => {
                     if (b.upgradeEnd && b.upgradeEnd <= Date.now()) {
                         completeUpgrade(index);
                     }
-                (gameState.myBusinesses) {
-                gameState.myBusinesses.forEach((b, index) => {
-                    if (b.upgradeEnd && b.upgradeEnd <= Date.now()) {
-                        completeUpgrade(index);
-                               if (gameState.myBusinesses) {
-                gameState.myBusinesses.forEach((b, index) => {
-                    if (b.upgradeEnd && b.upgradeEnd <= Date.now()) {
-                        completeUpgrade(index);
-                    }
-                });
-            }
-            
-            const activeTab = document.querySelector('.nav-item.active')?.innerText || '';
-            if (activeTab.includes('Бизнес')) {
-                renderBusiness();
-            } else if ( });
-            }
-            
-            const activeTab = document.querySelector('.nav-item.active')?.innerText || '';
-            if (activeTab.includes('Бизнес')) {
-                renderBusiness();
-            } else if ( }
                 });
             }
             
@@ -6336,29 +5161,7 @@ Currencies.find(cr => cr.id === c.id);
             } else if (activeTab.includes('Налоги')) {
                 renderTax();
             } else if (activeTab.includes('Космос')) {
-                if (rocketactiveTab.includes('Налоги')) {
-                renderTax();
-            } else if (activeTab.includes('Космос')) {
-                if (rocketLaunchEndactiveTab.includes('Налоги')) {
-                renderTax();
-            } else if (activeTab.includes('Космос')) {
-                if (rocketLaunchEndLaunchEnd && rocketLaunchEnd > Date.now()) {
-                    renderSpace();
-                }
-            }
-        }, 100);
-
-        // ========== ИНИЦИАЛИЗАЦИЯ ==========
-        window.onload = function() {
-            && rocketLaunchEnd > Date.now()) {
-                    renderSpace();
-                }
-            }
-        }, 100);
-
-        // ========== ИНИЦИАЛИЗАЦИЯ ==========
-        window.onload = function() {
-            && rocketLaunchEnd > Date.now()) {
+                if (rocketLaunchEnd && rocketLaunchEnd > Date.now()) {
                     renderSpace();
                 }
             }
@@ -6372,67 +5175,22 @@ Currencies.find(cr => cr.id === c.id);
                     diamonds: 1000,
                     exp: 0,
                     level: 1,
- if (!loadGame()) {
-                gameState = {
-                    balance: 1000000,
-                    diamonds: 1000,
-                    exp: 0,
-                    level: 1,
-                    totalClicks: 0,
-                    totalEarned: 1000000,
-                    lastOnlineTime: Date.now if (!loadGame()) {
-                gameState = {
-                    balance: 1000000,
-                    diamonds: 1000,
-                    exp: 0,
-                    level: 1,
                     totalClicks: 0,
                     totalEarned: 1000000,
                     lastOnlineTime: Date.now(),
-                    myBusinesses: [],
-                    miningF                    totalClicks: 0,
-                    totalEarned: 1000000,
-                    lastOnlineTime: Date.now(),
-                    myBusinesses: [],
-                   (),
                     myBusinesses: [],
                     miningFarms: [],
                     battlePass: { level: 1, exp: 0, claimed: [], lastReset: Date.now() },
-                    businessSlots: MAXarms: [],
-                    battlePass: { level: 1, exp: 0, claimed: [], lastReset: Date.now() },
                     businessSlots: MAX_BUSINESSES,
                     businessPassUpgraded: false,
                     houses: houses.map(h => ({ ...h })),
                     islands: islands.map(i => ({ ...i })),
- miningFarms: [],
-                    battlePass: { level: 1, exp: 0, claimed: [], lastReset: Date.now() },
-                    businessSlots: MAX_BUSINESSES,
-                    businessPassUpgraded: false,
-                    houses: houses.map(h => ({ ...h })),
-                    islands: islands.map(i => ({ ...i_BUSINESSES,
-                    businessPassUpgraded: false,
-                    houses: houses.map(h => ({ ...h })),
-                    islands: islands.map(i => ({ ...i })),
-                    garages: { cars: [],                    garages: { cars: [], planes: [], ships: [] },
-                    crypto: cryptoCurrencies.map(c => ({ id: c.id, owned: 0 })),
                     garages: { cars: [], planes: [], ships: [] },
-                    crypto: cryptoCurrencies.map(c => ({ id: c.id, owned: 0 planes: [], ships: [] },
                     crypto: cryptoCurrencies.map(c => ({ id: c.id, owned: 0 })),
                     cryptoPrices: cryptoCurrencies.map(c => c.basePrice),
                     taxes: [],
                     calendar: {
                         currentDay: 1,
-                        lastClaimTime: Date.now() - 24 * 60 * 60 * 1000 })),
-                    cryptoPrices: cryptoCurrencies.map(c => c.basePrice),
-                    taxes: [],
-                    calendar: {
-                        currentDay: 1,
-                        lastClaimTime: Date.now() - 24 * 60 * 60 * 1000,
-                        })),
-                    cryptoPrices: cryptoCurrencies.map(c => c.basePrice),
-                    taxes: [],
-                    calendar: {
-                        currentDay: 1,
                         lastClaimTime: Date.now() - 24 * 60 * 60 * 1000,
                         claimedDays: [],
                         totalDiamonds: 0,
@@ -6442,55 +5200,6 @@ Currencies.find(cr => cr.id === c.id);
                         level: 0,
                         unlockedLevels: [0],
                         lastLaunch: null
-                    },
-                    achievements: [],
-                    claimedAchievements: [],
-                    rocketLaunches: []
-                };
-                
-                cryptoPrices =,
-                        claimedDays: [],
-                        totalDiamonds: 0,
-                        streak: 0
-                    },
-                    space: {
-                        level: 0,
-                        unlockedLevels: [0],
-                        lastLaunch: null
-                    },
-                    achievements: [],
-                    claimedAchievements: [],
-                    rocketLaunches: []
-                };
-                
-                cryptoPrices = claimedDays: [],
-                        totalDiamonds: 0,
-                        streak: 0
-                    },
-                    space: {
-                        level: 0,
-                        unlockedLevels: [0],
-                        gameState.cryptoPrices;
-            }
-            
-            if (ADMIN_SECRETS.includes(currentUser)) {
-                enableAdminMode();
-            }
-            
-            updateUsernameDisplay();
-            
-            updateUI();
-            renderEarn gameState.cryptoPrices;
-            }
-            
-            if (ADMIN_SECRETS.includes(currentUser)) {
-                enableAdminMode();
-            }
-            
-            updateUsernameDisplay();
-            
-            updateUI();
-            renderEarn lastLaunch: null
                     },
                     achievements: [],
                     claimedAchievements: [],
@@ -6512,3 +5221,4 @@ Currencies.find(cr => cr.id === c.id);
     </script>
 </body>
 </html>
+```
